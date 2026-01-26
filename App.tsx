@@ -10,6 +10,7 @@ import Concierge from './components/Concierge';
 import AuthModal from './components/AuthModal';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import MobileBottomNav from './components/MobileBottomNav';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -30,16 +31,17 @@ const ScrollToTop = () => {
   return null;
 };
 
-const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading }: { 
+const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfileOpen, setIsProfileOpen }: { 
   user: any, 
   isAdmin: boolean, 
   openAuth: (mode: 'login' | 'register') => void, 
   handleSignOut: () => void,
-  isAuthLoading: boolean
+  isAuthLoading: boolean,
+  isProfileOpen: boolean,
+  setIsProfileOpen: (val: boolean) => void
 }) => {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,99 +62,103 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading }: {
       }`}
     >
       <Link to="/" className="flex items-center gap-3">
-        <div className="w-12 h-12 overflow-hidden">
+        <div className="w-10 h-10 md:w-12 md:h-12 overflow-hidden">
           <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
-          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-sm md:text-2xl leading-tight">
+          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-xs md:text-2xl leading-tight">
             Shotabdi <span className="text-hotel-text font-serif">Residential</span>
           </h1>
           <div className="flex items-center gap-2">
             <span className="w-4 h-[1px] bg-hotel-primary hidden md:block"></span>
-            <p className="text-[7px] md:text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold">Luxury Reimagined</p>
+            <p className="text-[6px] md:text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold">Luxury Reimagined</p>
           </div>
         </div>
       </Link>
 
       <div className="flex items-center gap-2 md:gap-5">
-        {isAuthLoading ? (
-          <div className="p-3 bg-gray-50 rounded-2xl animate-pulse flex items-center gap-2">
-            <Loader2 size={16} className="text-hotel-primary animate-spin" />
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Verifying...</span>
-          </div>
-        ) : user ? (
-          <div className="relative">
-            <button 
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-4 pr-2 py-2 transition-all duration-300 hover:shadow-md group"
-            >
-              <div className="text-right flex flex-col justify-center hidden sm:flex">
-                <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
-                  {user.displayName || 'Account'}
-                </p>
-                <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                  {isAdmin ? 'Admin Access' : 'Registered Member'}
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
-                <img 
-                  src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isProfileOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)}></div>
-                <div className="absolute top-full right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden animate-fade-in">
-                  <div className="px-4 py-4 border-b border-gray-50 mb-1 bg-gray-50/30">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Session Identity</p>
-                    <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
-                  </div>
-                  
-                  {isAdmin && (
-                    <Link 
-                      to="/admin" 
-                      onClick={() => setIsProfileOpen(false)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
-                    >
-                      <LayoutDashboard size={14} /> Admin Dashboard
-                    </Link>
-                  )}
-
-                  <button 
-                    onClick={() => {
-                      handleSignOut();
-                      setIsProfileOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-hotel-primary hover:bg-red-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <LogOut size={14} /> Log Out Account
-                  </button>
+        <div className="hidden lg:flex items-center gap-2 md:gap-5">
+          {isAuthLoading ? (
+            <div className="p-3 bg-gray-50 rounded-2xl animate-pulse flex items-center gap-2">
+              <Loader2 size={16} className="text-hotel-primary animate-spin" />
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Verifying...</span>
+            </div>
+          ) : user ? (
+            <div className="relative">
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-4 pr-2 py-2 transition-all duration-300 hover:shadow-md group"
+              >
+                <div className="text-right flex flex-col justify-center hidden sm:flex">
+                  <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
+                    {user.displayName || 'Account'}
+                  </p>
+                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                    {isAdmin ? 'Admin Access' : 'Registered Member'}
+                  </p>
                 </div>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 md:gap-3">
-            <button 
-              onClick={() => openAuth('login')}
-              className="px-4 md:px-6 py-2.5 text-gray-600 hover:text-hotel-primary font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all"
-            >
-              Login
-            </button>
-            <button 
-              onClick={() => openAuth('register')}
-              className="px-6 md:px-8 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
-            >
-              Register
-            </button>
-          </div>
+                <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
+                  <img 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 md:gap-3">
+              <button 
+                onClick={() => openAuth('login')}
+                className="px-4 md:px-6 py-2.5 text-gray-600 hover:text-hotel-primary font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all"
+              >
+                Login
+              </button>
+              <button 
+                onClick={() => openAuth('register')}
+                className="px-6 md:px-8 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
+              >
+                Register
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Unified Mobile Profile Dropdown Overlay */}
+        {isProfileOpen && user && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm lg:bg-transparent" onClick={() => setIsProfileOpen(false)}></div>
+            <div className="absolute top-[80%] lg:top-full right-4 lg:right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden animate-fade-in">
+              <div className="px-4 py-4 border-b border-gray-50 mb-1 bg-gray-50/30">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Session Identity</p>
+                <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
+              </div>
+              
+              {isAdmin && (
+                <Link 
+                  to="/admin" 
+                  onClick={() => setIsProfileOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
+                >
+                  <LayoutDashboard size={14} /> Admin Dashboard
+                </Link>
+              )}
+
+              <button 
+                onClick={() => {
+                  handleSignOut();
+                  setIsProfileOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-hotel-primary hover:bg-red-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
+              >
+                <LogOut size={14} /> Log Out Account
+              </button>
+            </div>
+          </>
         )}
-        <a href="tel:+8801717425702" className="bg-gray-50 p-2.5 rounded-xl text-hotel-primary lg:hidden border border-gray-100">
+
+        <a href="tel:+8801717425702" className="bg-gray-50 p-2.5 rounded-xl text-hotel-primary border border-gray-100 shadow-sm active:scale-90 transition-all">
           <Phone size={18} />
         </a>
       </div>
@@ -166,6 +172,7 @@ const AppContent = () => {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
 
   const initializeGoogleOneTap = () => {
@@ -174,12 +181,10 @@ const AppContent = () => {
         (window as any).google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: async (response: any) => {
-            console.log('One Tap response received');
             setIsAuthLoading(true);
             try {
               const credential = GoogleAuthProvider.credential(response.credential);
               const result = await signInWithCredential(auth, credential);
-              console.log('One Tap Sign-In Successful:', result.user.uid);
               setUser(result.user);
             } catch (err) {
               console.error("One Tap Authentication Failed:", err);
@@ -199,13 +204,11 @@ const AppContent = () => {
   };
 
   useEffect(() => {
-    // 1. Persistent Auth State Listener
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setIsAuthLoading(false);
       
       if (currentUser) {
-        console.log('User detected:', currentUser.uid);
         try {
           const idTokenResult = await currentUser.getIdTokenResult(true);
           setIsAdmin(!!idTokenResult.claims.admin);
@@ -214,11 +217,9 @@ const AppContent = () => {
         }
       } else {
         setIsAdmin(false);
-        // Wait for script if needed
         if ((window as any).google) {
           initializeGoogleOneTap();
         } else {
-          // Retry if script is still loading
           const checkScript = setInterval(() => {
             if ((window as any).google) {
               initializeGoogleOneTap();
@@ -248,13 +249,15 @@ const AppContent = () => {
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text">
       <Sidebar isAdmin={isAdmin} />
 
-      <main className="lg:ml-72 flex-1 relative">
+      <main className="lg:ml-72 flex-1 relative pb-24 lg:pb-0">
         <Header 
           user={user} 
           isAdmin={isAdmin} 
           openAuth={openAuth} 
           handleSignOut={handleSignOut} 
           isAuthLoading={isAuthLoading}
+          isProfileOpen={isProfileOpen}
+          setIsProfileOpen={setIsProfileOpen}
         />
         <div className="h-16"></div>
 
@@ -286,15 +289,15 @@ const AppContent = () => {
         </Routes>
 
         {user && location.pathname === '/' && (
-          <div className="fixed bottom-8 right-8 z-[60] lg:right-12">
+          <div className="fixed bottom-28 right-6 z-[60] lg:bottom-8 lg:right-8">
             <div className="group relative">
                <div className="absolute -inset-2 bg-hotel-primary/20 rounded-full blur-xl group-hover:bg-hotel-primary/40 transition-all opacity-0 group-hover:opacity-100"></div>
                <button 
                 onClick={() => document.getElementById('ai-concierge-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="relative bg-hotel-primary text-white p-5 rounded-[2rem] shadow-2xl shadow-red-200 hover:scale-110 transition-all active:scale-95 flex items-center gap-3"
+                className="relative bg-hotel-primary text-white p-4 lg:p-5 rounded-[2rem] shadow-2xl shadow-red-200 hover:scale-110 transition-all active:scale-95 flex items-center gap-3"
               >
                 <Sparkles size={24} />
-                <span className="pr-2 text-[10px] font-black uppercase tracking-widest hidden group-hover:block">AI Concierge</span>
+                <span className="pr-2 text-[10px] font-black uppercase tracking-widest hidden lg:block group-hover:block">AI Concierge</span>
               </button>
             </div>
           </div>
@@ -305,6 +308,13 @@ const AppContent = () => {
           onClose={() => setIsAuthModalOpen(false)} 
           initialMode={authInitialMode}
           onSuccess={(u) => setUser(u)}
+        />
+
+        <MobileBottomNav 
+          user={user} 
+          isAdmin={isAdmin} 
+          openAuth={openAuth} 
+          toggleProfile={() => setIsProfileOpen(!isProfileOpen)}
         />
 
         <footer className="bg-hotel-primary text-white pt-24 pb-12 relative overflow-hidden">
