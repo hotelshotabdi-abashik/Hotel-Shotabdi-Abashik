@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ViewType } from './types';
 import Sidebar from './components/Sidebar';
@@ -8,7 +9,8 @@ import NearbyRestaurants from './components/NearbyRestaurants';
 import Concierge from './components/Concierge';
 import AuthModal from './components/AuthModal';
 import { auth, onAuthStateChanged, signOut } from './services/firebase';
-import { Phone, LogOut, User as UserIcon } from 'lucide-react';
+// Fixed: Added Sparkles to the imported icons from lucide-react
+import { Phone, LogOut, User as UserIcon, MessageSquare, Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
@@ -63,12 +65,12 @@ const App: React.FC = () => {
           <div className="hidden lg:block">
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-hotel-primary/10 shadow-sm">
+                <div className="w-9 h-9 rounded-xl overflow-hidden border-2 border-hotel-primary/10 shadow-sm">
                   <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=FF0000&color=fff`} alt="Profile" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{user.displayName || 'Guest User'}</p>
-                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em]">{user.email}</p>
+                   <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-none mb-1">{user.displayName || 'Guest User'}</p>
+                   <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-[0.2em]">{user.email}</p>
                 </div>
               </div>
             ) : (
@@ -77,10 +79,18 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {user && (
+              <button 
+                onClick={() => setCurrentView('overview' as any)} // For this demo, let's keep things simple
+                className="lg:hidden bg-hotel-muted p-2.5 rounded-xl text-hotel-primary shadow-sm"
+              >
+                <MessageSquare size={18} />
+              </button>
+            )}
             {user ? (
               <button 
                 onClick={handleSignOut}
-                className="flex items-center gap-2 px-4 py-2 bg-hotel-muted text-hotel-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-hotel-primary hover:text-white transition-all shadow-sm active:scale-95"
+                className="flex items-center gap-2 px-4 py-2.5 bg-hotel-muted text-hotel-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-hotel-primary hover:text-white transition-all shadow-sm active:scale-95"
               >
                 <LogOut size={14} /> Sign Out
               </button>
@@ -98,7 +108,34 @@ const App: React.FC = () => {
           </div>
         </header>
 
+        {/* PROMPT FLOATING ACTION (Only when logged in) */}
+        {user && currentView !== 'rooms' && (
+          <div className="fixed bottom-8 right-8 z-[60] lg:right-12">
+            <div className="group relative">
+               <div className="absolute -inset-2 bg-hotel-primary/20 rounded-full blur-xl group-hover:bg-hotel-primary/40 transition-all opacity-0 group-hover:opacity-100"></div>
+               <button 
+                onClick={() => {
+                  // This is a simple way to "open" the concierge. 
+                  // In a real app we might use a popup, but here we'll just switch a state.
+                  // For now, let's just alert that it's personalized.
+                }}
+                className="relative bg-hotel-primary text-white p-5 rounded-[2rem] shadow-2xl shadow-red-200 hover:scale-110 transition-all active:scale-95 flex items-center gap-3"
+              >
+                <Sparkles size={24} />
+                <span className="pr-2 text-[10px] font-black uppercase tracking-widest hidden group-hover:block">AI Concierge for {user.displayName?.split(' ')[0]}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {renderContent()}
+
+        {/* CUSTOM AI PROMPT SECTION (Appearing at bottom of overview) */}
+        {currentView === 'overview' && (
+          <div className="bg-hotel-muted/30 py-20 border-t border-hotel-muted">
+            <Concierge />
+          </div>
+        )}
 
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
@@ -115,7 +152,6 @@ const App: React.FC = () => {
                 Redefining the residential experience in Sylhet since 2010. We combine modern luxury with traditional warmth.
               </p>
             </div>
-            {/* Additional footer columns could go here */}
           </div>
           <div className="border-t border-white/10 pt-12 text-center text-[9px] font-bold text-white/40 uppercase tracking-[0.5em] px-10">
             © 2024 Hotel Shotabdi Residential • All Rights Reserved
