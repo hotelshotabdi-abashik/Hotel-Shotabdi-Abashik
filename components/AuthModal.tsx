@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Mail, Lock, LogIn, Sparkles, Loader2 } from 'lucide-react';
 import { 
@@ -5,7 +6,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   googleProvider, 
-  signInWithPopup 
+  signInWithRedirect 
 } from '../services/firebase';
 
 interface AuthModalProps {
@@ -44,11 +45,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
-      onClose();
+      // Using Redirect instead of Popup to avoid COOP policy issues
+      await signInWithRedirect(auth, googleProvider);
+      // Note: The page will redirect, so onClose() isn't called here.
+      // The result is handled in App.tsx on mount.
     } catch (err: any) {
       setError(err.message.replace('Firebase:', '').replace('auth/', ''));
-    } finally {
       setLoading(false);
     }
   };
@@ -86,10 +88,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <button 
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full bg-white border border-gray-200 text-gray-700 py-3.5 rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-3 active:scale-95"
+            className="w-full bg-white border border-gray-200 text-gray-700 py-3.5 rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
           >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />
-            Continue with Google
+            {loading ? (
+              <Loader2 size={16} className="animate-spin text-hotel-primary" />
+            ) : (
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />
+            )}
+            {loading ? 'Redirecting to Google...' : 'Continue with Google'}
           </button>
 
           <div className="relative flex items-center justify-center">
