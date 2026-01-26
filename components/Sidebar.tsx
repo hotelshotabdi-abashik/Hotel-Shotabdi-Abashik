@@ -4,29 +4,14 @@ import { Phone, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 
-const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
-
 const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
-      {/* Brand Section */}
-      <div className="p-8 pb-4 flex flex-col items-center text-center">
-        <Link to="/" className="group">
-          <div className="w-32 h-32 mb-4 overflow-hidden transition-transform duration-500 group-hover:scale-105">
-            <img src={LOGO_URL} alt="Shotabdi Logo" className="w-full h-full object-contain" />
-          </div>
-          <h2 className="font-serif font-black text-hotel-primary tracking-tight text-xl leading-tight">
-            Shotabdi <span className="text-hotel-text">Residential</span>
-          </h2>
-          <p className="text-[8px] text-gray-400 tracking-[0.4em] uppercase font-bold mt-1">Luxury Reimagined</p>
-        </Link>
-      </div>
-
-      {/* Map Section - Adjusted size to fit better with the logo */}
-      <div className="relative group h-32 w-full overflow-hidden border-y border-gray-50 mt-4">
+      {/* Map Section - Full color as requested */}
+      <div className="relative group h-40 w-full overflow-hidden border-b border-gray-50">
         <a 
           href={mapUrl} 
           target="_blank" 
@@ -41,14 +26,15 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
               frameBorder="0"
               scrolling="no"
               src="https://maps.google.com/maps?q=Hotel%20Shotabdi%20Residential,%20WR6H+Q2P,%20Sylhet%203100&t=&z=16&ie=UTF8&iwloc=addr&output=embed"
-              className="pointer-events-none grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+              className="pointer-events-none opacity-80 group-hover:opacity-100 transition-all duration-700"
             ></iframe>
           </div>
           <div className="absolute inset-0 bg-hotel-primary/0 group-hover:bg-hotel-primary/5 transition-colors"></div>
         </a>
       </div>
 
-      <div className="p-6 flex-1 overflow-y-auto no-scrollbar">
+      <div className="p-6 flex-1 overflow-y-auto no-scrollbar pt-10">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 px-6">Navigation</p>
         <nav className="space-y-2 mb-8">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;

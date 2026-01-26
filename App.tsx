@@ -17,7 +17,7 @@ import {
   signInWithCredential, 
   GoogleAuthProvider 
 } from './services/firebase';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2 } from 'lucide-react';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon } from 'lucide-react';
 
 const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
 const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
@@ -294,6 +294,16 @@ const AppContent = () => {
           onSuccess={(u) => setUser(u)}
         />
 
+        {/* Floating Map Pin for Mobile */}
+        <a 
+          href="https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="lg:hidden fixed bottom-28 right-6 z-50 bg-hotel-primary text-white p-4 rounded-full shadow-2xl animate-bounce hover:animate-none active:scale-90 transition-all"
+        >
+          <MapIcon size={24} />
+        </a>
+
         <MobileBottomNav 
           user={user} 
           isAdmin={isAdmin} 
@@ -309,10 +319,7 @@ const AppContent = () => {
                 <div className="w-28 h-28 md:w-40 md:h-40 shrink-0 brightness-0 invert transition-transform duration-500 hover:scale-105">
                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <div className="flex flex-col">
-                  <h4 className="text-2xl font-serif font-black">Shotabdi</h4>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Residential Hotel</p>
-                </div>
+                {/* Hotel name text removed from footer as requested */}
               </Link>
               <p className="text-white/70 text-[11px] leading-relaxed max-w-xs font-medium">
                 Redefining the residential experience in Sylhet since 2010. We combine modern luxury with traditional warmth and unparalleled service.
@@ -369,7 +376,7 @@ const AppContent = () => {
                   </Link>
                 </li>
                 <li>
-                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/20 shadow-lg grayscale brightness-125 contrast-75">
+                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/20 shadow-lg brightness-110">
                     <iframe
                       title="Footer Map"
                       width="100%"
