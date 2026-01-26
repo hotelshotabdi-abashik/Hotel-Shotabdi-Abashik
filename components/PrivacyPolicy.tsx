@@ -19,7 +19,7 @@ const PrivacyPolicy: React.FC = () => {
             <Eye size={20} /> 1. Information We Collect
           </h2>
           <p className="text-sm leading-relaxed">
-            Shotabdi Abashik collects minimal information necessary to provide our services. When you use Google Sign-In, we collect your:
+            Shotabdi Residential collects minimal information necessary to provide our services. When you use Google Sign-In, we collect your:
           </p>
           <ul className="list-disc pl-5 text-sm space-y-2">
             <li>Email address (used for account identification and communication).</li>

@@ -19,7 +19,7 @@ const TermsOfService: React.FC = () => {
             <Info size={20} /> 1. Acceptance of Terms
           </h2>
           <p className="text-sm leading-relaxed">
-            By accessing or using the Shotabdi Abashik website, you agree to be bound by these Terms of Service and all applicable laws and regulations in Bangladesh.
+            By accessing or using the Shotabdi Residential website, you agree to be bound by these Terms of Service and all applicable laws and regulations in Bangladesh.
           </p>
         </div>
 
@@ -37,7 +37,7 @@ const TermsOfService: React.FC = () => {
             <AlertCircle size={20} /> 3. Disclaimer
           </h2>
           <p className="text-sm leading-relaxed">
-            The materials on our website are provided on an 'as is' basis. Shotabdi Abashik makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability.
+            The materials on our website are provided on an 'as is' basis. Shotabdi Residential makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability.
           </p>
         </div>
 
@@ -46,7 +46,7 @@ const TermsOfService: React.FC = () => {
             <Gavel size={20} /> 4. Governing Law
           </h2>
           <p className="text-sm leading-relaxed">
-            Any claim relating to Shotabdi Abashik's website shall be governed by the laws of Bangladesh without regard to its conflict of law provisions.
+            Any claim relating to Shotabdi Residential's website shall be governed by the laws of Bangladesh without regard to its conflict of law provisions.
           </p>
         </div>
 

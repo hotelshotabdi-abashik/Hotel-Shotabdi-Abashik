@@ -1,26 +1,19 @@
 
 import React from 'react';
 import { Phone } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
-import { ViewType } from '../types';
 
 const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
 
-interface SidebarProps {
-  currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ 
-  currentView, 
-  onViewChange
-}) => {
+const Sidebar: React.FC = () => {
+  const location = useLocation();
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
       {/* New Branding Header */}
-      <div className="p-6 flex items-center gap-3 border-b border-gray-50">
+      <Link to="/" className="p-6 flex items-center gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
         <div className="w-10 h-10 overflow-hidden">
           <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
         </div>
@@ -28,7 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <h1 className="font-serif font-black text-lg leading-tight text-hotel-primary">Shotabdi</h1>
           <p className="text-[8px] text-gray-400 tracking-[0.3em] uppercase font-bold">Residential</p>
         </div>
-      </div>
+      </Link>
 
       {/* Map Section - Now clean without overlays */}
       <div className="relative group h-40 w-full overflow-hidden border-b border-gray-100">
@@ -56,11 +49,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-6 flex-1 overflow-y-auto no-scrollbar">
         <nav className="space-y-3 mb-8">
           {NAV_ITEMS.map((item) => {
-            const isActive = currentView === item.id;
+            const isActive = location.pathname === item.path;
             return (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => onViewChange(item.id)}
+                to={item.path}
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${
                   isActive 
                     ? 'bg-hotel-primary text-white shadow-xl shadow-red-50' 
@@ -73,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <span className={`text-[11px] tracking-[0.1em] font-black uppercase ${isActive ? 'text-white' : ''}`}>
                   {item.label}
                 </span>
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -86,9 +79,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helpline</span>
           </div>
           <p className="text-[12px] text-hotel-primary font-black mb-4 tracking-tight">+8801717425702</p>
-          <button className="w-full bg-white text-hotel-primary py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm">
+          <a href="tel:+8801717425702" className="block w-full bg-white text-hotel-primary py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center">
             Quick Reach
-          </button>
+          </a>
         </div>
         <div className="text-center py-2">
            <p className="text-[8px] text-gray-300 tracking-[0.4em] uppercase italic font-bold">
