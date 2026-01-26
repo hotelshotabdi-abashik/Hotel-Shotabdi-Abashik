@@ -60,17 +60,17 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
         showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
     >
-      <Link to="/" className="flex items-center gap-4 md:gap-5">
-        <div className="w-16 h-16 md:w-24 md:h-24 overflow-hidden shrink-0">
+      <Link to="/" className="flex items-center gap-4 md:gap-6">
+        <div className="w-20 h-20 md:w-28 md:h-28 overflow-hidden shrink-0 py-1 transition-transform duration-500 hover:scale-105">
           <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
-          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-sm md:text-3xl leading-tight">
+          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-base md:text-3xl leading-tight">
             Shotabdi <span className="text-hotel-text font-serif">Residential</span>
           </h1>
           <div className="flex items-center gap-2">
-            <span className="w-6 h-[1px] bg-hotel-primary hidden md:block"></span>
-            <p className="text-[7px] md:text-[10px] text-gray-400 tracking-[0.3em] uppercase font-bold">Luxury Reimagined</p>
+            <span className="w-8 h-[1px] bg-hotel-primary hidden md:block"></span>
+            <p className="text-[8px] md:text-[11px] text-gray-400 tracking-[0.4em] uppercase font-bold">Luxury Reimagined</p>
           </div>
         </div>
       </Link>
@@ -257,7 +257,7 @@ const AppContent = () => {
           isProfileOpen={isProfileOpen}
           setIsProfileOpen={setIsProfileOpen}
         />
-        <div className="h-16"></div>
+        <div className="h-24"></div>
 
         <Routes>
           <Route path="/" element={
@@ -305,24 +305,27 @@ const AppContent = () => {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
           <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
-              <Link to="/" className="flex items-center gap-3">
-                <div className="w-24 h-24 md:w-32 md:h-32 shrink-0">
-                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
+              <Link to="/" className="flex items-center gap-4">
+                <div className="w-28 h-28 md:w-40 md:h-40 shrink-0 brightness-0 invert transition-transform duration-500 hover:scale-105">
+                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <h4 className="text-2xl font-serif font-black">Shotabdi Residential</h4>
+                <div className="flex flex-col">
+                  <h4 className="text-2xl font-serif font-black">Shotabdi</h4>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Residential Hotel</p>
+                </div>
               </Link>
               <p className="text-white/70 text-[11px] leading-relaxed max-w-xs font-medium">
                 Redefining the residential experience in Sylhet since 2010. We combine modern luxury with traditional warmth and unparalleled service.
               </p>
-              <div className="flex items-center gap-4">
-                <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"><Facebook size={16}/></a>
-                <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"><Instagram size={16}/></a>
-                <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"><Twitter size={16}/></a>
+              <div className="flex items-center gap-4 pt-4">
+                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-sm"><Facebook size={18}/></a>
+                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-sm"><Instagram size={18}/></a>
+                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-sm"><Twitter size={18}/></a>
               </div>
             </div>
 
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Quick Navigation</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Quick Navigation</h5>
               <ul className="space-y-3">
                 <li><Link to="/" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Home Residency</Link></li>
                 <li><Link to="/rooms" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Luxury Rooms</Link></li>
@@ -332,7 +335,7 @@ const AppContent = () => {
             </div>
 
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Contact Detail</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Contact Detail</h5>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <MapPin size={18} className="text-white/60 shrink-0" />
@@ -341,8 +344,8 @@ const AppContent = () => {
                 <li className="flex items-center gap-3">
                   <Phone size={18} className="text-white/60 shrink-0" />
                   <div className="flex flex-col">
-                    <span className="text-sm">+8801717425702</span>
-                    <span className="text-sm">01334935566</span>
+                    <span className="text-sm font-bold">+8801717425702</span>
+                    <span className="text-sm opacity-70">01334935566</span>
                   </div>
                 </li>
                 <li className="flex items-center gap-3">
@@ -353,7 +356,7 @@ const AppContent = () => {
             </div>
 
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Legal & Security</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Legal & Security</h5>
               <ul className="space-y-3">
                 <li>
                   <Link to="/privacypolicy" className="flex items-center gap-2 text-sm font-medium hover:translate-x-2 transition-transform">
@@ -366,7 +369,7 @@ const AppContent = () => {
                   </Link>
                 </li>
                 <li>
-                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/10 shadow-lg grayscale">
+                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/20 shadow-lg grayscale brightness-125 contrast-75">
                     <iframe
                       title="Footer Map"
                       width="100%"
