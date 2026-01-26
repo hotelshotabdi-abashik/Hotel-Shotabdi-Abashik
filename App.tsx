@@ -61,7 +61,7 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
       }`}
     >
       <Link to="/" className="flex items-center gap-4 md:gap-5">
-        <div className="w-14 h-14 md:w-20 md:h-20 overflow-hidden shrink-0">
+        <div className="w-16 h-16 md:w-24 md:h-24 overflow-hidden shrink-0">
           <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
@@ -306,8 +306,8 @@ const AppContent = () => {
           <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-20 h-20 md:w-28 md:h-28 shrink-0">
-                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+                <div className="w-24 h-24 md:w-32 md:h-32 shrink-0">
+                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
                 </div>
                 <h4 className="text-2xl font-serif font-black">Shotabdi Residential</h4>
               </Link>
