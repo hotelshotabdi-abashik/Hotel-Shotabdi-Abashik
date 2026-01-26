@@ -17,7 +17,7 @@ export interface TouristSpot {
   uri: string;
 }
 
-// Added ChatMessage for AI conversation components
+// Added ChatMessage interface to fix: Module '"../types"' has no exported member 'ChatMessage'.
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;

@@ -6,7 +6,6 @@ import Hero from './components/Hero';
 import RoomGrid from './components/RoomGrid';
 import TouristGuide from './components/TouristGuide';
 import NearbyRestaurants from './components/NearbyRestaurants';
-import Concierge from './components/Concierge';
 import AuthModal from './components/AuthModal';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -18,7 +17,7 @@ import {
   signInWithCredential, 
   GoogleAuthProvider 
 } from './services/firebase';
-import { Phone, LogOut, Sparkles, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2 } from 'lucide-react';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2 } from 'lucide-react';
 
 const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
 const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
@@ -125,7 +124,6 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
           )}
         </div>
 
-        {/* Unified Mobile Profile Dropdown Overlay */}
         {isProfileOpen && user && (
           <>
             <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm lg:bg-transparent" onClick={() => setIsProfileOpen(false)}></div>
@@ -267,8 +265,9 @@ const AppContent = () => {
               <Hero />
               <div className="mt-20"><RoomGrid /></div>
               <div className="mt-12"><NearbyRestaurants /></div>
-              <div id="ai-concierge-section" className="bg-hotel-muted/30 py-24 border-t border-hotel-muted">
-                <Concierge />
+              <div className="bg-gray-50 py-24 text-center">
+                <h3 className="text-3xl font-serif font-black text-hotel-primary">Experience Excellence</h3>
+                <p className="text-gray-500 mt-4 max-w-lg mx-auto font-light">Join thousands of happy guests who have made Shotabdi Residential their home away from home in Sylhet.</p>
               </div>
             </div>
           } />
@@ -287,21 +286,6 @@ const AppContent = () => {
             </div>
           } />
         </Routes>
-
-        {user && location.pathname === '/' && (
-          <div className="fixed bottom-28 right-6 z-[60] lg:bottom-8 lg:right-8">
-            <div className="group relative">
-               <div className="absolute -inset-2 bg-hotel-primary/20 rounded-full blur-xl group-hover:bg-hotel-primary/40 transition-all opacity-0 group-hover:opacity-100"></div>
-               <button 
-                onClick={() => document.getElementById('ai-concierge-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="relative bg-hotel-primary text-white p-4 lg:p-5 rounded-[2rem] shadow-2xl shadow-red-200 hover:scale-110 transition-all active:scale-95 flex items-center gap-3"
-              >
-                <Sparkles size={24} />
-                <span className="pr-2 text-[10px] font-black uppercase tracking-widest hidden lg:block group-hover:block">AI Concierge</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         <AuthModal 
           isOpen={isAuthModalOpen} 
