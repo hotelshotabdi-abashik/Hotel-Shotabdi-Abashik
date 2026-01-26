@@ -137,7 +137,7 @@ const App: React.FC = () => {
           }`}
         >
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('overview')}>
-            <div className="w-10 h-10 lg:hidden overflow-hidden">
+            <div className="w-10 h-10 overflow-hidden">
               <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">

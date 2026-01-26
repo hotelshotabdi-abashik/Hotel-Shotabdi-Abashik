@@ -19,7 +19,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
-      <div className="relative group h-48 w-full overflow-hidden border-b border-gray-100">
+      {/* New Branding Header */}
+      <div className="p-6 flex items-center gap-3 border-b border-gray-50">
+        <div className="w-10 h-10 overflow-hidden">
+          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+        </div>
+        <div className="flex flex-col">
+          <h1 className="font-serif font-black text-lg leading-tight text-hotel-primary">Shotabdi</h1>
+          <p className="text-[8px] text-gray-400 tracking-[0.3em] uppercase font-bold">Residential</p>
+        </div>
+      </div>
+
+      {/* Map Section - Now clean without overlays */}
+      <div className="relative group h-40 w-full overflow-hidden border-b border-gray-100">
         <a 
           href={mapUrl} 
           target="_blank" 
@@ -37,18 +49,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               className="pointer-events-none"
             ></iframe>
           </div>
-          <div className="absolute inset-0 bg-hotel-primary/0 group-hover:bg-hotel-primary/10 transition-colors"></div>
+          <div className="absolute inset-0 bg-hotel-primary/0 group-hover:bg-hotel-primary/5 transition-colors"></div>
         </a>
-        
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent flex items-center gap-3">
-          <div className="w-12 h-12 overflow-hidden">
-            <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="font-serif font-black text-xl leading-tight text-hotel-primary">Shotabdi</h1>
-            <p className="text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold">Residential Access</p>
-          </div>
-        </div>
       </div>
 
       <div className="p-6 flex-1 overflow-y-auto no-scrollbar">
