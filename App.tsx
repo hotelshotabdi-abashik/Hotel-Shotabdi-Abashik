@@ -16,17 +16,18 @@ import {
   signInWithCredential, 
   GoogleAuthProvider 
 } from './services/firebase';
-import { Phone, LogOut, User as UserIcon, MessageSquare, Sparkles } from 'lucide-react';
+import { Phone, LogOut, MessageSquare, Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
   const [user, setUser] = useState<any>(null);
   
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // IMPORTANT: This ID must match your Web Client ID in the Google Cloud Console.
   const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
 
   useEffect(() => {
@@ -39,6 +40,7 @@ const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       
+      // Initialize Google One Tap if no user is logged in
       if (!currentUser && (window as any).google) {
         try {
           (window as any).google.accounts.id.initialize({
@@ -51,13 +53,15 @@ const App: React.FC = () => {
                 console.error("One Tap Sign-in Error:", err);
               }
             },
-            cancel_on_tap_outside: false,
+            auto_select: false,
+            cancel_on_tap_outside: true,
             context: 'signin'
           });
 
+          // Show the One Tap prompt
           (window as any).google.accounts.id.prompt();
         } catch (err) {
-          console.error("Google One Tap Error:", err);
+          console.error("Google One Tap Initialization Error:", err);
         }
       }
     });
@@ -84,7 +88,7 @@ const App: React.FC = () => {
   const handleSignOut = () => signOut(auth);
 
   const openAuth = (mode: 'login' | 'register') => {
-    setAuthMode(mode);
+    setAuthInitialMode(mode);
     setIsAuthModalOpen(true);
   };
 
@@ -141,10 +145,10 @@ const App: React.FC = () => {
                 <div className="group relative flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-5 pr-1.5 py-1.5 transition-all duration-300 hover:shadow-md cursor-pointer">
                   <div className="text-right flex flex-col justify-center hidden sm:flex">
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[150px]">
-                      {user.displayName || 'Residential Guest'}
+                      {user.displayName || 'Guest User'}
                     </p>
                     <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-widest opacity-70 leading-none">
-                      Verified Member
+                      Active Member
                     </p>
                   </div>
                   <div className="relative">
@@ -160,7 +164,7 @@ const App: React.FC = () => {
 
                   <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 p-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-50 mb-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Profile</p>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Profile Identity</p>
                       <p className="text-[11px] font-bold text-gray-700 truncate">{user.email}</p>
                     </div>
                     <button 
@@ -176,13 +180,13 @@ const App: React.FC = () => {
               <div className="flex items-center gap-2 md:gap-3">
                 <button 
                   onClick={() => openAuth('login')}
-                  className="px-4 md:px-6 py-2.5 text-gray-700 hover:text-hotel-primary font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all"
+                  className="px-4 md:px-6 py-2.5 text-gray-600 hover:text-hotel-primary font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all"
                 >
                   Login
                 </button>
                 <button 
                   onClick={() => openAuth('register')}
-                  className="px-5 md:px-7 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
+                  className="px-6 md:px-8 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
                 >
                   Register
                 </button>
@@ -224,6 +228,7 @@ const App: React.FC = () => {
         <AuthModal 
           isOpen={isAuthModalOpen} 
           onClose={() => setIsAuthModalOpen(false)} 
+          initialMode={authInitialMode}
         />
 
         <footer className="bg-hotel-primary text-white pt-24 pb-12 relative overflow-hidden">
