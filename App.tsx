@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import RoomGrid from './components/RoomGrid';
@@ -18,7 +18,7 @@ import {
   signInWithCredential, 
   GoogleAuthProvider 
 } from './services/firebase';
-import { Phone, LogOut, Sparkles, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText } from 'lucide-react';
+import { Phone, LogOut, Sparkles, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, User, LayoutDashboard, ChevronDown } from 'lucide-react';
 
 const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
 
@@ -30,9 +30,10 @@ const ScrollToTop = () => {
   return null;
 };
 
-const Header = ({ user, openAuth, handleSignOut }: { user: any, openAuth: (mode: 'login' | 'register') => void, handleSignOut: () => void }) => {
+const Header = ({ user, isAdmin, openAuth, handleSignOut }: { user: any, isAdmin: boolean, openAuth: (mode: 'login' | 'register') => void, handleSignOut: () => void }) => {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,11 +58,11 @@ const Header = ({ user, openAuth, handleSignOut }: { user: any, openAuth: (mode:
       }`}
     >
       <Link to="/" className="flex items-center gap-3">
-        <div className="w-10 h-10 overflow-hidden">
+        <div className="w-12 h-12 overflow-hidden">
           <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
-          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-sm md:text-xl leading-tight">
+          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-sm md:text-2xl leading-tight">
             Shotabdi <span className="text-hotel-text font-serif">Residential</span>
           </h1>
           <div className="flex items-center gap-2">
@@ -73,40 +74,60 @@ const Header = ({ user, openAuth, handleSignOut }: { user: any, openAuth: (mode:
 
       <div className="flex items-center gap-2 md:gap-5">
         {user ? (
-          <div className="flex items-center gap-3">
-            <div className="group relative flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-5 pr-1.5 py-1.5 transition-all duration-300 hover:shadow-md cursor-pointer">
+          <div className="relative">
+            <button 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-4 pr-2 py-2 transition-all duration-300 hover:shadow-md"
+            >
               <div className="text-right flex flex-col justify-center hidden sm:flex">
-                <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[150px]">
+                <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
                   {user.displayName || 'Guest User'}
                 </p>
-                <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-widest opacity-70 leading-none">
-                  Active Member
+                <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                  {isAdmin ? 'Admin Portal' : 'Member'}
                 </p>
               </div>
-              <div className="relative">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10">
-                  <img 
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+              <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10">
+                <img 
+                  src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
               </div>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 p-2 z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-50 mb-1">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Profile Identity</p>
-                  <p className="text-[11px] font-bold text-gray-700 truncate">{user.email}</p>
+            {isProfileOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)}></div>
+                <div className="absolute top-full right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden animate-fade-in">
+                  <div className="px-4 py-4 border-b border-gray-50 mb-1">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Authenticated Account</p>
+                    <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
+                  </div>
+                  
+                  {isAdmin && (
+                    <Link 
+                      to="/admin" 
+                      onClick={() => setIsProfileOpen(false)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
+                    >
+                      <LayoutDashboard size={14} /> Admin Dashboard
+                    </Link>
+                  )}
+
+                  <button 
+                    onClick={() => {
+                      handleSignOut();
+                      setIsProfileOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-hotel-primary hover:bg-red-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <LogOut size={14} /> Sign Out Account
+                  </button>
                 </div>
-                <button 
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-3 py-3 text-hotel-primary hover:bg-red-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
-                >
-                  <LogOut size={14} /> Sign Out
-                </button>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2 md:gap-3">
@@ -136,35 +157,52 @@ const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
 
   const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
 
   useEffect(() => {
+    // Persistent Auth Listener
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        console.log('User detected:', currentUser.uid);
+        // Check for admin role in custom claims
+        const idTokenResult = await currentUser.getIdTokenResult();
+        setIsAdmin(!!idTokenResult.claims.admin);
+      } else {
+        setIsAdmin(false);
+        // Initialize Google One Tap if no user
+        if ((window as any).google) {
+          try {
+            (window as any).google.accounts.id.initialize({
+              client_id: GOOGLE_CLIENT_ID,
+              callback: async (response: any) => {
+                try {
+                  const credential = GoogleAuthProvider.credential(response.credential);
+                  await signInWithCredential(auth, credential);
+                } catch (err) {
+                  console.error("Google One Tap Auth Error:", err);
+                }
+              },
+              auto_select: false,
+              cancel_on_tap_outside: true,
+              context: 'signin'
+            });
+            (window as any).google.accounts.id.prompt();
+          } catch (err) { console.error("Google One Tap Prompt Error:", err); }
+        }
+      }
+    });
+
+    // Handle redirect results for mobile
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) setUser(result.user);
       })
-      .catch((error) => console.error("Redirect sign-in error:", error));
+      .catch((error) => console.error("Auth redirect result error:", error));
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (!currentUser && (window as any).google) {
-        try {
-          (window as any).google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: async (response: any) => {
-              const credential = GoogleAuthProvider.credential(response.credential);
-              await signInWithCredential(auth, credential);
-            },
-            auto_select: false,
-            cancel_on_tap_outside: true,
-            context: 'signin'
-          });
-          (window as any).google.accounts.id.prompt();
-        } catch (err) { console.error("Google One Tap Error:", err); }
-      }
-    });
     return () => unsubscribe();
   }, []);
 
@@ -176,10 +214,10 @@ const AppContent = () => {
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text">
-      <Sidebar />
+      <Sidebar isAdmin={isAdmin} />
 
       <main className="lg:ml-72 flex-1 relative">
-        <Header user={user} openAuth={openAuth} handleSignOut={handleSignOut} />
+        <Header user={user} isAdmin={isAdmin} openAuth={openAuth} handleSignOut={handleSignOut} />
         <div className="h-16"></div>
 
         <Routes>
@@ -198,6 +236,7 @@ const AppContent = () => {
           <Route path="/guide" element={<div className="py-20 bg-white"><TouristGuide /></div>} />
           <Route path="/privacypolicy" element={<PrivacyPolicy />} />
           <Route path="/termsofservice" element={<TermsOfService />} />
+          <Route path="/admin" element={<div className="p-20 text-center"><h1 className="text-3xl font-serif font-black">Admin Management Panel</h1><p className="text-gray-500 mt-4">Authorized Access Only.</p></div>} />
         </Routes>
 
         {user && location.pathname === '/' && (

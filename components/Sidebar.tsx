@@ -1,30 +1,17 @@
 
 import React from 'react';
-import { Phone } from 'lucide-react';
+import { Phone, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 
-const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
-
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
-      {/* New Branding Header */}
-      <Link to="/" className="p-6 flex items-center gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-        <div className="w-10 h-10 overflow-hidden">
-          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
-        </div>
-        <div className="flex flex-col">
-          <h1 className="font-serif font-black text-lg leading-tight text-hotel-primary">Shotabdi</h1>
-          <p className="text-[8px] text-gray-400 tracking-[0.3em] uppercase font-bold">Residential</p>
-        </div>
-      </Link>
-
-      {/* Map Section - Now clean without overlays */}
-      <div className="relative group h-40 w-full overflow-hidden border-b border-gray-100">
+      {/* Map Section - Now the top element of the sidebar */}
+      <div className="relative group h-48 w-full overflow-hidden border-b border-gray-100">
         <a 
           href={mapUrl} 
           target="_blank" 
@@ -69,6 +56,24 @@ const Sidebar: React.FC = () => {
               </Link>
             );
           })}
+
+          {isAdmin && (
+            <div className="pt-4 mt-4 border-t border-gray-50">
+              <Link
+                to="/admin"
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${
+                  location.pathname === '/admin' 
+                    ? 'bg-amber-600 text-white shadow-xl shadow-amber-50' 
+                    : 'text-amber-600 hover:bg-amber-50'
+                }`}
+              >
+                <LayoutDashboard size={20} />
+                <span className="text-[11px] tracking-[0.1em] font-black uppercase">
+                  Admin Dashboard
+                </span>
+              </Link>
+            </div>
+          )}
         </nav>
       </div>
 
