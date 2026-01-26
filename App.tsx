@@ -60,17 +60,17 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
         showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
     >
-      <Link to="/" className="flex items-center gap-3">
-        <div className="w-10 h-10 md:w-12 md:h-12 overflow-hidden">
+      <Link to="/" className="flex items-center gap-4 md:gap-5">
+        <div className="w-14 h-14 md:w-20 md:h-20 overflow-hidden shrink-0">
           <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
-          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-xs md:text-2xl leading-tight">
+          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-sm md:text-3xl leading-tight">
             Shotabdi <span className="text-hotel-text font-serif">Residential</span>
           </h1>
           <div className="flex items-center gap-2">
-            <span className="w-4 h-[1px] bg-hotel-primary hidden md:block"></span>
-            <p className="text-[6px] md:text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold">Luxury Reimagined</p>
+            <span className="w-6 h-[1px] bg-hotel-primary hidden md:block"></span>
+            <p className="text-[7px] md:text-[10px] text-gray-400 tracking-[0.3em] uppercase font-bold">Luxury Reimagined</p>
           </div>
         </div>
       </Link>
@@ -306,7 +306,7 @@ const AppContent = () => {
           <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-12 h-12">
+                <div className="w-20 h-20 md:w-28 md:h-28 shrink-0">
                   <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <h4 className="text-2xl font-serif font-black">Shotabdi Residential</h4>
