@@ -73,10 +73,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             {isLogin ? <LogIn size={24} /> : <UserPlus size={24} />}
           </div>
           <h3 className="text-2xl font-serif font-black mb-1">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
+            {isLogin ? 'Login' : 'Register'}
           </h3>
           <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">
-            Hotel Shotabdi Residential
+            Shotabdi Residential
           </p>
         </div>
 
@@ -93,12 +93,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             className="w-full bg-white border border-gray-200 text-gray-700 py-3.5 rounded-xl font-black text-[11px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
             {!loading && <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />}
-            {loading ? <Loader2 size={16} className="animate-spin text-hotel-primary" /> : 'Sign in with Google'}
+            {loading ? <Loader2 size={16} className="animate-spin text-hotel-primary" /> : 'Google Sign In'}
           </button>
 
           <div className="relative flex items-center justify-center">
             <div className="border-t border-gray-100 w-full"></div>
-            <span className="bg-white px-4 text-[9px] font-black text-gray-300 uppercase tracking-widest absolute">Or use Email</span>
+            <span className="bg-white px-4 text-[9px] font-black text-gray-300 uppercase tracking-widest absolute">Or Email</span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -112,7 +112,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3.5 pl-11 pr-4 text-xs font-medium focus:border-hotel-primary outline-none transition-all"
-                  placeholder="Enter your email"
+                  placeholder="Enter email"
                 />
               </div>
             </div>
@@ -137,7 +137,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
               disabled={loading}
               className="w-full bg-hotel-primary text-white py-4 rounded-xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-red-50 hover:bg-hotel-secondary transition-all active:scale-95 flex items-center justify-center gap-2 mt-4"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : (isLogin ? <LogIn size={16} /> : <Sparkles size={16} />)}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : (isLogin ? <LogIn size={16} /> : <UserPlus size={16} />)}
               {isLogin ? 'Login' : 'Register'}
             </button>
           </form>
@@ -148,7 +148,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
               onClick={() => setIsLogin(!isLogin)}
               className="text-[10px] font-black text-gray-400 hover:text-hotel-primary uppercase tracking-widest transition-colors"
             >
-              {isLogin ? "Need an account? Sign Up" : "Already a member? Login"}
+              {isLogin ? "Join Shotabdi - Register" : "Already a Member? Login"}
             </button>
           </div>
         </div>

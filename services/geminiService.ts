@@ -6,7 +6,7 @@ import { ChatMessage } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Generates a response from the AI concierge for Hotel Shotabdi.
+ * Generates a response from the AI concierge for Shotabdi Residential.
  * @param history The conversation history.
  * @param message The new user message.
  * @returns The AI's response text.
@@ -31,7 +31,7 @@ export const getConciergeResponse = async (history: ChatMessage[], message: stri
       model: 'gemini-3-flash-preview',
       contents: contents,
       config: {
-        systemInstruction: "You are a helpful and polite AI concierge for Hotel Shotabdi in Sylhet, Bangladesh. Provide information about available rooms (Deluxe Single, Deluxe Double, Family Suite, Super Deluxe), hotel facilities (Wi-Fi, AC, Parking, 24/7 Helpline), and local Sylhet attractions (Keane Bridge, tea gardens, Shah Jalal Mazar). Keep your responses professional, warm, and concise.",
+        systemInstruction: "You are a helpful and polite AI concierge for Shotabdi Residential in Sylhet, Bangladesh. Provide information about available rooms (Deluxe Single, Deluxe Double, Family Suite, Super Deluxe), hotel facilities (Wi-Fi, AC, Parking, 24/7 Helpline), and local Sylhet attractions (Keane Bridge, tea gardens, Shah Jalal Mazar). Keep your responses professional, warm, and concise.",
       },
     });
 

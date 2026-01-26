@@ -1,3 +1,4 @@
+
 export interface Room {
   id: string;
   title: string;
@@ -9,7 +10,7 @@ export interface Room {
   capacity: number;
 }
 
-export type ViewType = 'overview' | 'rooms' | 'guide' | 'restaurants';
+export type ViewType = 'overview' | 'rooms' | 'guide' | 'restaurants' | 'privacy' | 'terms';
 
 export interface TouristSpot {
   title: string;

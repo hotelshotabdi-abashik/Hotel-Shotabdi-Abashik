@@ -8,6 +8,8 @@ import TouristGuide from './components/TouristGuide';
 import NearbyRestaurants from './components/NearbyRestaurants';
 import Concierge from './components/Concierge';
 import AuthModal from './components/AuthModal';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -16,7 +18,9 @@ import {
   signInWithCredential, 
   GoogleAuthProvider 
 } from './services/firebase';
-import { Phone, LogOut, MessageSquare, Sparkles } from 'lucide-react';
+import { Phone, LogOut, MessageSquare, Sparkles, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText } from 'lucide-react';
+
+const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
@@ -27,7 +31,7 @@ const App: React.FC = () => {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // IMPORTANT: This ID must match your Web Client ID in the Google Cloud Console.
+  // Note: Client ID is often project-specific. Using the current verified one.
   const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
 
   useEffect(() => {
@@ -40,7 +44,6 @@ const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       
-      // Initialize Google One Tap if no user is logged in
       if (!currentUser && (window as any).google) {
         try {
           (window as any).google.accounts.id.initialize({
@@ -57,11 +60,9 @@ const App: React.FC = () => {
             cancel_on_tap_outside: true,
             context: 'signin'
           });
-
-          // Show the One Tap prompt
           (window as any).google.accounts.id.prompt();
         } catch (err) {
-          console.error("Google One Tap Initialization Error:", err);
+          console.error("Google One Tap Error:", err);
         }
       }
     });
@@ -92,6 +93,11 @@ const App: React.FC = () => {
     setIsAuthModalOpen(true);
   };
 
+  const navigateTo = (view: ViewType) => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'overview':
@@ -108,6 +114,10 @@ const App: React.FC = () => {
         return <div className="py-20 bg-white min-h-screen"><NearbyRestaurants /></div>;
       case 'guide':
         return <div className="py-20 bg-white"><TouristGuide /></div>;
+      case 'privacy':
+        return <PrivacyPolicy />;
+      case 'terms':
+        return <TermsOfService />;
       default:
         return <Hero />;
     }
@@ -117,7 +127,7 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text">
       <Sidebar 
         currentView={currentView} 
-        onViewChange={setCurrentView} 
+        onViewChange={navigateTo} 
       />
 
       <main className="lg:ml-72 flex-1 relative">
@@ -126,8 +136,10 @@ const App: React.FC = () => {
             showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="bg-hotel-primary text-white w-9 h-9 flex items-center justify-center rounded-xl font-black text-xs lg:hidden shadow-lg shadow-red-200">HS</div>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('overview')}>
+            <div className="w-10 h-10 lg:hidden overflow-hidden">
+              <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+            </div>
             <div className="flex flex-col">
               <h1 className="font-serif font-black text-hotel-primary tracking-tight text-sm md:text-xl leading-tight">
                 Shotabdi <span className="text-hotel-text font-serif">Residential</span>
@@ -154,7 +166,7 @@ const App: React.FC = () => {
                   <div className="relative">
                     <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10">
                       <img 
-                        src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=FF0000&color=fff`} 
+                        src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
                       />
@@ -162,7 +174,7 @@ const App: React.FC = () => {
                     <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>
 
-                  <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 p-2 z-50">
+                  <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 p-2 z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-50 mb-1">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Profile Identity</p>
                       <p className="text-[11px] font-bold text-gray-700 truncate">{user.email}</p>
@@ -192,7 +204,7 @@ const App: React.FC = () => {
                 </button>
               </div>
             )}
-            <a href="tel:+8801700000000" className="bg-gray-50 p-2.5 rounded-xl text-hotel-primary lg:hidden border border-gray-100">
+            <a href="tel:+8801717425702" className="bg-gray-50 p-2.5 rounded-xl text-hotel-primary lg:hidden border border-gray-100">
               <Phone size={18} />
             </a>
           </div>
@@ -200,7 +212,7 @@ const App: React.FC = () => {
 
         <div className="h-16"></div>
 
-        {user && currentView !== 'rooms' && (
+        {user && currentView === 'overview' && (
           <div className="fixed bottom-8 right-8 z-[60] lg:right-12">
             <div className="group relative">
                <div className="absolute -inset-2 bg-hotel-primary/20 rounded-full blur-xl group-hover:bg-hotel-primary/40 transition-all opacity-0 group-hover:opacity-100"></div>
@@ -235,17 +247,89 @@ const App: React.FC = () => {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
           <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-white text-hotel-primary p-2 rounded-xl font-bold text-xs shadow-lg">HS</div>
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('overview')}>
+                <div className="w-12 h-12">
+                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+                </div>
                 <h4 className="text-2xl font-serif font-black">Shotabdi Residential</h4>
               </div>
-              <p className="text-white/70 text-[11px] leading-relaxed max-w-xs font-medium uppercase tracking-wider">
-                Luxury • Comfort • Legacy
+              <p className="text-white/70 text-[11px] leading-relaxed max-w-xs font-medium">
+                Redefining the residential experience in Sylhet since 2010. We combine modern luxury with traditional warmth and unparalleled service.
               </p>
+              <div className="flex items-center gap-4">
+                <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"><Facebook size={16}/></a>
+                <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"><Instagram size={16}/></a>
+                <a href="#" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"><Twitter size={16}/></a>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Quick Navigation</h5>
+              <ul className="space-y-3">
+                <li><button onClick={() => navigateTo('overview')} className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Home Residency</button></li>
+                <li><button onClick={() => navigateTo('rooms')} className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Luxury Rooms</button></li>
+                <li><button onClick={() => navigateTo('guide')} className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Tourist Destinations</button></li>
+                <li><button onClick={() => navigateTo('restaurants')} className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Dining Options</button></li>
+              </ul>
+            </div>
+
+            <div className="space-y-6">
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Contact Detail</h5>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <MapPin size={18} className="text-white/60 shrink-0" />
+                  <span className="text-sm">WR6H+Q2P, Humayun Rashid Square, Sylhet 3100</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Phone size={18} className="text-white/60 shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-sm">+8801717425702</span>
+                    <span className="text-sm">01334935566</span>
+                  </div>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Mail size={18} className="text-white/60 shrink-0" />
+                  <span className="text-sm">hotelshotabdiabashik@gmail.com</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-6">
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Legal & Security</h5>
+              <ul className="space-y-3">
+                <li>
+                  <button onClick={() => navigateTo('privacy')} className="flex items-center gap-2 text-sm font-medium hover:translate-x-2 transition-transform">
+                    <ShieldCheck size={14} className="text-white/60" /> Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigateTo('terms')} className="flex items-center gap-2 text-sm font-medium hover:translate-x-2 transition-transform">
+                    <FileText size={14} className="text-white/60" /> Terms of Service
+                  </button>
+                </li>
+                <li>
+                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/10 shadow-lg grayscale">
+                    <iframe
+                      title="Footer Map"
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      scrolling="no"
+                      src="https://maps.google.com/maps?q=Hotel%20Shotabdi%20Residential,%20WR6H+Q2P,%20Sylhet%203100&t=&z=14&ie=UTF8&iwloc=addr&output=embed"
+                    ></iframe>
+                  </div>
+                </li>
+              </ul>
             </div>
           </div>
-          <div className="border-t border-white/10 pt-12 text-center text-[9px] font-bold text-white/40 uppercase tracking-[0.5em] px-10">
-            © 2024 Hotel Shotabdi Residential • All Rights Reserved
+          <div className="border-t border-white/10 pt-12 flex flex-col items-center gap-4 text-center px-10">
+            <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.5em]">
+              © 2024 Shotabdi Residential • All Rights Reserved
+            </p>
+            <div className="flex items-center gap-6">
+              <button onClick={() => navigateTo('privacy')} className="text-[8px] font-black text-white/30 uppercase tracking-widest hover:text-white transition-colors">Privacy</button>
+              <button onClick={() => navigateTo('terms')} className="text-[8px] font-black text-white/30 uppercase tracking-widest hover:text-white transition-colors">Terms</button>
+            </div>
           </div>
         </footer>
       </main>

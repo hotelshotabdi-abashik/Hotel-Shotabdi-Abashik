@@ -4,6 +4,8 @@ import { Phone } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { ViewType } from '../types';
 
+const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
+
 interface SidebarProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
@@ -38,9 +40,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="absolute inset-0 bg-hotel-primary/0 group-hover:bg-hotel-primary/10 transition-colors"></div>
         </a>
         
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent">
-          <h1 className="font-serif font-black text-2xl leading-tight text-hotel-primary">Shotabdi</h1>
-          <p className="text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold">Residential Access</p>
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent flex items-center gap-3">
+          <div className="w-12 h-12 overflow-hidden">
+            <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="font-serif font-black text-xl leading-tight text-hotel-primary">Shotabdi</h1>
+            <p className="text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold">Residential Access</p>
+          </div>
         </div>
       </div>
 
@@ -76,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Phone size={14} className="text-hotel-primary" />
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helpline</span>
           </div>
-          <p className="text-[12px] text-hotel-primary font-black mb-4 tracking-tight">+880 1700-000000</p>
+          <p className="text-[12px] text-hotel-primary font-black mb-4 tracking-tight">+8801717425702</p>
           <button className="w-full bg-white text-hotel-primary py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm">
             Quick Reach
           </button>
