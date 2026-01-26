@@ -247,7 +247,7 @@ const AppContent = () => {
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text">
       <Sidebar isAdmin={isAdmin} />
 
-      <main className="lg:ml-72 flex-1 relative pb-24 lg:pb-0">
+      <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0">
         <Header 
           user={user} 
           isAdmin={isAdmin} 
