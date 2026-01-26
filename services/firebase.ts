@@ -9,7 +9,8 @@ import {
   GoogleAuthProvider, 
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  signInWithCredential
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -38,5 +39,7 @@ export {
   onAuthStateChanged, 
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  signInWithCredential,
+  GoogleAuthProvider
 };
