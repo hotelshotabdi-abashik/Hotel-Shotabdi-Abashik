@@ -18,8 +18,6 @@ import {
   db,
   onAuthStateChanged, 
   signOut, 
-  signInWithCredential, 
-  GoogleAuthProvider,
   syncUserProfile,
   ref,
   get,
@@ -28,7 +26,7 @@ import {
   OWNER_EMAIL
 } from './services/firebase';
 import { UserProfile, AppNotification } from './types';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Settings, UserCheck, Bell, CheckCircle2 } from 'lucide-react';
+import { Phone, LogOut, LayoutDashboard, ChevronDown, Loader2, Settings, Bell, CheckCircle2, ShieldCheck, UserCheck } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 
@@ -100,14 +98,14 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
         <Link to="/" className="w-8 h-8 md:w-12 md:h-12 overflow-hidden shrink-0 hover:scale-110 transition-transform">
           <img src={LOGO_ICON_URL} alt="Logo" className="w-full h-full object-contain" />
         </Link>
-        <Link to="/" className="flex flex-col overflow-hidden">
+        <div className="flex flex-col overflow-hidden">
           <h1 className="font-serif font-black tracking-tighter md:tracking-tight leading-tight flex items-baseline gap-1 whitespace-nowrap">
             <span className="text-hotel-primary text-[13px] md:text-[22px]">Hotel</span>
             <span className="text-hotel-primary text-[10px] md:text-[18px]">Shotabdi</span>
             <span className="text-hotel-text text-[10px] md:text-[18px]">Residential</span>
           </h1>
           <p className="text-[6.5px] md:text-[9px] text-gray-400 tracking-[0.3em] uppercase font-bold truncate">Luxury Reimagined</p>
-        </Link>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
@@ -117,19 +115,18 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
           </div>
         ) : user ? (
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Notification Bell */}
             <div className="relative">
               <button 
                 onClick={() => { setIsNotifOpen(!isNotifOpen); if (!isNotifOpen) markAllAsRead(); }}
                 className="p-3 bg-gray-50 hover:bg-white rounded-xl border border-gray-100 text-gray-400 hover:text-hotel-primary transition-all relative"
               >
                 <Bell size={18} />
-                {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full ring-2 ring-white animate-bounce">{unreadCount}</span>}
+                {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full ring-2 ring-white">{unreadCount}</span>}
               </button>
               {isNotifOpen && (
                 <div className="absolute top-full right-0 mt-3 w-72 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
                   <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Memory Updates</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Updates</span>
                     <button onClick={() => setIsNotifOpen(false)} className="text-[9px] font-bold text-hotel-primary">Close</button>
                   </div>
                   <div className="max-h-64 overflow-y-auto no-scrollbar">
@@ -143,18 +140,17 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
                           </div>
                         </div>
                       </div>
-                    )) : <div className="p-8 text-center text-[9px] font-bold text-gray-300 uppercase">No new alerts</div>}
+                    )) : <div className="p-8 text-center text-[9px] font-bold text-gray-300 uppercase">No alerts</div>}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Profile Dropdown */}
             <div className="relative">
               <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl p-1.5 pl-3 hover:shadow-md transition-all">
                 <div className="text-right hidden sm:block">
                   <p className="text-[10px] font-black text-gray-900 leading-none truncate max-w-[80px]">{profile?.legalName?.split(' ')[0] || 'Guest'}</p>
-                  <p className="text-[7px] font-bold text-hotel-primary uppercase tracking-widest mt-0.5">{isOwner ? 'Owner' : 'Member'}</p>
+                  <p className={`text-[7px] font-bold uppercase tracking-widest mt-0.5 ${isOwner ? 'text-amber-600' : 'text-hotel-primary'}`}>{isOwner ? 'Owner' : 'Member'}</p>
                 </div>
                 <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-8 h-8 rounded-xl object-cover border border-gray-100" />
               </button>
@@ -162,7 +158,7 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
                 <div className="absolute top-full right-0 mt-3 w-56 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 animate-fade-in">
                   {(isAdmin || isOwner) && (
                     <Link to="/admin" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors text-[9px] font-black uppercase tracking-widest">
-                      <LayoutDashboard size={14} /> Admin Dashboard
+                      <LayoutDashboard size={14} /> Admin Panel
                     </Link>
                   )}
                   <button onClick={() => { openManageAccount(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors text-[9px] font-black uppercase tracking-widest">
@@ -201,38 +197,37 @@ const AppContent = () => {
     try {
       const data = await syncUserProfile(u);
       setProfile(data);
+      
+      // Step 1: Immediate owner check locally based on email
       if (u.email === OWNER_EMAIL) {
         setIsOwner(true);
         setIsAdmin(true);
-      } else {
-        const roleRef = ref(db, `roles/${u.uid}`);
-        const roleSnap = await get(roleRef);
-        if (roleSnap.exists()) {
-          const role = roleSnap.val();
-          setIsAdmin(role === 'admin' || role === 'owner');
-        } else {
-          setIsAdmin(false);
-          setIsOwner(false);
-        }
+        return; // Don't even try to read roles if they're already owner
+      }
+
+      // Step 2: Check roles for non-owners (this might trigger PERMISSION_DENIED if rules are strict)
+      const roleRef = ref(db, `roles/${u.uid}`);
+      const roleSnap = await get(roleRef);
+      if (roleSnap.exists()) {
+        const role = roleSnap.val();
+        setIsAdmin(role === 'admin' || role === 'owner');
       }
     } catch (error) {
-      console.error("Profile Load Error:", error);
+      console.warn("Background Profile sync issue (expected for new users):", error);
     }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      // Step 1: Immediately set the user object to update the UI base
+      // 1. Immediately set User and clear loading
       setUser(currentUser);
       
       if (currentUser) {
-        // Step 2: Load additional profile/role data asynchronously
-        // We don't 'await' here to prevent blocking isAuthLoading(false)
+        // 2. Perform background sync
         loadProfile(currentUser).finally(() => {
           setIsAuthLoading(false);
         });
       } else {
-        // Clear all state if logged out
         setProfile(null);
         setIsAdmin(false);
         setIsOwner(false);
@@ -245,13 +240,11 @@ const AppContent = () => {
   const handleSignOut = async () => {
     setIsAuthLoading(true);
     await signOut(auth);
-    // onAuthStateChanged will handle the rest
   };
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <Sidebar isAdmin={isAdmin || isOwner} />
-      {/* Onboarding shows if profile exists but isn't complete (e.g. after deletion) */}
       {user && profile && !profile.isComplete && !isAuthLoading && (
         <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
       )}
@@ -278,14 +271,14 @@ const AppContent = () => {
           <Route path="/guide" element={<div className="py-10 bg-white"><TouristGuide /></div>} />
           <Route path="/privacypolicy" element={<PrivacyPolicy />} />
           <Route path="/termsofservice" element={<TermsOfService />} />
-          <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen flex flex-col items-center justify-center"><h1 className="text-2xl font-serif font-black">Restricted HQ Area</h1></div>} />
+          <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen flex flex-col items-center justify-center"><h1 className="text-2xl font-serif font-black">Restricted Area</h1></div>} />
         </Routes>
 
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsProfileOpen(!isProfileOpen)} />
 
         <footer className="bg-hotel-primary text-white pt-16 pb-12 w-full text-center">
-          <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.5em]">© 2024 Shotabdi Residential • HQ Command Center</p>
+          <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.5em]">© 2024 Shotabdi Residential • All Rights Reserved</p>
         </footer>
       </main>
     </div>

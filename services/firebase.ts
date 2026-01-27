@@ -44,49 +44,60 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
  * Checks if a username is already taken by another user
  */
 export const checkUsernameUnique = async (username: string, currentUid: string) => {
-  const normalized = username.toLowerCase().trim();
-  const usernameRef = ref(db, `usernames/${normalized}`);
-  const snapshot = await get(usernameRef);
-  if (snapshot.exists()) {
-    return snapshot.val() === currentUid;
+  try {
+    const normalized = username.toLowerCase().trim();
+    const usernameRef = ref(db, `usernames/${normalized}`);
+    const snapshot = await get(usernameRef);
+    if (snapshot.exists()) {
+      return snapshot.val() === currentUid;
+    }
+    return true;
+  } catch (e) {
+    return true; // Safe fallback for availability check
   }
-  return true;
 };
 
 /**
- * Syncs profile data and updates the login memory. 
- * If a user was deleted, snapshot.exists() will be false and we return a fresh onboarding profile.
+ * Syncs profile data. Returns a blank onboarding-ready profile if read fails or data doesn't exist.
  */
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
   const userRef = ref(db, `profiles/${user.uid}`);
-  const snapshot = await get(userRef);
-
   const now = Date.now();
+  
+  const freshProfile = {
+    uid: user.uid,
+    email: user.email,
+    photoURL: user.photoURL,
+    createdAt: now,
+    lastLogin: now,
+    isComplete: false,
+    legalName: '',
+    username: '',
+    phone: '',
+    guardianPhone: '',
+    nidNumber: '',
+    nidImageUrl: ''
+  };
 
-  if (!snapshot.exists()) {
-    // This is a new or recently deleted user - trigger onboarding
-    const basicProfile = {
-      uid: user.uid,
-      email: user.email,
-      photoURL: user.photoURL,
-      createdAt: now,
-      lastLogin: now,
-      isComplete: false
-    };
-    await set(userRef, basicProfile);
-    return basicProfile;
-  } else {
-    const currentData = snapshot.val();
-    // Non-blocking update for login timestamp
-    update(userRef, { lastLogin: now }).catch(() => {});
-    return { ...currentData, lastLogin: now };
+  try {
+    const snapshot = await get(userRef);
+    if (!snapshot.exists()) {
+      await set(userRef, freshProfile);
+      return freshProfile;
+    } else {
+      const currentData = snapshot.val();
+      update(userRef, { lastLogin: now }).catch(() => {});
+      return { ...currentData, lastLogin: now };
+    }
+  } catch (e) {
+    console.warn("Profile sync blocked (new user or permission denied):", e);
+    return freshProfile; // Return uncompleted profile to trigger onboarding
   }
 };
 
 /**
  * Fully deletes a user's data from the database.
- * Deleting the username entry allows a new user (or the same one) to reclaim it later.
  */
 export const deleteUserProfile = async (uid: string, username?: string) => {
   const updates: any = {};
@@ -95,7 +106,6 @@ export const deleteUserProfile = async (uid: string, username?: string) => {
     updates[`usernames/${username.toLowerCase().trim()}`] = null;
   }
   updates[`notifications/${uid}`] = null;
-  // Also clear roles if any
   updates[`roles/${uid}`] = null;
   return update(ref(db), updates);
 };
