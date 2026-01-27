@@ -30,11 +30,27 @@ const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
 const ADMIN_SECRET = "kahar02";
 
-const ScrollToTop = () => {
+// SEO & Scroll Helper
+const RouteMetadata = () => {
   const { pathname } = useLocation();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Dynamic Title Management for Google Sitelinks
+    const titles: Record<string, string> = {
+      '/': 'Hotel Shotabdi Residential | Premium Stay in Sylhet',
+      '/rooms': 'Our Luxury Rooms & Suites | Hotel Shotabdi',
+      '/restaurants': 'Nearby Dining & Restaurants | Hotel Shotabdi',
+      '/guide': 'Sylhet Tourist Guide & Landmarks | Hotel Shotabdi',
+      '/privacypolicy': 'Privacy Policy | Hotel Shotabdi',
+      '/termsofservice': 'Terms of Service | Hotel Shotabdi',
+      '/admin': 'Admin Dashboard | Hotel Shotabdi'
+    };
+    
+    document.title = titles[pathname] || 'Hotel Shotabdi Residential';
   }, [pathname]);
+  
   return null;
 };
 
@@ -499,7 +515,7 @@ const AppContent = () => {
 
 const App: React.FC = () => (
   <BrowserRouter>
-    <ScrollToTop />
+    <RouteMetadata />
     <AppContent />
   </BrowserRouter>
 );
