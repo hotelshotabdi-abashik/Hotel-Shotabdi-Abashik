@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>Shotabdi Residential</title>
   
-  <!-- Google Site Verification for Domain Ownership -->
+  <!-- Google Site Verification -->
   <meta name="google-site-verification" content="3dfs89_ySAWxAtSeQeGHNu87dl73jjpFvsMrg4fxd9M" />
   
   <link rel="icon" type="image/png" href="https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png">
@@ -13,41 +13,24 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: none;  /* Firefox */
-    }
-    img {
-      object-fit: cover;
-      width: 100%;
-      height: 100%;
-    }
+    /* Utility Styles */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    img { object-fit: cover; width: 100%; height: 100%; }
+    
     @keyframes fade-in {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in {
-      animation: fade-in 0.5s ease-out forwards;
-    }
+    .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
     
-    /* Custom One-Shot Spin Animation */
     @keyframes spin-once {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    .animate-spin-once {
-      animation: spin-once 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    .animate-spin-once { animation: spin-once 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
-    body {
-      overflow-x: hidden;
-      width: 100vw;
-    }
+    body { overflow-x: hidden; width: 100vw; }
 
     .glass-badge {
       background: rgba(255, 255, 255, 0.2);
@@ -57,7 +40,8 @@
     }
   </style>
   <script>
-    tailwind.config = {
+    // Inline Tailwind Configuration
+    window.tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
@@ -95,7 +79,7 @@
 </head>
 <body class="bg-white text-hotel-text">
   <div id="root"></div>
-  <!-- Standard Vite entry point -->
+  <!-- Entry point for Vite build -->
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
