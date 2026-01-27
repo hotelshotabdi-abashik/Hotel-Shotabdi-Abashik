@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertTriangle, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History } from 'lucide-react';
-import { db, ref, set, get, checkUsernameUnique, serverTimestamp } from '../services/firebase';
+import { X, Save, AlertTriangle, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History, Trash2, UserX } from 'lucide-react';
+import { db, ref, set, get, checkUsernameUnique, serverTimestamp, deleteUserProfile, signOut, auth } from '../services/firebase';
 import { UserProfile } from '../types';
 
 interface Props {
@@ -17,6 +17,8 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
   const [pendingDays, setPendingDays] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [nidPreview, setNidPreview] = useState(profile.nidImageUrl);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   const [form, setForm] = useState({ 
     legalName: profile.legalName,
@@ -83,6 +85,19 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteSelf = async () => {
+    setDeleting(true);
+    try {
+      await deleteUserProfile(profile.uid, profile.username);
+      await signOut(auth);
+      window.location.reload();
+    } catch (err) {
+      setError("Failed to delete profile. Try again.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -231,6 +246,16 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
               </div>
             </div>
           </form>
+
+          {/* Dangerous Zone */}
+          <div className="pt-10 border-t border-gray-50">
+             <button 
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors mx-auto"
+             >
+                <Trash2 size={14} /> Clear My Identity Data
+             </button>
+          </div>
         </div>
 
         <div className="p-8 md:p-10 bg-gray-50/50 border-t border-gray-100/50">
@@ -256,6 +281,36 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
           )}
         </div>
       </div>
+
+      {/* Internal Delete Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+           <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center shadow-2xl animate-fade-in">
+              <div className="w-16 h-16 bg-red-50 text-hotel-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <UserX size={32} />
+              </div>
+              <h3 className="text-2xl font-serif font-black mb-2">Forget Me?</h3>
+              <p className="text-xs text-gray-500 leading-relaxed mb-8">
+                This action is irreversible. All your profile information, NID documents, and username claim will be wiped from our secure servers.
+              </p>
+              <div className="space-y-3">
+                 <button 
+                    disabled={deleting}
+                    onClick={handleDeleteSelf}
+                    className="w-full bg-hotel-primary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 flex items-center justify-center gap-2"
+                 >
+                    {deleting ? <Loader2 className="animate-spin" size={16} /> : "Yes, Purge My Data"}
+                 </button>
+                 <button 
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="w-full py-4 text-[10px] font-black uppercase text-gray-400"
+                 >
+                    Cancel
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
