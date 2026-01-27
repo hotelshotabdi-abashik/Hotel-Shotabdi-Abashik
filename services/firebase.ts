@@ -55,6 +55,7 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
 
 /**
  * Syncs profile data and updates the login memory. 
+ * If a user was deleted, snapshot.exists() will be false and we return a fresh onboarding profile.
  */
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
@@ -64,6 +65,7 @@ export const syncUserProfile = async (user: any) => {
   const now = Date.now();
 
   if (!snapshot.exists()) {
+    // This is a new or recently deleted user - trigger onboarding
     const basicProfile = {
       uid: user.uid,
       email: user.email,
@@ -76,13 +78,15 @@ export const syncUserProfile = async (user: any) => {
     return basicProfile;
   } else {
     const currentData = snapshot.val();
-    update(userRef, { lastLogin: now }).catch(console.error);
+    // Non-blocking update for login timestamp
+    update(userRef, { lastLogin: now }).catch(() => {});
     return { ...currentData, lastLogin: now };
   }
 };
 
 /**
- * Fully deletes a user's data from the database
+ * Fully deletes a user's data from the database.
+ * Deleting the username entry allows a new user (or the same one) to reclaim it later.
  */
 export const deleteUserProfile = async (uid: string, username?: string) => {
   const updates: any = {};
@@ -91,6 +95,8 @@ export const deleteUserProfile = async (uid: string, username?: string) => {
     updates[`usernames/${username.toLowerCase().trim()}`] = null;
   }
   updates[`notifications/${uid}`] = null;
+  // Also clear roles if any
+  updates[`roles/${uid}`] = null;
   return update(ref(db), updates);
 };
 

@@ -31,7 +31,6 @@ import { UserProfile, AppNotification } from './types';
 import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Settings, UserCheck, Bell, CheckCircle2 } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
-const GOOGLE_CLIENT_ID = "682102275681-le7slsv9pnljvq34ht8llnbrkn5mumpg.apps.googleusercontent.com";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -198,38 +197,47 @@ const AppContent = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const loadProfile = useCallback(async (u: any) => {
-    if (!u) {
-      setProfile(null);
-      setIsAdmin(false);
-      setIsOwner(false);
-      return;
-    }
-    const data = await syncUserProfile(u);
-    setProfile(data);
-    if (u.email === OWNER_EMAIL) {
-      setIsOwner(true);
-      setIsAdmin(true);
-    } else {
-      const roleRef = ref(db, `roles/${u.uid}`);
-      const roleSnap = await get(roleRef);
-      if (roleSnap.exists()) {
-        const role = roleSnap.val();
-        setIsAdmin(role === 'admin' || role === 'owner');
+    if (!u) return;
+    try {
+      const data = await syncUserProfile(u);
+      setProfile(data);
+      if (u.email === OWNER_EMAIL) {
+        setIsOwner(true);
+        setIsAdmin(true);
+      } else {
+        const roleRef = ref(db, `roles/${u.uid}`);
+        const roleSnap = await get(roleRef);
+        if (roleSnap.exists()) {
+          const role = roleSnap.val();
+          setIsAdmin(role === 'admin' || role === 'owner');
+        } else {
+          setIsAdmin(false);
+          setIsOwner(false);
+        }
       }
+    } catch (error) {
+      console.error("Profile Load Error:", error);
     }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      // Step 1: Immediately set the user object to update the UI base
       setUser(currentUser);
+      
       if (currentUser) {
-        await loadProfile(currentUser);
+        // Step 2: Load additional profile/role data asynchronously
+        // We don't 'await' here to prevent blocking isAuthLoading(false)
+        loadProfile(currentUser).finally(() => {
+          setIsAuthLoading(false);
+        });
       } else {
+        // Clear all state if logged out
+        setProfile(null);
         setIsAdmin(false);
         setIsOwner(false);
-        setProfile(null);
+        setIsAuthLoading(false);
       }
-      setIsAuthLoading(false);
     });
     return () => unsubscribe();
   }, [loadProfile]);
@@ -237,13 +245,19 @@ const AppContent = () => {
   const handleSignOut = async () => {
     setIsAuthLoading(true);
     await signOut(auth);
+    // onAuthStateChanged will handle the rest
   };
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <Sidebar isAdmin={isAdmin || isOwner} />
-      {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
-      {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
+      {/* Onboarding shows if profile exists but isn't complete (e.g. after deletion) */}
+      {user && profile && !profile.isComplete && !isAuthLoading && (
+        <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
+      )}
+      {user && profile && isManageAccountOpen && (
+        <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />
+      )}
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full">
         <Header 
