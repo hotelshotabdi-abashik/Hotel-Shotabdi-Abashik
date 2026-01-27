@@ -17,8 +17,23 @@ export interface TouristSpot {
   uri: string;
 }
 
-// Added ChatMessage interface to fix: Module '"../types"' has no exported member 'ChatMessage'.
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
+}
+
+export interface UserProfile {
+  uid: string;
+  legalName: string;
+  username: string;
+  email: string;
+  phone: string;
+  guardianPhone: string;
+  nidNumber: string;
+  nidImageUrl: string;
+  photoURL: string;
+  bio: string;
+  createdAt: number;
+  lastUpdated: number;
+  isComplete: boolean;
 }

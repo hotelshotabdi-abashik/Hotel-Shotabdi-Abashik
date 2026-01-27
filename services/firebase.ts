@@ -13,7 +13,7 @@ import {
   ref, 
   set, 
   get, 
-  child,
+  update,
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -35,29 +35,39 @@ export const db = getDatabase(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Function to handle profile synchronization in Realtime Database
+/**
+ * Checks if a username is already taken by another user
+ */
+export const checkUsernameUnique = async (username: string, currentUid: string) => {
+  const normalized = username.toLowerCase().trim();
+  const usernameRef = ref(db, `usernames/${normalized}`);
+  const snapshot = await get(usernameRef);
+  if (snapshot.exists()) {
+    return snapshot.val() === currentUid;
+  }
+  return true;
+};
+
+/**
+ * Syncs basic profile data and returns the full profile status
+ */
 export const syncUserProfile = async (user: any) => {
-  if (!user) return;
+  if (!user) return null;
   const userRef = ref(db, `profiles/${user.uid}`);
   const snapshot = await get(userRef);
 
   if (!snapshot.exists()) {
-    // First time login - create social profile
-    await set(userRef, {
+    const basicProfile = {
       uid: user.uid,
-      displayName: user.displayName,
       email: user.email,
       photoURL: user.photoURL,
-      username: user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, ''),
-      bio: "Checking in at Shotabdi Residential!",
       createdAt: serverTimestamp(),
-      lastLogin: serverTimestamp()
-    });
-  } else {
-    // Returning user - update last login
-    const lastLoginRef = ref(db, `profiles/${user.uid}/lastLogin`);
-    await set(lastLoginRef, serverTimestamp());
+      isComplete: false
+    };
+    await set(userRef, basicProfile);
+    return basicProfile;
   }
+  return snapshot.val();
 };
 
 export { 
@@ -68,5 +78,7 @@ export {
   GoogleAuthProvider,
   ref,
   get,
-  set
+  set,
+  update,
+  serverTimestamp
 };

@@ -7,6 +7,8 @@ import RoomGrid from './components/RoomGrid';
 import TouristGuide from './components/TouristGuide';
 import NearbyRestaurants from './components/NearbyRestaurants';
 import AuthModal from './components/AuthModal';
+import ProfileOnboarding from './components/ProfileOnboarding';
+import ManageAccount from './components/ManageAccount';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -21,7 +23,8 @@ import {
   ref,
   get
 } from './services/firebase';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon } from 'lucide-react';
+import { UserProfile } from './types';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, Settings } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const GOOGLE_CLIENT_ID = "682102275681-le7slsv9pnljvq34ht8llnbrkn5mumpg.apps.googleusercontent.com";
@@ -34,11 +37,13 @@ const ScrollToTop = () => {
   return null;
 };
 
-const Header = ({ user, isAdmin, isOwner, openAuth, handleSignOut, isAuthLoading, isProfileOpen, setIsProfileOpen }: { 
+const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, handleSignOut, isAuthLoading, isProfileOpen, setIsProfileOpen }: { 
   user: any, 
+  profile: UserProfile | null,
   isAdmin: boolean, 
   isOwner: boolean,
   openAuth: () => void, 
+  openManageAccount: () => void,
   handleSignOut: () => void,
   isAuthLoading: boolean,
   isProfileOpen: boolean,
@@ -110,10 +115,10 @@ const Header = ({ user, isAdmin, isOwner, openAuth, handleSignOut, isAuthLoading
               >
                 <div className="text-right flex flex-col justify-center hidden sm:flex">
                   <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
-                    {user.displayName || 'Guest User'}
+                    {profile?.legalName || user.displayName || 'Guest'}
                   </p>
                   <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isOwner ? 'text-purple-600' : isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                    {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : 'Verified Member'}
+                    {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : `@${profile?.username || 'user'}`}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
@@ -147,6 +152,16 @@ const Header = ({ user, isAdmin, isOwner, openAuth, handleSignOut, isAuthLoading
                    <ShieldCheck size={12} className="text-green-500" />
                 </div>
               </div>
+
+              <button 
+                onClick={() => {
+                  openManageAccount();
+                  setIsProfileOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
+              >
+                <Settings size={14} /> Manage Account
+              </button>
               
               {(isAdmin || isOwner) && (
                 <Link 
@@ -181,12 +196,20 @@ const Header = ({ user, isAdmin, isOwner, openAuth, handleSignOut, isAuthLoading
 
 const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
+
+  const loadProfile = async (u: any) => {
+    const data = await syncUserProfile(u);
+    setProfile(data);
+    if (u) await fetchUserRole(u.uid);
+  };
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -215,7 +238,7 @@ const AppContent = () => {
             try {
               const credential = GoogleAuthProvider.credential(response.credential);
               const result = await signInWithCredential(auth, credential);
-              await syncUserProfile(result.user);
+              await loadProfile(result.user);
               setUser(result.user);
             } catch (err) {
               console.error("One Tap Authentication Failed:", err);
@@ -237,8 +260,7 @@ const AppContent = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        await syncUserProfile(currentUser);
-        await fetchUserRole(currentUser.uid);
+        await loadProfile(currentUser);
       }
       setUser(currentUser);
       setIsAuthLoading(false);
@@ -246,6 +268,7 @@ const AppContent = () => {
       if (!currentUser) {
         setIsAdmin(false);
         setIsOwner(false);
+        setProfile(null);
         if ((window as any).google) {
           initializeGoogleOneTap();
         } else {
@@ -277,12 +300,24 @@ const AppContent = () => {
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <Sidebar isAdmin={isAdmin || isOwner} />
 
+      {/* Mandatory Onboarding for first-time users */}
+      {user && profile && !profile.isComplete && (
+        <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
+      )}
+
+      {/* Profile Management Modal */}
+      {user && profile && isManageAccountOpen && (
+        <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />
+      )}
+
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full overflow-x-hidden">
         <Header 
           user={user} 
+          profile={profile}
           isAdmin={isAdmin} 
           isOwner={isOwner}
           openAuth={openAuth} 
+          openManageAccount={() => setIsManageAccountOpen(true)}
           handleSignOut={handleSignOut} 
           isAuthLoading={isAuthLoading}
           isProfileOpen={isProfileOpen}
@@ -322,13 +357,11 @@ const AppContent = () => {
           isOpen={isAuthModalOpen} 
           onClose={() => setIsAuthModalOpen(false)} 
           onSuccess={async (u) => {
-            await syncUserProfile(u);
-            await fetchUserRole(u.uid);
+            await loadProfile(u);
             setUser(u);
           }}
         />
 
-        {/* Floating Map Pin for Mobile */}
         <a 
           href="https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+Kumargaon,+Bus+Stand,+Sylhet+3100"
           target="_blank"
