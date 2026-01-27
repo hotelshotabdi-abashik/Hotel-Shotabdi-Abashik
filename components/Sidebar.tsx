@@ -4,37 +4,52 @@ import { Phone, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 
+const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
+
 const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
-      {/* Map Section - Full color as requested */}
-      <div className="relative group h-40 w-full overflow-hidden border-b border-gray-50">
+      {/* Brand Section */}
+      <div className="p-8 pb-4">
+        <Link to="/" className="flex items-center gap-4 group">
+          <div className="w-12 h-12 bg-hotel-primary rounded-2xl flex items-center justify-center p-2.5 shadow-lg shadow-red-100 group-hover:scale-110 transition-transform">
+            <img src={LOGO_URL} className="w-full h-full object-contain brightness-0 invert" alt="Logo" />
+          </div>
+          <div>
+            <h1 className="text-xl font-serif font-black text-gray-900 leading-none">Shotabdi</h1>
+            <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.3em] mt-1.5">Residential</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Map Section */}
+      <div className="relative group h-32 mx-6 mt-6 rounded-[2rem] overflow-hidden border border-gray-50">
         <a 
           href={mapUrl} 
           target="_blank" 
           rel="noopener noreferrer"
           className="block w-full h-full relative"
         >
-          <div className="absolute inset-0 w-full h-[120%] -top-[10%] left-0">
+          <div className="absolute inset-0 w-full h-[140%] -top-[20%]">
             <iframe
               title="Hotel Location"
               width="100%"
               height="100%"
               frameBorder="0"
               scrolling="no"
-              src="https://maps.google.com/maps?q=Hotel%20Shotabdi%20Residential,%20WR6H+Q2P,%20Sylhet%203100&t=&z=16&ie=UTF8&iwloc=addr&output=embed"
-              className="pointer-events-none opacity-80 group-hover:opacity-100 transition-all duration-700"
+              src="https://maps.google.com/maps?q=Hotel%20Shotabdi%20Residential,%20WR6H+Q2P,%20Sylhet%203100&t=&z=15&ie=UTF8&iwloc=addr&output=embed"
+              className="pointer-events-none opacity-60 group-hover:opacity-100 transition-all duration-700"
             ></iframe>
           </div>
-          <div className="absolute inset-0 bg-hotel-primary/0 group-hover:bg-hotel-primary/5 transition-colors"></div>
+          <div className="absolute inset-0 bg-hotel-primary/5 group-hover:bg-transparent transition-colors"></div>
         </a>
       </div>
 
-      <div className="p-6 flex-1 overflow-y-auto no-scrollbar pt-10">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 px-6">Navigation</p>
+      <div className="p-6 flex-1 overflow-y-auto no-scrollbar pt-8">
+        <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-6 px-4">Sanctuary Access</p>
         <nav className="space-y-2 mb-8">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
@@ -42,16 +57,16 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
               <Link
                 key={item.id}
                 to={item.path}
-                className={`w-full flex items-center gap-4 px-6 py-3.5 rounded-2xl transition-all duration-300 ${
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 ${
                   isActive 
-                    ? 'bg-hotel-primary text-white shadow-xl shadow-red-100' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-hotel-primary'
+                    ? 'bg-hotel-primary text-white shadow-xl shadow-red-100 translate-x-1' 
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-hotel-primary'
                 }`}
               >
                 <span className={isActive ? 'text-white' : 'text-hotel-primary'}>
                   {item.icon}
                 </span>
-                <span className={`text-[10px] tracking-[0.1em] font-black uppercase ${isActive ? 'text-white' : ''}`}>
+                <span className={`text-[10px] tracking-[0.15em] font-black uppercase ${isActive ? 'text-white' : ''}`}>
                   {item.label}
                 </span>
               </Link>
@@ -69,8 +84,8 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
                 }`}
               >
                 <LayoutDashboard size={20} />
-                <span className="text-[11px] tracking-[0.1em] font-black uppercase">
-                  Admin Dashboard
+                <span className="text-[10px] tracking-[0.15em] font-black uppercase">
+                  Control Center
                 </span>
               </Link>
             </div>
@@ -78,15 +93,15 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
         </nav>
       </div>
 
-      <div className="p-6 pt-0 space-y-4">
-        <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+      <div className="p-6 pt-0">
+        <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 group hover:border-hotel-primary/20 transition-all">
           <div className="flex items-center gap-3 mb-2">
             <Phone size={14} className="text-hotel-primary" />
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helpline</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Quick Helpline</span>
           </div>
-          <p className="text-[12px] text-hotel-primary font-black mb-4 tracking-tight">+8801717425702</p>
-          <a href="tel:+8801717425702" className="block w-full bg-white text-hotel-primary py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center">
-            Quick Reach
+          <p className="text-[12px] text-gray-900 font-black mb-4 tracking-tight">+8801717425702</p>
+          <a href="tel:+8801717425702" className="block w-full bg-white text-hotel-primary py-3.5 text-[9px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center">
+            Call Reception
           </a>
         </div>
       </div>
