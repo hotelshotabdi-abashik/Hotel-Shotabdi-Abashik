@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Clock } from 'lucide-react';
+import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink } from 'lucide-react';
 import { Attraction } from '../types';
 
 interface Props {
@@ -11,21 +11,21 @@ interface Props {
 }
 
 const DEFAULT_ATTRACTIONS: Attraction[] = [
-  { id: 1, name: "Keane Bridge", subtitle: "Historic Landmark", distance: "0.8 km", description: "The 'Gateway to Sylhet'. An iconic 1936 steel structure offering panoramic river views.", image: "https://images.unsplash.com/photo-1623057000739-30ac5bb06227?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 2, name: "Shah Jalal Dargah", subtitle: "Spiritual Center", distance: "1.5 km", description: "The most sacred spiritual site in the region, housing the tomb of the famous saint.", image: "https://images.unsplash.com/photo-1596701062351-be5f6a210d7d?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 3, name: "Malnicherra Tea Estate", subtitle: "Nature & Heritage", distance: "3.5 km", description: "The oldest tea garden in South Asia. Rolling hills of green as far as the eye can see.", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 4, name: "Ratargul Swamp Forest", subtitle: "Natural Wonder", distance: "26 km", description: "Bangladesh's only freshwater swamp forest. A mystical boat journey through submerged trees.", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 5, name: "Bisnakandi", subtitle: "Stone & Stream", distance: "42 km", description: "Where the Meghalaya mountains meet the clear blue streams. A paradise for nature lovers.", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 6, name: "Jaflong", subtitle: "Stone Collection", distance: "56 km", description: "Famous for its stone collection from the riverbed and the stunning Zero Point border.", image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 7, name: "Surma River Cruise", subtitle: "Waterway", distance: "0.5 km", description: "Enjoy a relaxing boat ride on the Surma River right in the heart of the city.", image: "https://images.unsplash.com/photo-1544735032-6a71dd6414fe?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 8, name: "Shah Paran Dargah", subtitle: "Spiritual", distance: "8.0 km", description: "A major pilgrimage site located on a hilltop on the outskirts of Sylhet city.", image: "https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 9, name: "Adventure World", subtitle: "Theme Park", distance: "5.5 km", description: "A popular amusement park for families and kids near the airport road.", image: "https://images.unsplash.com/photo-1502139214982-d0ad755818d8?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 10, name: "Osmani Museum", subtitle: "Historical", distance: "1.2 km", description: "Dedicated to General M.A.G. Osmani, the commander-in-chief of Bangladesh's 1971 war.", image: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 11, name: "Lalakhal", subtitle: "Blue Water", distance: "38 km", description: "Known for its turquoise blue water and the scenic boat rides leading to the mountains.", image: "https://images.unsplash.com/photo-1439405326854-014607f694d7?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 12, name: "Panthumai Waterfall", subtitle: "Waterfall", distance: "45 km", description: "One of the most beautiful waterfalls near the border, surrounded by lush forest.", image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 13, name: "Lakkatura Tea Garden", subtitle: "Nature", distance: "4.2 km", description: "A peaceful retreat very close to the stadium, perfect for a morning walk.", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 14, name: "Sreemangal", subtitle: "Tea Capital", distance: "95 km", description: "The tea capital of Bangladesh. Home to the Lawachara National Park.", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80", mapUrl: "#" },
-  { id: 15, name: "Ali Amjad Clock Tower", subtitle: "Historic", distance: "0.8 km", description: "A century-old clock tower located next to Keane Bridge on the river bank.", image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&q=80", mapUrl: "#" }
+  { id: 1, name: "Keane Bridge", subtitle: "Historic Landmark", distance: "0.8 km", description: "The 'Gateway to Sylhet'. An iconic 1936 steel structure offering panoramic river views.", image: "https://images.unsplash.com/photo-1623057000739-30ac5bb06227?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Keane+Bridge+Sylhet" },
+  { id: 2, name: "Shah Jalal Dargah", subtitle: "Spiritual Center", distance: "1.5 km", description: "The most sacred spiritual site in the region, housing the tomb of the famous saint.", image: "https://images.unsplash.com/photo-1596701062351-be5f6a210d7d?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Shah+Jalal+Dargah+Sylhet" },
+  { id: 3, name: "Malnicherra Tea Estate", subtitle: "Nature & Heritage", distance: "3.5 km", description: "The oldest tea garden in South Asia. Rolling hills of green as far as the eye can see.", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Malnicherra+Tea+Estate" },
+  { id: 4, name: "Ratargul Swamp Forest", subtitle: "Natural Wonder", distance: "26 km", description: "Bangladesh's only freshwater swamp forest. A mystical boat journey through submerged trees.", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Ratargul+Swamp+Forest" },
+  { id: 5, name: "Bisnakandi", subtitle: "Stone & Stream", distance: "42 km", description: "Where the Meghalaya mountains meet the clear blue streams. A paradise for nature lovers.", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Bisnakandi+Sylhet" },
+  { id: 6, name: "Jaflong", subtitle: "Stone Collection", distance: "56 km", description: "Famous for its stone collection from the riverbed and the stunning Zero Point border.", image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Jaflong+Sylhet" },
+  { id: 7, name: "Surma River Cruise", subtitle: "Waterway", distance: "0.5 km", description: "Enjoy a relaxing boat ride on the Surma River right in the heart of the city.", image: "https://images.unsplash.com/photo-1544735032-6a71dd6414fe?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Surma+River+Sylhet" },
+  { id: 8, name: "Shah Paran Dargah", subtitle: "Spiritual", distance: "8.0 km", description: "A major pilgrimage site located on a hilltop on the outskirts of Sylhet city.", image: "https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Shah+Paran+Dargah+Sylhet" },
+  { id: 9, name: "Adventure World", subtitle: "Theme Park", distance: "5.5 km", description: "A popular amusement park for families and kids near the airport road.", image: "https://images.unsplash.com/photo-1502139214982-d0ad755818d8?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Adventure+World+Sylhet" },
+  { id: 10, name: "Osmani Museum", subtitle: "Historical", distance: "1.2 km", description: "Dedicated to General M.A.G. Osmani, the commander-in-chief of Bangladesh's 1971 war.", image: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Osmani+Museum+Sylhet" },
+  { id: 11, name: "Lalakhal", subtitle: "Blue Water", distance: "38 km", description: "Known for its turquoise blue water and the scenic boat rides leading to the mountains.", image: "https://images.unsplash.com/photo-1439405326854-014607f694d7?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Lalakhal+Sylhet" },
+  { id: 12, name: "Panthumai Waterfall", subtitle: "Waterfall", distance: "45 km", description: "One of the most beautiful waterfalls near the border, surrounded by lush forest.", image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Panthumai+Waterfall" },
+  { id: 13, name: "Lakkatura Tea Garden", subtitle: "Nature", distance: "4.2 km", description: "A peaceful retreat very close to the stadium, perfect for a morning walk.", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Lakkatura+Tea+Garden" },
+  { id: 14, name: "Sreemangal", subtitle: "Tea Capital", distance: "95 km", description: "The tea capital of Bangladesh. Home to the Lawachara National Park.", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Sreemangal" },
+  { id: 15, name: "Ali Amjad Clock Tower", subtitle: "Historic", distance: "0.8 km", description: "A century-old clock tower located next to Keane Bridge on the river bank.", image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&q=80", mapUrl: "https://maps.google.com/?q=Ali+Amjad+Clock+Tower+Sylhet" }
 ];
 
 const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdate, onImageUpload }) => {
@@ -73,14 +73,14 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
       distance: "5.0 km",
       description: "A short but engaging description of this local treasure.",
       image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80",
-      mapUrl: "#"
+      mapUrl: "https://maps.google.com"
     };
     onUpdate?.([newItem, ...displayList]);
   };
 
   return (
     <section className="bg-gray-50/50 min-h-screen w-full">
-      {/* Search & Header Header */}
+      {/* Search & Header */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-16 md:pt-24 pb-12">
         <div className="text-center flex flex-col items-center">
             <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6 shadow-sm">
@@ -177,28 +177,41 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                 
                 {isEditMode ? (
                   <textarea 
-                    className="text-[11px] text-gray-500 bg-gray-50 rounded-xl p-3 h-28 w-full outline-none mt-2 leading-relaxed"
+                    className="text-[11px] text-gray-500 bg-gray-50 rounded-xl p-3 h-24 w-full outline-none mt-2 leading-relaxed"
                     value={spot.description}
                     onChange={(e) => updateSpot(spot.id, 'description', e.target.value)}
                   />
                 ) : (
-                  <p className="text-[11px] text-gray-500 leading-relaxed mb-8 flex-grow line-clamp-3">
+                  <p className="text-[11px] text-gray-500 leading-relaxed mb-6 flex-grow line-clamp-3">
                     {spot.description}
                   </p>
                 )}
 
-                {!isEditMode && (
-                  <div className="mt-auto pt-6 border-t border-gray-50">
+                <div className="mt-auto pt-6 border-t border-gray-50">
+                  {isEditMode ? (
+                    <div className="flex flex-col gap-2">
+                       <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                       <div className="relative">
+                         <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
+                         <input 
+                            className="w-full bg-gray-50 rounded-xl py-2 pl-8 pr-4 text-[10px] font-medium outline-none border border-gray-100 focus:border-blue-600"
+                            placeholder="https://maps.google.com/..."
+                            value={spot.mapUrl}
+                            onChange={(e) => updateSpot(spot.id, 'mapUrl', e.target.value)}
+                         />
+                       </div>
+                    </div>
+                  ) : (
                     <a 
                       href={spot.mapUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-2 text-gray-900 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-colors"
+                      className="inline-flex items-center gap-2 text-gray-900 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-colors group/btn"
                     >
-                      Plan Your Trip <ArrowRight size={14} className="text-blue-600" />
+                      View Map <ExternalLink size={14} className="text-blue-600 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                     </a>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))}
