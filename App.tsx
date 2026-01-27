@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -16,7 +17,7 @@ import {
   signInWithCredential, 
   GoogleAuthProvider 
 } from './services/firebase';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon } from 'lucide-react';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, AlertCircle } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
@@ -66,7 +67,6 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
       }`}
     >
       <div className="flex items-center gap-1.5 md:gap-4 overflow-hidden">
-        {/* Header Logo - Non-clickable (no navigation) with 360-degree rotation */}
         <div 
           onClick={handleLogoClick}
           onAnimationEnd={() => setIsRotating(false)}
@@ -77,7 +77,6 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
           <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain pointer-events-none" />
         </div>
         
-        {/* Brand Title - Separate from logo, still links to home */}
         <Link to="/" className="flex flex-col overflow-hidden">
           <h1 className="font-serif font-black tracking-tighter md:tracking-tight leading-tight flex items-baseline gap-1 whitespace-nowrap">
             <span className="text-hotel-primary text-[13px] md:text-[22px]">Hotel</span>
@@ -108,9 +107,14 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
                   <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
                     {user.displayName || 'Account'}
                   </p>
-                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                    {isAdmin ? 'Admin Access' : 'Registered Member'}
-                  </p>
+                  <div className="flex items-center justify-end gap-1.5">
+                    {!user.emailVerified && (
+                      <span className="text-[7px] font-black text-hotel-primary bg-red-50 px-1.5 py-0.5 rounded-full animate-pulse">Unverified</span>
+                    )}
+                    <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                      {isAdmin ? 'Admin Access' : 'Registered Member'}
+                    </p>
+                  </div>
                 </div>
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
                   <img 
@@ -146,7 +150,13 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
             <div className="absolute top-[80%] lg:top-full right-4 lg:right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden animate-fade-in">
               <div className="px-4 py-4 border-b border-gray-50 mb-1 bg-gray-50/30">
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Session Identity</p>
-                <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
+                <div className="flex items-center gap-2">
+                   <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
+                   {user.emailVerified ? <ShieldCheck size={12} className="text-green-500" /> : <AlertCircle size={12} className="text-hotel-primary" />}
+                </div>
+                {!user.emailVerified && (
+                  <p className="text-[8px] text-hotel-primary font-black mt-2 uppercase tracking-widest">Verify Email to unlock booking</p>
+                )}
               </div>
               
               {isAdmin && (
