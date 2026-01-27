@@ -61,11 +61,11 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
 
   return (
     <header 
-      className={`fixed top-0 right-0 left-0 lg:left-72 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 flex justify-between items-center transition-all duration-500 ease-in-out ${
+      className={`fixed top-0 right-0 left-0 lg:left-72 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-3 md:px-10 py-3 flex justify-between items-center transition-all duration-500 ease-in-out ${
         showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
     >
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-1.5 md:gap-4 overflow-hidden">
         {/* Header Logo - Non-clickable (no navigation) with 360-degree rotation */}
         <div 
           onClick={handleLogoClick}
@@ -78,15 +78,15 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
         </div>
         
         {/* Brand Title - Separate from logo, still links to home */}
-        <Link to="/" className="flex flex-col">
-          <h1 className="font-serif font-black tracking-tight leading-tight flex items-baseline gap-1">
-            <span className="text-hotel-primary text-[14px] md:text-[22px]">Hotel</span>
-            <span className="text-hotel-primary text-[11px] md:text-[18px]">Shotabdi</span>
-            <span className="text-hotel-text text-[11px] md:text-[18px]">Residential</span>
+        <Link to="/" className="flex flex-col overflow-hidden">
+          <h1 className="font-serif font-black tracking-tighter md:tracking-tight leading-tight flex items-baseline gap-1 whitespace-nowrap">
+            <span className="text-hotel-primary text-[13px] md:text-[22px]">Hotel</span>
+            <span className="text-hotel-primary text-[10px] md:text-[18px]">Shotabdi</span>
+            <span className="text-hotel-text text-[10px] md:text-[18px]">Residential</span>
           </h1>
           <div className="flex items-center gap-2">
             <span className="w-6 h-[1px] bg-hotel-primary hidden md:block"></span>
-            <p className="text-[7px] md:text-[9px] text-gray-400 tracking-[0.4em] uppercase font-bold">Luxury Reimagined</p>
+            <p className="text-[6.5px] md:text-[9px] text-gray-400 tracking-[0.3em] md:tracking-[0.4em] uppercase font-bold truncate">Luxury Reimagined</p>
           </div>
         </Link>
       </div>
@@ -172,8 +172,8 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
           </>
         )}
 
-        <a href="tel:+8801717425702" className="bg-gray-50 p-2.5 rounded-xl text-hotel-primary border border-gray-100 shadow-sm active:scale-90 transition-all">
-          <Phone size={18} />
+        <a href="tel:+8801717425702" className="bg-gray-50 p-2 rounded-md md:rounded-xl text-hotel-primary border border-gray-100 shadow-sm active:scale-90 transition-all">
+          <Phone size={16} className="md:w-[18px] md:h-[18px]" />
         </a>
       </div>
     </header>
@@ -260,10 +260,10 @@ const AppContent = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text">
+    <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <Sidebar isAdmin={isAdmin} />
 
-      <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0">
+      <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full overflow-x-hidden">
         <Header 
           user={user} 
           isAdmin={isAdmin} 
@@ -273,32 +273,32 @@ const AppContent = () => {
           isProfileOpen={isProfileOpen}
           setIsProfileOpen={setIsProfileOpen}
         />
-        <div className="h-24"></div>
+        <div className="h-20 md:h-24"></div>
 
         <Routes>
           <Route path="/" element={
             <div className="bg-white">
               <Hero />
-              <div className="mt-20"><RoomGrid /></div>
-              <div className="mt-12"><NearbyRestaurants /></div>
-              <div className="bg-gray-50 py-24 text-center">
-                <h3 className="text-3xl font-serif font-black text-hotel-primary">Experience Excellence</h3>
-                <p className="text-gray-500 mt-4 max-w-lg mx-auto font-light">Join thousands of happy guests who have made Shotabdi Residential their home away from home in Sylhet.</p>
+              <div className="mt-10 md:mt-20"><RoomGrid /></div>
+              <div className="mt-8 md:mt-12"><NearbyRestaurants /></div>
+              <div className="bg-gray-50 py-16 md:py-24 text-center px-6">
+                <h3 className="text-2xl md:text-3xl font-serif font-black text-hotel-primary">Experience Excellence</h3>
+                <p className="text-gray-500 mt-4 max-w-lg mx-auto font-light text-sm md:text-base">Join thousands of happy guests who have made Shotabdi Residential their home away from home in Sylhet.</p>
               </div>
             </div>
           } />
-          <Route path="/rooms" element={<div className="py-20 bg-white"><RoomGrid /></div>} />
-          <Route path="/restaurants" element={<div className="py-20 bg-white min-h-screen"><NearbyRestaurants /></div>} />
-          <Route path="/guide" element={<div className="py-20 bg-white"><TouristGuide /></div>} />
+          <Route path="/rooms" element={<div className="py-10 md:py-20 bg-white"><RoomGrid /></div>} />
+          <Route path="/restaurants" element={<div className="py-10 md:py-20 bg-white min-h-screen"><NearbyRestaurants /></div>} />
+          <Route path="/guide" element={<div className="py-10 md:py-20 bg-white"><TouristGuide /></div>} />
           <Route path="/privacypolicy" element={<PrivacyPolicy />} />
           <Route path="/termsofservice" element={<TermsOfService />} />
           <Route path="/admin" element={
-            <div className="p-20 text-center min-h-screen flex flex-col items-center justify-center">
-              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-600 mb-6">
-                <LayoutDashboard size={40} />
+            <div className="p-10 md:p-20 text-center min-h-screen flex flex-col items-center justify-center">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-600 mb-6">
+                <LayoutDashboard size={32} />
               </div>
-              <h1 className="text-3xl font-serif font-black">Admin Management Panel</h1>
-              <p className="text-gray-500 mt-4 max-w-md mx-auto">Welcome back. This portal is strictly for authorized personnel of Shotabdi Residential.</p>
+              <h1 className="text-2xl md:text-3xl font-serif font-black">Admin Management Panel</h1>
+              <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm">Welcome back. This portal is strictly for authorized personnel of Shotabdi Residential.</p>
             </div>
           } />
         </Routes>
@@ -327,15 +327,14 @@ const AppContent = () => {
           toggleProfile={() => setIsProfileOpen(!isProfileOpen)}
         />
 
-        <footer className="bg-hotel-primary text-white pt-24 pb-12 relative overflow-hidden">
+        <footer className="bg-hotel-primary text-white pt-16 md:pt-24 pb-12 relative overflow-hidden w-full">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-          <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
               <Link to="/" className="flex items-center gap-4">
                 <div className="w-20 h-20 md:w-32 md:h-32 shrink-0 brightness-0 invert transition-transform duration-500 hover:scale-105">
                   <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain" />
                 </div>
-                {/* Hotel name text removed from footer as requested */}
               </Link>
               <p className="text-white/70 text-[11px] leading-relaxed max-w-xs font-medium">
                 Redefining the residential experience in Sylhet since 2010. We combine modern luxury with traditional warmth and unparalleled service.
@@ -373,7 +372,7 @@ const AppContent = () => {
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail size={18} className="text-white/60 shrink-0" />
-                  <span className="text-sm">hotelshotabdiabashik@gmail.com</span>
+                  <span className="text-sm break-all">hotelshotabdiabashik@gmail.com</span>
                 </li>
               </ul>
             </div>
@@ -406,7 +405,7 @@ const AppContent = () => {
               </ul>
             </div>
           </div>
-          <div className="border-t border-white/10 pt-12 flex flex-col items-center gap-4 text-center px-10">
+          <div className="border-t border-white/10 pt-12 flex flex-col items-center gap-4 text-center px-6">
             <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.5em]">
               © 2024 Shotabdi Residential • All Rights Reserved
             </p>

@@ -53,60 +53,60 @@ const NearbyRestaurants: React.FC = () => {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
+    <section className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full">
       <div className="mb-10 text-center">
         <span className="text-hotel-primary font-bold text-[10px] uppercase tracking-[0.3em] mb-2 block">Sylheti Gastronomy</span>
-        <h2 className="text-3xl font-serif text-gray-900 mb-4">Nearby Restaurants</h2>
+        <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-4 font-black">Nearby Restaurants</h2>
         <p className="text-gray-500 text-sm max-w-xl mx-auto font-light leading-relaxed">
           Discover the finest dining spots within minutes of your stay. From local favorites to international cuisines.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
         {RESTAURANTS_DATA.slice(0, visibleItems).map((res) => (
           <div 
             key={res.id} 
             className="bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col md:flex-row overflow-hidden hover:shadow-xl transition-all duration-300 h-auto md:h-44 group"
           >
-            <div className="w-full md:w-2/5 relative shrink-0 h-28 md:h-full">
+            <div className="w-full md:w-2/5 relative shrink-0 h-32 md:h-full">
               <img 
                 src={res.image} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 alt={res.name} 
               />
-              <div className="absolute top-1 left-1 md:top-3 md:left-3 bg-white/90 backdrop-blur shadow-sm px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md text-[7px] md:text-[10px] font-bold text-gray-800 whitespace-nowrap">
+              <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-white/90 backdrop-blur shadow-sm px-2 md:px-2.5 py-1 rounded-md text-[8px] md:text-[10px] font-bold text-gray-800 whitespace-nowrap">
                 {res.tag}
               </div>
             </div>
 
-            <div className="flex-1 p-2 md:p-5 flex flex-col justify-between overflow-hidden">
+            <div className="flex-1 p-4 md:p-5 flex flex-col justify-between overflow-hidden">
               <div>
-                <div className="flex justify-between items-start mb-0.5 md:mb-1.5">
-                  <h3 className="text-[10px] md:text-xl font-bold text-gray-900 truncate leading-tight pr-1">
+                <div className="flex justify-between items-start mb-1 md:mb-1.5">
+                  <h3 className="text-sm md:text-xl font-bold text-gray-900 truncate leading-tight pr-1">
                     {res.name}
                   </h3>
-                  <div className="flex items-center gap-0.5 text-green-600 font-bold text-[8px] md:text-xs shrink-0">
-                    {res.rating} <Star size={8} fill="currentColor" className="md:w-3 md:h-3" />
+                  <div className="flex items-center gap-0.5 text-green-600 font-bold text-[10px] md:text-xs shrink-0">
+                    {res.rating} <Star size={10} fill="currentColor" className="md:w-3 md:h-3" />
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-1 md:gap-4 mb-2 md:mb-4">
-                  <div className="flex items-center gap-1 text-[7px] md:text-[11px] text-gray-400 font-medium">
-                    <Clock size={8} className="md:w-3.5 md:h-3.5 text-gray-300" />
+                <div className="flex flex-col md:flex-row gap-1 md:gap-4 mb-3 md:mb-4">
+                  <div className="flex items-center gap-1 text-[9px] md:text-[11px] text-gray-400 font-medium">
+                    <Clock size={10} className="md:w-3.5 md:h-3.5 text-gray-300" />
                     {res.time}
                   </div>
-                  <div className="flex items-center gap-1 text-[7px] md:text-[11px] text-gray-400 font-medium">
-                    <MapPin size={8} className="md:w-3.5 md:h-3.5 text-gray-300" />
+                  <div className="flex items-center gap-1 text-[9px] md:text-[11px] text-gray-400 font-medium">
+                    <MapPin size={10} className="md:w-3.5 md:h-3.5 text-gray-300" />
                     {res.distance}
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-1 md:gap-2">
-                <button className="flex-1 bg-hotel-primary text-white flex items-center justify-center gap-1 py-1 md:py-2.5 rounded-md md:rounded-xl text-[8px] md:text-[11px] font-bold hover:brightness-110 active:scale-95 transition-all">
-                  <MapIcon size={8} className="md:w-3.5 md:h-3.5" /> Map
+              <div className="flex gap-2">
+                <button className="flex-1 bg-hotel-primary text-white flex items-center justify-center gap-1.5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-bold hover:brightness-110 active:scale-95 transition-all">
+                  <MapIcon size={10} className="md:w-3.5 md:h-3.5" /> Map
                 </button>
-                <button className="px-2 md:px-4 bg-gray-50 text-gray-400 flex items-center justify-center py-1 md:py-2.5 rounded-md md:rounded-xl text-[8px] md:text-[11px] font-bold hover:bg-gray-100 hover:text-gray-600 transition-all">
+                <button className="px-3 md:px-4 bg-gray-50 text-gray-400 flex items-center justify-center py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-bold hover:bg-gray-100 hover:text-gray-600 transition-all">
                   Details
                 </button>
               </div>
@@ -116,10 +116,10 @@ const NearbyRestaurants: React.FC = () => {
       </div>
 
       {visibleItems < RESTAURANTS_DATA.length && (
-        <div className="mt-12 text-center">
+        <div className="mt-12 text-center px-4">
           <button 
             onClick={loadMore}
-            className="group px-8 py-3.5 bg-white border border-gray-200 text-hotel-secondary font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-hotel-primary hover:text-white hover:border-hotel-primary transition-all shadow-sm active:scale-95 flex items-center gap-2 mx-auto"
+            className="group w-full max-w-xs md:w-auto px-8 py-3.5 bg-white border border-gray-200 text-hotel-secondary font-black text-[10px] md:text-[11px] uppercase tracking-widest rounded-xl hover:bg-hotel-primary hover:text-white hover:border-hotel-primary transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 mx-auto"
           >
             Explore More Dining <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </button>

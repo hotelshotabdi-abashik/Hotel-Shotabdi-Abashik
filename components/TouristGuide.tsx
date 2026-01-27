@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Compass, ArrowRight, MapPin, Search } from 'lucide-react';
 
@@ -299,61 +298,61 @@ const TouristGuide: React.FC = () => {
   };
 
   return (
-    <section className="bg-hotel-accent min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 pt-12 pb-10">
+    <section className="bg-hotel-accent min-h-screen w-full">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10 md:pt-12 pb-8 md:pb-10">
         <div className="text-center">
             <div className="inline-flex items-center justify-center p-2 bg-hotel-primary/10 rounded-full mb-4">
             <Compass className="text-hotel-primary" size={20} />
             </div>
-            <h2 className="text-3xl md:text-5xl font-serif text-gray-900 mb-4">Discover Sylhet</h2>
-            <p className="text-gray-500 text-base max-w-2xl mx-auto leading-relaxed font-light mb-8">
+            <h2 className="text-2xl md:text-5xl font-serif text-gray-900 mb-4 font-black">Discover Sylhet</h2>
+            <p className="text-gray-500 text-sm md:text-base max-w-2xl mx-auto leading-relaxed font-light mb-8">
             The soul of Bangladesh lies in its tea valleys and sacred sites. Explore 30 top-rated attractions just minutes from Hotel Shotabdi.
             </p>
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-xl mx-auto mb-12 relative">
+        <div className="max-w-xl mx-auto mb-10 relative">
             <input 
                 type="text" 
-                placeholder="Search places (e.g. Tea, Forest, Temple)..."
+                placeholder="Search places (e.g. Tea, Forest)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl py-4 pl-12 pr-6 text-sm focus:border-hotel-primary outline-none transition-all"
+                className="w-full bg-white border border-gray-100 shadow-sm rounded-2xl py-3.5 md:py-4 pl-12 pr-6 text-sm focus:border-hotel-primary outline-none transition-all"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pb-24 lg:pb-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-24 lg:pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {filteredAttractions.slice(0, visibleCount).map((spot) => (
             <div 
               key={spot.id} 
-              className="bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] border border-gray-100 group hover:shadow-xl transition-all duration-500 flex flex-col h-full"
+              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.02)] border border-gray-100 group hover:shadow-xl transition-all duration-500 flex flex-col h-full"
             >
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-44 md:h-48 overflow-hidden">
                 <img 
                   src={spot.image} 
                   alt={spot.name} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur shadow-sm text-hotel-secondary text-[10px] font-black px-3 py-1.5 rounded-xl flex items-center gap-1">
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur shadow-sm text-hotel-secondary text-[9px] md:text-[10px] font-black px-2 md:px-3 py-1 md:py-1.5 rounded-lg md:rounded-xl flex items-center gap-1">
                   <MapPin size={10} className="text-hotel-primary" />
                   {spot.distance}
                 </div>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col">
+              <div className="p-5 md:p-6 flex-1 flex flex-col">
                 <div className="mb-2">
-                  <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                  <h3 className="text-base md:text-lg font-bold text-gray-900 leading-tight">
                     {spot.name}
                   </h3>
-                  <span className="text-[10px] font-black text-hotel-primary tracking-widest uppercase block mt-1">
+                  <span className="text-[9px] font-black text-hotel-primary tracking-widest uppercase block mt-1">
                     {spot.subtitle}
                   </span>
                 </div>
                 
-                <p className="text-[11px] text-gray-400 leading-relaxed mb-6 flex-grow">
+                <p className="text-[10px] md:text-[11px] text-gray-400 leading-relaxed mb-6 flex-grow">
                   {spot.description}
                 </p>
 
@@ -362,11 +361,11 @@ const TouristGuide: React.FC = () => {
                     href={spot.mapUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="inline-flex items-center gap-1.5 text-hotel-secondary font-black text-[10px] uppercase tracking-widest hover:text-hotel-primary transition-all"
+                    className="inline-flex items-center gap-1.5 text-hotel-secondary font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:text-hotel-primary transition-all"
                   >
                     Directions <ArrowRight size={12} />
                   </a>
-                  <div className="w-2 h-2 rounded-full bg-hotel-gold/20"></div>
+                  <div className="w-2 h-2 rounded-full bg-hotel-primary/10"></div>
                 </div>
               </div>
             </div>
@@ -374,24 +373,24 @@ const TouristGuide: React.FC = () => {
         </div>
 
         {visibleCount < filteredAttractions.length && (
-          <div className="mt-16 text-center">
+          <div className="mt-12 md:mt-16 text-center px-4">
             <button 
               onClick={loadMore}
-              className="px-12 py-4 bg-hotel-secondary text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-hotel-primary transition-all shadow-xl active:scale-95 flex items-center gap-3 mx-auto"
+              className="w-full max-w-xs md:w-auto px-8 md:px-12 py-3.5 md:py-4 bg-hotel-secondary text-white font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] rounded-xl md:rounded-2xl hover:bg-hotel-primary transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 mx-auto"
             >
               See More Attractions
               <div className="bg-white/20 p-1 rounded-md">
                  <Compass size={14} />
               </div>
             </button>
-            <p className="text-[10px] text-gray-400 mt-4 font-medium italic">
+            <p className="text-[9px] text-gray-400 mt-4 font-medium italic">
                 Showing {Math.min(visibleCount, filteredAttractions.length)} of {filteredAttractions.length} unique destinations
             </p>
           </div>
         )}
 
         {filteredAttractions.length === 0 && (
-            <div className="text-center py-20">
+            <div className="text-center py-20 px-4">
                 <p className="text-gray-400 italic">No matching places found. Try a different search.</p>
             </div>
         )}
