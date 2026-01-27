@@ -1,5 +1,5 @@
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
   onAuthStateChanged, 
@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup,
   signInWithCredential,
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+} from "firebase/auth";
 import { 
   getDatabase, 
   ref, 
@@ -18,7 +18,7 @@ import {
   onValue,
   remove,
   serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+} from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAk6x2Mt9IqmQftA5YI-wBbPEP9KBH2wFQ",
@@ -40,10 +40,6 @@ export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-/**
- * Checks if a username is already taken by another user.
- * Wrapped in try-catch to prevent permission errors from breaking the UI.
- */
 export const checkUsernameUnique = async (username: string, currentUid: string) => {
   try {
     const normalized = username.toLowerCase().trim();
@@ -54,15 +50,11 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
     }
     return true;
   } catch (e) {
-    console.warn("Username uniqueness check bypassed due to permission restriction.");
+    console.warn("Username uniqueness check bypassed.");
     return true;
   }
 };
 
-/**
- * Syncs profile data. Returns a blank onboarding-ready profile if read fails or data doesn't exist.
- * This ensures that even if a user was deleted from the DB, they get prompted to re-onboard.
- */
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
   const userRef = ref(db, `profiles/${user.uid}`);
@@ -86,7 +78,6 @@ export const syncUserProfile = async (user: any) => {
   try {
     const snapshot = await get(userRef);
     if (!snapshot.exists()) {
-      // User has no profile record (new or deleted)
       return freshProfile;
     } else {
       const currentData = snapshot.val();
@@ -94,15 +85,11 @@ export const syncUserProfile = async (user: any) => {
       return { ...currentData, lastLogin: now };
     }
   } catch (e) {
-    // If permission is denied, assume it's a new user needing onboarding
-    console.warn("Database access restricted. Treating as new resident.");
+    console.warn("Database access restricted.");
     return freshProfile;
   }
 };
 
-/**
- * Fully deletes a user's data from the database.
- */
 export const deleteUserProfile = async (uid: string, username?: string) => {
   const updates: any = {};
   updates[`profiles/${uid}`] = null;
@@ -114,7 +101,6 @@ export const deleteUserProfile = async (uid: string, username?: string) => {
   return update(ref(db), updates);
 };
 
-/** Admin Helpers **/
 export const createNotification = async (userId: string, notification: any) => {
   const notificationsRef = ref(db, `notifications/${userId}`);
   const newNotificationRef = push(notificationsRef);
