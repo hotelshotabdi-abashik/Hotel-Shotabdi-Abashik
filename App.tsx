@@ -33,7 +33,7 @@ const ScrollToTop = () => {
 const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfileOpen, setIsProfileOpen }: { 
   user: any, 
   isAdmin: boolean, 
-  openAuth: (mode: 'login' | 'register') => void, 
+  openAuth: () => void, 
   handleSignOut: () => void,
   isAuthLoading: boolean,
   isProfileOpen: boolean,
@@ -105,16 +105,11 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
               >
                 <div className="text-right flex flex-col justify-center hidden sm:flex">
                   <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
-                    {user.displayName || 'Account'}
+                    {user.displayName || 'Guest User'}
                   </p>
-                  <div className="flex items-center justify-end gap-1.5">
-                    {!user.emailVerified && (
-                      <span className="text-[7px] font-black text-hotel-primary bg-red-50 px-1.5 py-0.5 rounded-full animate-pulse">Unverified</span>
-                    )}
-                    <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                      {isAdmin ? 'Admin Access' : 'Registered Member'}
-                    </p>
-                  </div>
+                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                    {isAdmin ? 'Admin Portal' : 'Verified Member'}
+                  </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
                   <img 
@@ -127,20 +122,12 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 md:gap-3">
-              <button 
-                onClick={() => openAuth('login')}
-                className="px-4 md:px-6 py-2.5 text-gray-600 hover:text-hotel-primary font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all"
-              >
-                Login
-              </button>
-              <button 
-                onClick={() => openAuth('register')}
-                className="px-6 md:px-8 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-widest hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
-              >
-                Register
-              </button>
-            </div>
+            <button 
+              onClick={openAuth}
+              className="px-8 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
+            >
+              Member Sign In
+            </button>
           )}
         </div>
 
@@ -149,14 +136,11 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
             <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm lg:bg-transparent" onClick={() => setIsProfileOpen(false)}></div>
             <div className="absolute top-[80%] lg:top-full right-4 lg:right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden animate-fade-in">
               <div className="px-4 py-4 border-b border-gray-50 mb-1 bg-gray-50/30">
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Session Identity</p>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Identity Profile</p>
                 <div className="flex items-center gap-2">
                    <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
-                   {user.emailVerified ? <ShieldCheck size={12} className="text-green-500" /> : <AlertCircle size={12} className="text-hotel-primary" />}
+                   <ShieldCheck size={12} className="text-green-500" />
                 </div>
-                {!user.emailVerified && (
-                  <p className="text-[8px] text-hotel-primary font-black mt-2 uppercase tracking-widest">Verify Email to unlock booking</p>
-                )}
               </div>
               
               {isAdmin && (
@@ -165,7 +149,7 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
                   onClick={() => setIsProfileOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
                 >
-                  <LayoutDashboard size={14} /> Admin Dashboard
+                  <LayoutDashboard size={14} /> Admin Controls
                 </Link>
               )}
 
@@ -176,7 +160,7 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-hotel-primary hover:bg-red-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
               >
-                <LogOut size={14} /> Log Out Account
+                <LogOut size={14} /> End Session
               </button>
             </div>
           </>
@@ -192,7 +176,6 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
 
 const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -264,8 +247,7 @@ const AppContent = () => {
     setIsAuthLoading(false);
   };
 
-  const openAuth = (mode: 'login' | 'register') => {
-    setAuthInitialMode(mode);
+  const openAuth = () => {
     setIsAuthModalOpen(true);
   };
 
@@ -316,7 +298,6 @@ const AppContent = () => {
         <AuthModal 
           isOpen={isAuthModalOpen} 
           onClose={() => setIsAuthModalOpen(false)} 
-          initialMode={authInitialMode}
           onSuccess={(u) => setUser(u)}
         />
 

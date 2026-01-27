@@ -6,14 +6,13 @@ import { Home, Bed, Map, Utensils, User, LogIn } from 'lucide-react';
 interface MobileBottomNavProps {
   user: any;
   isAdmin: boolean;
-  openAuth: (mode: 'login' | 'register') => void;
+  openAuth: () => void;
   toggleProfile: () => void;
 }
 
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAuth, toggleProfile }) => {
   const location = useLocation();
 
-  // Integrated all sidebar items into the bottom nav for a truly "sidebar-less" mobile experience
   const navItems = [
     { id: 'home', path: '/', label: 'Home', icon: <Home size={20} /> },
     { id: 'rooms', path: '/rooms', label: 'Rooms', icon: <Bed size={20} /> },
@@ -23,7 +22,6 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
 
   return (
     <nav className="lg:hidden fixed bottom-4 left-0 right-0 px-4 z-[70] transition-all duration-500 animate-fade-in">
-      {/* Container ensures centering and prevents clipping by using a responsive width */}
       <div className="max-w-lg mx-auto bg-white/90 backdrop-blur-2xl border border-white/40 shadow-[0_15px_40px_rgba(0,0,0,0.12)] rounded-[2rem] px-2 py-2 flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -53,7 +51,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
 
         {/* Dynamic Profile/Login Button */}
         <button
-          onClick={user ? toggleProfile : () => openAuth('login')}
+          onClick={user ? toggleProfile : openAuth}
           className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
             user ? (isAdmin ? 'text-amber-600' : 'text-hotel-primary') : 'text-hotel-primary'
           }`}
@@ -77,7 +75,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
         </button>
       </div>
       
-      {/* Spacer for bottom safe area insets (iPhone X style) */}
+      {/* Spacer for bottom safe area insets */}
       <div className="h-[env(safe-area-inset-bottom,0)]"></div>
     </nav>
   );
