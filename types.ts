@@ -28,6 +28,7 @@ export interface Restaurant {
   image: string;
   tag: string;
   mapUrl?: string;
+  phone?: string;
 }
 
 export interface Attraction {
@@ -38,6 +39,7 @@ export interface Attraction {
   description: string;
   image: string;
   mapUrl: string;
+  phone?: string;
 }
 
 export interface SiteConfig {

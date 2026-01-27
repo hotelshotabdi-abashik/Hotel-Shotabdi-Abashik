@@ -42,7 +42,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
   });
 
   const formatPriceString = (price: string) => {
-    // CRITICAL FIX: Guard against undefined or null price strings
+    // CRITICAL FIX: Guard against undefined or null price strings to prevent replace() crash
     const safePrice = price || "";
     const numeric = parseFloat(safePrice.replace(/[^0-9.]/g, ''));
     return isNaN(numeric) ? safePrice : formatter.format(numeric);

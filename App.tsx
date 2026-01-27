@@ -152,7 +152,7 @@ const AppContent = () => {
   };
 
   const uploadToR2 = async (file: File, folder: string): Promise<string> => {
-    // CRITICAL FIX: Guard against undefined folder
+    // CRITICAL FIX: Guard against undefined or empty folder string to prevent replace() crash
     const safeFolder = folder || "uploads";
     const cleanFolderName = safeFolder.replace(/^\/|\/$/g, '');
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
