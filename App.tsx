@@ -259,7 +259,7 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Modern Header with Large Text & Logo Interaction */}
+        {/* Modern Header - Adjusted Font & Size */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
@@ -269,13 +269,13 @@ const AppContent = () => {
               >
                 <img 
                   src={LOGO_ICON_URL} 
-                  className={`w-12 h-12 md:w-16 md:h-16 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
+                  className={`w-10 h-10 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
                   alt="Logo" 
                 />
               </div>
               <div className="flex flex-col select-none leading-none -space-y-0.5 md:-space-y-1">
-                <h1 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h1>
-                <p className="text-[10px] md:text-[12px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
+                <h1 className="text-xl md:text-3xl font-sans font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h1>
+                <p className="text-[10px] md:text-[11px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
               </div>
             </div>
           </div>
@@ -289,7 +289,7 @@ const AppContent = () => {
                   onClick={toggleNotifications}
                   className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
                 >
-                  <Bell size={26} />
+                  <Bell size={24} />
                   {unreadCount > 0 && (
                     <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
                       {unreadCount}
@@ -301,7 +301,7 @@ const AppContent = () => {
                   onClick={toggleManageAccount}
                   className={`flex items-center gap-3 bg-gray-50 hover:bg-white border p-1.5 pr-4 rounded-2xl transition-all group ${isManageAccountOpen ? 'border-hotel-primary/30 ring-4 ring-hotel-primary/5' : 'border-gray-100'}`}
                 >
-                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                     <img 
                       src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=B22222&color=fff`} 
                       className="w-full h-full object-cover" 
@@ -316,15 +316,13 @@ const AppContent = () => {
                   </div>
                 </button>
 
-                {/* Notification Dropdown Panel */}
                 {isNotificationsOpen && (
-                  <div className="absolute top-16 right-0 w-[320px] bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-fade-in z-[100]">
+                  <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[100]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
                       <div>
                         <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
-                        <p className="text-[9px] opacity-70 font-bold uppercase tracking-widest mt-0.5">Stay Updates</p>
                       </div>
-                      <button onClick={closeAllPopups} className="opacity-60 hover:opacity-100 transition-opacity">
+                      <button onClick={closeAllPopups}>
                         <X size={18} />
                       </button>
                     </div>
@@ -338,17 +336,14 @@ const AppContent = () => {
                               </div>
                               <div className="flex-1">
                                 <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{n.title}</h4>
-                                <p className="text-[10px] text-gray-500 leading-relaxed mt-1">{n.message}</p>
+                                <p className="text-[10px] text-gray-500 mt-1">{n.message}</p>
                               </div>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="py-12 text-center">
-                          <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
-                            <Bell size={24} />
-                          </div>
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">No new alerts</p>
+                        <div className="py-12 text-center text-gray-400">
+                          <p className="text-[10px] font-black uppercase tracking-widest">No alerts</p>
                         </div>
                       )}
                     </div>
