@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, Bed, Utensils, Map as MapIcon, 
@@ -21,6 +21,20 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   const [stayCategory, setStayCategory] = useState('vacation');
   const [selectedRoomId, setSelectedRoomId] = useState(ROOMS_DATA[0].id);
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
+  
+  // Date selection states
+  const [checkIn, setCheckIn] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  });
+  const [checkOut, setCheckOut] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().split('T')[0];
+  });
+
+  const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,7 +51,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
 
   const handleSearch = () => {
     // Navigate to rooms with the specific category ID to trigger highlighting
-    navigate(`/rooms?category=${selectedRoomId}`);
+    navigate(`/rooms?category=${selectedRoomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
     
     // Smooth scroll if already on the page or after navigation
     setTimeout(() => {
@@ -48,6 +62,14 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
     }, 100);
   };
 
+  const formatDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const weekday = date.toLocaleString('default', { weekday: 'short' });
+    return { day, month, weekday };
+  };
+
   const tabs = [
     { id: 'hotel', label: 'Book Stay', icon: <Bed size={16} />, path: '/rooms' },
     { id: 'restaurants', label: 'Restaurants', icon: <Utensils size={16} />, path: '/restaurants' },
@@ -55,6 +77,8 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   ];
 
   const selectedRoom = ROOMS_DATA.find(r => r.id === selectedRoomId);
+  const checkInDisplay = formatDateLabel(checkIn);
+  const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
     <section className="relative min-h-[65vh] md:min-h-[85vh] flex flex-col items-center justify-center pt-6 md:pt-12 pb-16 md:pb-24 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
@@ -169,7 +193,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                     <Key size={18} className="text-hotel-primary" />
                   </div>
                   <div className="flex flex-col items-start overflow-hidden text-left">
-                    <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Select Room Type</span>
+                    <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Room Selection</span>
                     <div className="flex items-center gap-2">
                       <p className="text-sm md:text-lg font-black text-gray-900 truncate max-w-[140px] md:max-w-none">
                         {selectedRoom?.title}
@@ -202,30 +226,50 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                 )}
               </div>
 
-              {/* Check-in */}
-              <div className="flex-1 bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100">
+              {/* Check-in Date Picker */}
+              <div 
+                onClick={() => checkInRef.current?.showPicker()}
+                className="relative flex-1 bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
+              >
+                <input 
+                  type="date" 
+                  ref={checkInRef}
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className="absolute inset-0 opacity-0 pointer-events-none" 
+                />
                 <div className="w-9 h-9 md:w-11 md:h-11 bg-gray-50 rounded-xl flex items-center justify-center mr-4 shrink-0 group-hover:bg-white transition-all">
                   <Calendar size={18} className="text-gray-400 group-hover:text-hotel-primary" />
                 </div>
                 <div className="flex flex-col items-start text-left">
                   <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check-in</span>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-sm md:text-lg font-black text-gray-900">28 Jan</p>
-                    <p className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase">Wed</p>
+                    <p className="text-sm md:text-lg font-black text-gray-900">{checkInDisplay.day} {checkInDisplay.month}</p>
+                    <p className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase">{checkInDisplay.weekday}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Check-out */}
-              <div className="flex-1 bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all">
+              {/* Check-out Date Picker */}
+              <div 
+                onClick={() => checkOutRef.current?.showPicker()}
+                className="relative flex-1 bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0"
+              >
+                <input 
+                  type="date" 
+                  ref={checkOutRef}
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="absolute inset-0 opacity-0 pointer-events-none" 
+                />
                 <div className="w-9 h-9 md:w-11 md:h-11 bg-gray-50 rounded-xl flex items-center justify-center mr-4 shrink-0 group-hover:bg-white transition-all">
                   <Moon size={18} className="text-gray-400 group-hover:text-hotel-primary" />
                 </div>
                 <div className="flex flex-col items-start text-left">
                   <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check-out</span>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-sm md:text-lg font-black text-gray-900">30 Jan</p>
-                    <p className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase">Fri</p>
+                    <p className="text-sm md:text-lg font-black text-gray-900">{checkOutDisplay.day} {checkOutDisplay.month}</p>
+                    <p className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase">{checkOutDisplay.weekday}</p>
                   </div>
                 </div>
               </div>
@@ -238,24 +282,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                 <Search size={22} strokeWidth={3} />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] lg:hidden">Check Vacancy</span>
               </button>
-            </div>
-
-            {/* Bottom Amenities - Responsive hiding for extreme density */}
-            <div className="hidden sm:flex flex-wrap items-center justify-center md:justify-start gap-6 md:gap-10 mt-6 md:mt-10 px-2 opacity-70">
-              {[
-                { label: 'Breakfast Included', icon: <Utensils size={12} /> },
-                { label: 'Free Cancellation', icon: <ShieldCheck size={12} /> },
-                { label: 'Pay at Hotel', icon: <Key size={12} /> }
-              ].map((perk, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-gray-400 group cursor-default">
-                  <span className="w-5 h-5 md:w-6 md:h-6 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300 group-hover:text-hotel-primary group-hover:bg-hotel-primary/5 transition-all">
-                    {perk.icon}
-                  </span>
-                  <span className="text-[8px] md:text-[11px] font-black uppercase tracking-widest text-gray-400 group-hover:text-gray-900 transition-colors">
-                    {perk.label}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         </div>
