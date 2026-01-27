@@ -5,7 +5,7 @@ import {
   Building2, ChevronRight, Zap, Camera, Loader2, 
   MapPin, Calendar, Users, Search, Bed, Utensils, 
   Map as MapIcon, HelpCircle, Briefcase, Info, 
-  Settings, ChevronDown, RotateCw
+  Settings, ChevronDown, RotateCw, Globe, Coffee, PhoneCall
 } from 'lucide-react';
 import { HeroConfig } from '../types';
 
@@ -20,7 +20,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('Hotel');
-  const [tripType, setTripType] = useState('Standard');
+  const [stayType, setStayType] = useState('Standard');
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,21 +36,30 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   };
 
   const tabs = [
-    { id: 'Hotel', icon: <Bed size={18} /> },
-    { id: 'Dining', icon: <Utensils size={18} /> },
-    { id: 'Guide', icon: <MapIcon size={18} /> },
-    { id: 'Support', icon: <HelpCircle size={18} /> },
-    { id: 'Corporate', icon: <Briefcase size={18} /> },
+    { id: 'Hotel', icon: <Bed size={18} />, path: '/rooms' },
+    { id: 'Dining', icon: <Utensils size={18} />, path: '/restaurants' },
+    { id: 'Guide', icon: <MapIcon size={18} />, path: '/guide' },
+    { id: 'Help', icon: <PhoneCall size={18} />, action: () => window.location.href = 'tel:+8801717425702' },
+    { id: 'Policy', icon: <Info size={18} />, path: '/privacypolicy' },
   ];
+
+  const handleTabClick = (tab: any) => {
+    setActiveTab(tab.id);
+    if (tab.action) {
+      tab.action();
+    } else if (tab.path && tab.id !== 'Hotel') {
+      navigate(tab.path);
+    }
+  };
 
   return (
     <section className="relative pt-12 md:pt-20 pb-24 md:pb-32 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
-      {/* Background with Overlay */}
+      {/* Background with Professional Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
           src={config.backgroundImage} 
-          className="w-full h-full object-cover opacity-40 grayscale" 
-          alt="Shotabdi Exterior"
+          className="w-full h-full object-cover opacity-30 grayscale" 
+          alt="Hotel Exterior"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A192F]/80 to-[#0A192F]"></div>
       </div>
@@ -66,130 +75,140 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
       )}
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Floating Booking Card (Screenshot Style) */}
-        <div className="bg-white rounded-[1rem] shadow-2xl overflow-hidden animate-fade-in">
+        {/* Screenshot Style Floating Card */}
+        <div className="bg-white rounded-[1rem] shadow-[0_20px_60px_rgba(0,0,0,0.3)] overflow-hidden animate-fade-in">
           
-          {/* Tabs Header */}
-          <div className="flex items-center overflow-x-auto no-scrollbar border-b border-gray-100 bg-white px-4">
+          {/* Top Horizontal Tabs */}
+          <div className="flex items-center overflow-x-auto no-scrollbar border-b border-gray-100 bg-white px-2 md:px-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-5 text-[11px] font-black uppercase tracking-widest transition-all relative ${
-                  activeTab === tab.id ? 'text-hotel-primary' : 'text-gray-400 hover:text-gray-600'
+                onClick={() => handleTabClick(tab)}
+                className={`flex items-center gap-3 px-6 py-5 text-[11px] font-bold uppercase tracking-widest transition-all relative whitespace-nowrap ${
+                  activeTab === tab.id ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
-                {tab.icon}
+                <span className={activeTab === tab.id ? 'text-blue-600' : 'text-gray-400'}>{tab.icon}</span>
                 {tab.id}
                 {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-hotel-primary rounded-t-full"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-600 rounded-t-full"></div>
                 )}
               </button>
             ))}
           </div>
 
           <div className="p-6 md:p-10 space-y-8">
-            {/* Trip Type Options */}
-            <div className="flex flex-wrap gap-4">
-              {['Standard', 'Long Stay', 'Group'].map((type) => (
+            {/* Stay Type Selectors */}
+            <div className="flex flex-wrap items-center gap-4">
+              {['Standard', 'Family Stay', 'Corporate'].map((type) => (
                 <button
                   key={type}
-                  onClick={() => setTripType(type)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                    tripType === type 
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-                      : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'
+                  onClick={() => setStayType(type)}
+                  className={`flex items-center gap-3 px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    stayType === type 
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
                   }`}
                 >
-                  <div className={`w-3 h-3 rounded-full border-2 ${tripType === type ? 'bg-white border-white' : 'border-gray-300'}`}></div>
+                  <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${stayType === type ? 'border-white' : 'border-gray-300'}`}>
+                    {stayType === type && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                  </div>
                   {type}
                 </button>
               ))}
 
               <div className="ml-auto hidden lg:flex gap-4">
-                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-600 text-[10px] font-black uppercase tracking-widest cursor-pointer">
-                  1 Guest <ChevronDown size={14} />
+                <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-50/50 border border-blue-100 rounded-full text-blue-600 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-blue-100 transition-colors">
+                  1 Traveller <ChevronDown size={14} />
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-600 text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-50/50 border border-blue-100 rounded-full text-blue-600 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-blue-100 transition-colors">
                   Economy <ChevronDown size={14} />
                 </div>
               </div>
             </div>
 
-            {/* Main Booking Bar */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-gray-100 rounded-xl overflow-hidden">
+            {/* Logical Booking Inputs */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
               
-              {/* Location 1 */}
-              <div className="lg:col-span-3 p-4 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors group">
-                <div className="flex items-center gap-4 h-full">
-                  <div className="text-xl font-black text-gray-900 group-hover:text-hotel-primary transition-colors">SYL</div>
+              {/* Physical Name Input */}
+              <div className="lg:col-span-3 p-5 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer">
+                <div className="flex items-center gap-5 h-full">
+                  <div className="text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">SYL</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold text-gray-900 truncate">Sylhet, Kumargaon</p>
-                    <p className="text-[9px] text-gray-400 font-medium truncate uppercase tracking-tighter">Bus Stand Area</p>
+                    <p className="text-[14px] font-black text-gray-900 truncate">Sylhet, Kumargaon</p>
+                    <p className="text-[10px] text-gray-400 font-bold truncate uppercase tracking-tighter">Bus Stand Area</p>
                   </div>
                 </div>
               </div>
 
-              {/* Swap Button (Purely Visual for style) */}
+              {/* Swap Visual Link */}
               <div className="hidden lg:flex items-center justify-center -mx-4 z-20">
-                <div className="w-8 h-8 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-300">
-                  <RotateCw size={14} />
+                <div className="w-9 h-9 rounded-full bg-white border border-gray-100 shadow-md flex items-center justify-center text-gray-400 hover:text-blue-600 transition-colors cursor-pointer">
+                  <RotateCw size={16} />
                 </div>
               </div>
 
-              {/* Location 2 (Map Code) */}
-              <div className="lg:col-span-3 p-4 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors group">
-                <div className="flex items-center gap-4 h-full">
-                  <div className="text-xl font-black text-gray-900 group-hover:text-hotel-primary transition-colors">MAP</div>
+              {/* Map Code / Code Input */}
+              <div className="lg:col-span-3 p-5 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer">
+                <div className="flex items-center gap-5 h-full">
+                  <div className="text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">GPS</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold text-gray-900 truncate">WR6H+Q2P</p>
-                    <p className="text-[9px] text-gray-400 font-medium truncate uppercase tracking-tighter">Sylhet 3100, BD</p>
+                    <p className="text-[14px] font-black text-gray-900 truncate">WR6H+Q2P</p>
+                    <p className="text-[10px] text-gray-400 font-bold truncate uppercase tracking-tighter">Sylhet 3100, BD</p>
                   </div>
                 </div>
               </div>
 
-              {/* Check-In */}
-              <div className="lg:col-span-2 p-4 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4 h-full">
-                  <div className="text-xl font-black text-gray-900">24</div>
+              {/* Check-In Date */}
+              <div className="lg:col-span-2 p-5 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer">
+                <div className="flex items-center gap-5 h-full">
+                  <div className="text-2xl font-black text-gray-900">28</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold text-gray-900 truncate">May</p>
-                    <p className="text-[9px] text-gray-400 font-medium truncate uppercase tracking-tighter">Friday, 2024</p>
+                    <p className="text-[14px] font-black text-gray-900 truncate">May</p>
+                    <p className="text-[10px] text-gray-400 font-bold truncate uppercase tracking-tighter">Friday, 2024</p>
                   </div>
                 </div>
               </div>
 
-              {/* Check-Out */}
-              <div className="lg:col-span-2 p-4 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4 h-full">
-                  <div className="text-xl font-black text-gray-900">26</div>
+              {/* Check-Out Date */}
+              <div className="lg:col-span-2 p-5 border-b lg:border-b-0 lg:border-r border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer">
+                <div className="flex items-center gap-5 h-full">
+                  <div className="text-2xl font-black text-gray-900">30</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold text-gray-900 truncate">May</p>
-                    <p className="text-[9px] text-gray-400 font-medium truncate uppercase tracking-tighter">Sunday, 2024</p>
+                    <p className="text-[14px] font-black text-gray-900 truncate">May</p>
+                    <p className="text-[10px] text-gray-400 font-bold truncate uppercase tracking-tighter">Sunday, 2024</p>
                   </div>
                 </div>
               </div>
 
-              {/* Search Button (Orange) */}
-              <div className="lg:col-span-2 p-2 bg-white">
+              {/* Action Button (Orange) */}
+              <div className="lg:col-span-2 p-3 bg-white">
                 <button 
                   onClick={() => navigate('/rooms')}
-                  className="w-full h-full bg-[#FF7000] hover:bg-[#E66400] text-white rounded-lg flex items-center justify-center transition-all shadow-lg shadow-orange-100 py-6 lg:py-0"
+                  className="w-full h-full bg-[#FF7000] hover:bg-[#E66400] text-white rounded-xl flex items-center justify-center transition-all shadow-xl shadow-orange-100 py-6 lg:py-0 active:scale-95"
                 >
-                  <Search size={28} strokeWidth={3} />
+                  <Search size={32} strokeWidth={3} />
                 </button>
               </div>
 
             </div>
 
-            {/* Bottom Fare Toggles */}
-            <div className="flex flex-wrap gap-6 pt-2">
-              {['Regular Fare', 'Group Fare', 'Corporate Rate'].map((fare) => (
-                <label key={fare} className="flex items-center gap-2 cursor-pointer group">
-                  <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center group-hover:border-blue-600 transition-colors">
-                    {fare === 'Regular Fare' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>}
+            {/* Bottom Fare Options (Shortcut Rates) */}
+            <div className="flex flex-wrap gap-10 pt-4">
+              {[
+                { label: 'Regular Fare', selected: true },
+                { label: 'Student Fare', selected: false },
+                { label: 'Umrah Fare', selected: false }
+              ].map((fare) => (
+                <label key={fare.label} className="flex items-center gap-3 cursor-pointer group">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    fare.selected ? 'border-blue-600 bg-blue-600 shadow-md ring-4 ring-blue-50' : 'border-gray-200 group-hover:border-blue-600'
+                  }`}>
+                    {fare.selected && <div className="w-2 h-2 bg-white rounded-full"></div>}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-gray-900">{fare}</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-widest ${fare.selected ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-700'}`}>
+                    {fare.label}
+                  </span>
                 </label>
               ))}
             </div>
@@ -197,25 +216,25 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
           </div>
         </div>
 
-        {/* Textual Overlay (Optional but kept for context if needed) */}
-        <div className="mt-16 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6">
-            <span className="w-2 h-2 rounded-full bg-[#FF7000] animate-pulse"></span>
-            <span className="text-[10px] font-black text-white/80 uppercase tracking-widest">Premium Residential Hub</span>
+        {/* Brand Presence Text */}
+        <div className="mt-20 text-center lg:text-left animate-fade-in delay-200">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 mb-8">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FF7000] animate-pulse"></span>
+            <span className="text-[11px] font-black text-white/90 uppercase tracking-[0.3em]">Premium Residential Service</span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-sans font-black text-white leading-[1.1] mb-4">
+          <h2 className="text-4xl md:text-7xl font-sans font-black text-white leading-[1] mb-6 tracking-tighter">
             {isEditMode ? (
               <input 
-                className="bg-transparent border-b-2 border-hotel-primary outline-none w-full"
+                className="bg-transparent border-b-4 border-blue-600 outline-none w-full"
                 value={config.title}
                 onChange={(e) => onUpdate?.({ title: e.target.value })}
               />
             ) : config.title}
           </h2>
-          <p className="text-lg text-white/60 max-w-xl leading-relaxed font-light">
+          <p className="text-xl text-white/50 max-w-2xl leading-relaxed font-light">
              {isEditMode ? (
               <input 
-                className="bg-transparent border-b border-white/30 outline-none w-full"
+                className="bg-transparent border-b border-white/20 outline-none w-full"
                 value={config.subtitle}
                 onChange={(e) => onUpdate?.({ subtitle: e.target.value })}
               />
