@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare } from 'lucide-react';
+import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon } from 'lucide-react';
 import { Attraction } from '../types';
 
 interface Props {
@@ -32,7 +31,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
   );
 
   const generateMapUrl = (name: string) => {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet')}`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet, Bangladesh')}`;
   };
 
   const handleImageChange = async (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,8 +157,9 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                 <div className="mb-4">
                   {isEditMode ? (
                     <input 
-                      className="text-lg font-black text-gray-900 border-b-2 border-blue-600 outline-none w-full"
+                      className="text-lg font-black text-gray-900 border-b-2 border-blue-600 outline-none w-full mb-1"
                       value={spot.name}
+                      placeholder="Place Name"
                       onChange={(e) => updateSpot(spot.id, 'name', e.target.value)}
                     />
                   ) : (
@@ -169,6 +169,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                     <input 
                       className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1.5 w-full bg-gray-50 rounded px-2 py-1 outline-none"
                       value={spot.subtitle}
+                      placeholder="Category (e.g. Nature)"
                       onChange={(e) => updateSpot(spot.id, 'subtitle', e.target.value)}
                     />
                   ) : (
@@ -178,12 +179,13 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                 
                 {isEditMode ? (
                   <textarea 
-                    className="text-[11px] text-gray-500 bg-gray-50 rounded-xl p-3 h-24 w-full outline-none mt-2 leading-relaxed"
+                    className="text-[11px] text-gray-500 bg-gray-50 rounded-xl p-3 h-24 w-full outline-none mt-2 leading-relaxed font-medium"
                     value={spot.description}
+                    placeholder="Brief history or attraction details..."
                     onChange={(e) => updateSpot(spot.id, 'description', e.target.value)}
                   />
                 ) : (
-                  <p className="text-[11px] text-gray-500 leading-relaxed mb-6 flex-grow line-clamp-3">
+                  <p className="text-[11px] text-gray-500 leading-relaxed mb-6 flex-grow line-clamp-3 italic">
                     {spot.description}
                   </p>
                 )}
@@ -192,14 +194,14 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                   {isEditMode ? (
                     <div className="flex flex-col gap-2">
                        <div className="flex justify-between items-center">
-                          <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                          <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Sync (Titled)</label>
                           <div className="flex gap-2">
                              <button 
                                 onClick={() => syncMapLink(spot.id)}
-                                className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
-                                title="Generate link based on name"
+                                className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline group/sync"
+                                title="Auto-generate link for titled name"
                               >
-                                <Wand2 size={10} /> Sync
+                                <Wand2 size={10} className="group-hover/sync:rotate-12 transition-transform" /> Magic Sync
                               </button>
                               {spot.mapUrl && (
                                 <a 
@@ -207,7 +209,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                                   target="_blank" 
                                   className="text-[8px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
                                 >
-                                  <CheckSquare size={10} /> Verify
+                                  <CheckSquare size={10} /> Live Test
                                 </a>
                               )}
                           </div>
@@ -216,7 +218,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                          <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                          <input 
                             className="w-full bg-gray-50 rounded-xl py-2 pl-8 pr-4 text-[10px] font-medium outline-none border border-gray-100 focus:border-blue-600"
-                            placeholder="https://maps.google.com/..."
+                            placeholder="URL will auto-fill..."
                             value={spot.mapUrl}
                             onChange={(e) => updateSpot(spot.id, 'mapUrl', e.target.value)}
                          />
@@ -227,9 +229,9 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                       href={spot.mapUrl.startsWith('http') ? spot.mapUrl : generateMapUrl(spot.mapUrl || spot.name)} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-2 text-gray-900 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-colors group/btn"
+                      className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-500 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn"
                     >
-                      View Map <ExternalLink size={14} className="text-blue-600 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                      <MapIcon size={14} className="group-hover/btn:text-white transition-colors" /> Location Details
                     </a>
                   )}
                 </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare } from 'lucide-react';
 import { Restaurant } from '../types';
@@ -26,7 +25,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   const displayList = restaurants.length > 0 ? restaurants : DEFAULT_RESTAURANTS;
 
   const generateMapUrl = (name: string) => {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet')}`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet, Bangladesh')}`;
   };
 
   const handleImageChange = async (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +136,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                     <input 
                       className="text-xl font-black text-gray-900 border-b-2 border-blue-600 outline-none w-full"
                       value={res.name}
+                      placeholder="Restaurant Name"
                       onChange={(e) => updateRes(res.id, 'name', e.target.value)}
                     />
                   ) : (
@@ -146,6 +146,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                     <input 
                       className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 w-full outline-none"
                       value={res.cuisine}
+                      placeholder="Cuisine Type"
                       onChange={(e) => updateRes(res.id, 'cuisine', e.target.value)}
                     />
                   ) : (
@@ -191,14 +192,14 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                 {isEditMode ? (
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                       <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                       <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Sync (Titled)</label>
                        <div className="flex gap-2">
                          <button 
                             onClick={() => syncMapLink(res.id)}
-                            className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
-                            title="Generate link based on name"
+                            className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline group/sync"
+                            title="Auto-fill search link for title"
                           >
-                            <Wand2 size={10} /> Sync
+                            <Wand2 size={10} className="group-hover/sync:rotate-12 transition-transform" /> Magic Sync
                           </button>
                           {res.mapUrl && (
                             <a 
@@ -206,7 +207,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                               target="_blank" 
                               className="text-[8px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
                             >
-                              <CheckSquare size={10} /> Verify
+                              <CheckSquare size={10} /> Live Test
                             </a>
                           )}
                        </div>
@@ -215,7 +216,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                       <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                       <input 
                         className="w-full bg-gray-50 rounded-xl py-3 pl-8 pr-4 text-[10px] font-medium outline-none border border-gray-100 focus:border-blue-600"
-                        placeholder="https://maps.google.com/..."
+                        placeholder="Search link will appear here..."
                         value={res.mapUrl || ''}
                         onChange={(e) => updateRes(res.id, 'mapUrl', e.target.value)}
                       />
@@ -228,7 +229,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                     rel="noopener noreferrer"
                     className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/map"
                   >
-                    <MapIcon size={14} className="group-hover/map:text-white transition-colors" /> View on Map
+                    <MapIcon size={14} className="group-hover/map:text-white transition-colors" /> View Location
                   </a>
                 )}
               </div>
