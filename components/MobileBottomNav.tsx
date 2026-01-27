@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Bed, Map, Utensils, User, LogIn } from 'lucide-react';
@@ -16,7 +15,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
   const navItems = [
     { id: 'home', path: '/', label: 'Home', icon: <Home size={20} /> },
     { id: 'rooms', path: '/rooms', label: 'Rooms', icon: <Bed size={20} /> },
-    { id: 'restaurants', path: '/restaurants', label: 'Dining', icon: <Utensils size={20} /> },
+    { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
     { id: 'guide', path: '/guide', label: 'Guide', icon: <Map size={20} /> },
   ];
 
