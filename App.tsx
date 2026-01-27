@@ -126,7 +126,7 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
               onClick={openAuth}
               className="px-8 py-3 bg-hotel-primary text-white rounded-xl font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] hover:bg-hotel-secondary shadow-lg shadow-red-100 transition-all active:scale-95"
             >
-              Member Sign In
+              Login
             </button>
           )}
         </div>

@@ -70,7 +70,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
             </div>
           )}
           <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
-            {user ? (isAdmin ? 'Admin' : 'Me') : 'Entry'}
+            {user ? (isAdmin ? 'Admin' : 'Me') : 'Login'}
           </span>
         </button>
       </div>

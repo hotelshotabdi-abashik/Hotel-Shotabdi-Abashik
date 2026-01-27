@@ -1,11 +1,9 @@
 
 import React, { useState } from 'react';
-import { X, Loader2, Facebook, Twitter } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { 
   auth, 
   googleProvider, 
-  facebookProvider, 
-  twitterProvider, 
   signInWithPopup
 } from '../services/firebase';
 
@@ -16,26 +14,26 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSignIn = async (provider: any, name: string) => {
-    setLoading(name);
+  const handleSignIn = async () => {
+    setLoading(true);
     setError('');
     try {
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, googleProvider);
       if (onSuccess) onSuccess(result.user);
       onClose();
     } catch (err: any) {
       if (err.code === 'auth/popup-closed-by-user') {
-        setLoading(null);
+        setLoading(false);
         return;
       }
       setError(err.message.replace('Firebase:', '').trim());
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   };
 
@@ -50,69 +48,36 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
         </button>
 
         <div className="bg-hotel-primary p-8 text-white text-center">
-          <h3 className="text-xl font-serif font-black tracking-tight">Member Access</h3>
+          <h3 className="text-xl font-serif font-black tracking-tight">Login</h3>
           <p className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-70 mt-1">Shotabdi Residential</p>
         </div>
 
-        <div className="p-8 space-y-4">
+        <div className="p-8 space-y-6">
           {error && (
             <div className="p-3 bg-red-50 text-hotel-primary text-[10px] font-black rounded-xl text-center uppercase tracking-widest border border-red-100">
               {error}
             </div>
           )}
 
-          <div className="space-y-3">
-            {/* Google Login */}
+          <div className="space-y-4">
             <button 
-              onClick={() => handleSignIn(googleProvider, 'google')}
-              disabled={!!loading}
-              className="w-full bg-white border border-gray-200 text-gray-700 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+              onClick={handleSignIn}
+              disabled={loading}
+              className="w-full bg-white border border-gray-200 text-gray-700 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 shadow-sm"
             >
-              {loading === 'google' ? (
-                <Loader2 size={16} className="animate-spin text-hotel-primary" />
+              {loading ? (
+                <Loader2 size={18} className="animate-spin text-hotel-primary" />
               ) : (
                 <>
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />
-                  Google Sign In
-                </>
-              )}
-            </button>
-
-            {/* Facebook Login */}
-            <button 
-              onClick={() => handleSignIn(facebookProvider, 'facebook')}
-              disabled={!!loading}
-              className="w-full bg-[#1877F2] text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
-            >
-              {loading === 'facebook' ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <>
-                  <Facebook size={16} fill="currentColor" />
-                  Facebook Login
-                </>
-              )}
-            </button>
-
-            {/* Twitter Login */}
-            <button 
-              onClick={() => handleSignIn(twitterProvider, 'twitter')}
-              disabled={!!loading}
-              className="w-full bg-[#1DA1F2] text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
-            >
-              {loading === 'twitter' ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <>
-                  <Twitter size={16} fill="currentColor" />
-                  Twitter Login
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                  Continue with Google
                 </>
               )}
             </button>
           </div>
 
-          <p className="text-center text-[8px] text-gray-300 font-bold uppercase tracking-widest pt-4">
-            Secure multi-provider verification
+          <p className="text-center text-[8px] text-gray-300 font-bold uppercase tracking-widest">
+            Secure verified access
           </p>
         </div>
       </div>
