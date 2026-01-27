@@ -15,21 +15,40 @@ export interface HeroConfig {
   subtitle: string;
   backgroundImage: string;
   buttonText: string;
+  locationLabel: string;
+}
+
+export interface Restaurant {
+  id: number;
+  name: string;
+  cuisine: string;
+  rating: number;
+  time: string;
+  distance: string;
+  image: string;
+  tag: string;
+}
+
+export interface Attraction {
+  id: number;
+  name: string;
+  subtitle: string;
+  distance: string;
+  description: string;
+  image: string;
+  mapUrl: string;
 }
 
 export interface SiteConfig {
   hero: HeroConfig;
   rooms: Room[];
+  restaurants: Restaurant[];
+  touristGuides: Attraction[];
   announcement: string;
   lastUpdated: number;
 }
 
 export type ViewType = 'overview' | 'rooms' | 'guide' | 'restaurants' | 'privacy' | 'terms';
-
-export interface TouristSpot {
-  title: string;
-  uri: string;
-}
 
 export interface ChatMessage {
   role: 'user' | 'model';

@@ -32,7 +32,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
 
   return (
     <section className="relative pt-6 md:pt-10 pb-16 md:pb-20 px-3 md:px-10 bg-[#F2F6F9] w-full overflow-hidden">
-      {/* Background with Subtle Pattern & Edit Capability */}
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none">
         <img 
           src={config.backgroundImage} 
@@ -46,7 +45,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
           <label className="flex items-center gap-3 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg border border-gray-100 cursor-pointer hover:bg-white transition-all">
             <input type="file" className="hidden" onChange={handleImageChange} />
             {isUploading ? <Loader2 className="animate-spin text-hotel-primary" size={16} /> : <Camera size={16} className="text-hotel-primary" />}
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Change Hero Image</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Change Image</span>
           </label>
         </div>
       )}
@@ -55,7 +54,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
         <div className="mb-10 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-100 shadow-sm mb-6">
             <span className="w-2 h-2 rounded-full bg-hotel-primary animate-pulse"></span>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Now Accepting Bookings</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Open for Bookings</span>
           </div>
           
           {isEditMode ? (
@@ -66,9 +65,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
             />
           ) : (
             <h1 className="text-4xl md:text-7xl font-serif font-black text-gray-900 leading-[1.1] mb-6">
-              {config.title.split('Reimagined')[0]} 
-              <span className="text-hotel-primary">Reimagined</span> 
-              {config.title.split('Reimagined')[1]}
+              {config.title}
             </h1>
           )}
           
@@ -85,7 +82,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
           )}
         </div>
 
-        {/* Search Logic */}
         <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-[0_30px_100px_rgba(0,0,0,0.08)] p-4 md:p-6 border border-gray-50 group hover:shadow-[0_40px_120px_rgba(229,57,53,0.12)] transition-all duration-700">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4 items-stretch">
             <div className="lg:col-span-4 bg-gray-50 rounded-[1.5rem] p-5 flex items-center gap-5 border border-transparent group-hover:border-gray-100 transition-all">
@@ -94,7 +90,15 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
               </div>
               <div>
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Location</span>
-                <p className="text-sm font-black text-hotel-text">Sylhet HQ District</p>
+                {isEditMode ? (
+                  <input 
+                    className="text-sm font-black text-hotel-text bg-transparent border-b border-hotel-primary outline-none"
+                    value={config.locationLabel}
+                    onChange={(e) => onUpdate?.({ locationLabel: e.target.value })}
+                  />
+                ) : (
+                  <p className="text-sm font-black text-hotel-text">{config.locationLabel}</p>
+                )}
               </div>
             </div>
 

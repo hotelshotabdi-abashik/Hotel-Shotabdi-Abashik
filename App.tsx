@@ -23,7 +23,7 @@ import {
   onValue,
   update
 } from './services/firebase';
-import { UserProfile, SiteConfig, AppNotification } from './types';
+import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction } from './types';
 import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
@@ -56,14 +56,18 @@ const AppContent = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
+  
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
       title: "Luxury Rooms in Sylhet",
       subtitle: "Enjoy the best stay at the heart of the city.",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
-      buttonText: "Book Now"
+      buttonText: "Book Now",
+      locationLabel: "Sylhet HQ District"
     },
     rooms: ROOMS_DATA,
+    restaurants: [],
+    touristGuides: [],
     announcement: "25% OFF DISCOUNT",
     lastUpdated: 0
   });
@@ -118,7 +122,7 @@ const AppContent = () => {
       });
       if (res.ok) {
         setSiteConfig(updatedConfig);
-        alert("Website published!");
+        alert("Website published live!");
         setIsEditMode(false);
       } else {
         throw new Error("Save failed");
@@ -184,26 +188,33 @@ const AppContent = () => {
     await update(ref(db), updates);
   };
 
-  const toggleAuth = () => {
+  const closeAllPopups = () => {
+    setIsAuthModalOpen(false);
     setIsNotificationsOpen(false);
     setIsManageAccountOpen(false);
-    setIsAuthModalOpen(!isAuthModalOpen);
+  };
+
+  const toggleAuth = () => {
+    const nextState = !isAuthModalOpen;
+    closeAllPopups();
+    setIsAuthModalOpen(nextState);
   };
 
   const toggleNotifications = () => {
-    setIsAuthModalOpen(false);
-    setIsManageAccountOpen(false);
-    setIsNotificationsOpen(!isNotificationsOpen);
-    if (!isNotificationsOpen) markAllAsRead();
+    const nextState = !isNotificationsOpen;
+    closeAllPopups();
+    setIsNotificationsOpen(nextState);
+    if (nextState) markAllAsRead();
   };
 
   const toggleManageAccount = () => {
-    setIsAuthModalOpen(false);
-    setIsNotificationsOpen(false);
-    setIsManageAccountOpen(!isManageAccountOpen);
+    const nextState = !isManageAccountOpen;
+    closeAllPopups();
+    setIsManageAccountOpen(nextState);
   };
 
-  const handleLogoClick = () => {
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsLogoSpinning(true);
     setTimeout(() => setIsLogoSpinning(false), 600);
   };
@@ -248,7 +259,7 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Main Header */}
+        {/* Modern Header with Large Text & Logo Interaction */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
@@ -258,12 +269,12 @@ const AppContent = () => {
               >
                 <img 
                   src={LOGO_ICON_URL} 
-                  className={`w-10 h-10 md:w-14 md:h-14 object-contain ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
+                  className={`w-12 h-12 md:w-16 md:h-16 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
                   alt="Logo" 
                 />
               </div>
               <div className="flex flex-col select-none leading-none -space-y-0.5 md:-space-y-1">
-                <h1 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h1>
+                <h1 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h1>
                 <p className="text-[10px] md:text-[12px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
               </div>
             </div>
@@ -278,9 +289,9 @@ const AppContent = () => {
                   onClick={toggleNotifications}
                   className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
                 >
-                  <Bell size={24} />
+                  <Bell size={26} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">
+                    <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
                       {unreadCount}
                     </span>
                   )}
@@ -290,9 +301,9 @@ const AppContent = () => {
                   onClick={toggleManageAccount}
                   className={`flex items-center gap-3 bg-gray-50 hover:bg-white border p-1.5 pr-4 rounded-2xl transition-all group ${isManageAccountOpen ? 'border-hotel-primary/30 ring-4 ring-hotel-primary/5' : 'border-gray-100'}`}
                 >
-                  <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                     <img 
-                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
+                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=B22222&color=fff`} 
                       className="w-full h-full object-cover" 
                       alt="User"
                     />
@@ -305,13 +316,15 @@ const AppContent = () => {
                   </div>
                 </button>
 
+                {/* Notification Dropdown Panel */}
                 {isNotificationsOpen && (
-                  <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[100]">
+                  <div className="absolute top-16 right-0 w-[320px] bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-fade-in z-[100]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
                       <div>
-                        <h3 className="text-sm font-black uppercase tracking-widest">Alerts</h3>
+                        <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
+                        <p className="text-[9px] opacity-70 font-bold uppercase tracking-widest mt-0.5">Stay Updates</p>
                       </div>
-                      <button onClick={() => setIsNotificationsOpen(false)}>
+                      <button onClick={closeAllPopups} className="opacity-60 hover:opacity-100 transition-opacity">
                         <X size={18} />
                       </button>
                     </div>
@@ -324,15 +337,18 @@ const AppContent = () => {
                                 <Info size={14} />
                               </div>
                               <div className="flex-1">
-                                <h4 className="text-[11px] font-black text-gray-900 uppercase">{n.title}</h4>
-                                <p className="text-[10px] text-gray-500 mt-1">{n.message}</p>
+                                <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{n.title}</h4>
+                                <p className="text-[10px] text-gray-500 leading-relaxed mt-1">{n.message}</p>
                               </div>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="py-10 text-center text-gray-400">
-                          <p className="text-[10px] font-black uppercase tracking-widest">No new alerts</p>
+                        <div className="py-12 text-center">
+                          <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
+                            <Bell size={24} />
+                          </div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">No new alerts</p>
                         </div>
                       )}
                     </div>
@@ -366,12 +382,17 @@ const AppContent = () => {
                   onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))}
                   onImageUpload={(f) => uploadToR2(f, 'Rooms')}
                 />
-                <NearbyRestaurants />
+                <NearbyRestaurants 
+                  restaurants={siteConfig.restaurants}
+                  isEditMode={isEditMode}
+                  onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))}
+                  onImageUpload={(f) => uploadToR2(f, 'Restaurants')}
+                />
               </div>
             } />
             <Route path="/rooms" element={<div className="py-10"><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} /></div>} />
-            <Route path="/restaurants" element={<div className="py-10 min-h-screen"><NearbyRestaurants /></div>} />
-            <Route path="/guide" element={<div className="py-10"><TouristGuide /></div>} />
+            <Route path="/restaurants" element={<div className="py-10 min-h-screen"><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} /></div>} />
+            <Route path="/guide" element={<div className="py-10"><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Tourist Guides')} /></div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
             <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Denied</div>} />
@@ -401,7 +422,7 @@ const AppContent = () => {
 
         <AuthModal 
           isOpen={isAuthModalOpen} 
-          onClose={() => setIsAuthModalOpen(false)} 
+          onClose={closeAllPopups} 
         />
         
         {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
@@ -409,7 +430,7 @@ const AppContent = () => {
         {user && profile && isManageAccountOpen && (
           <ManageAccount 
             profile={profile} 
-            onClose={() => setIsManageAccountOpen(false)} 
+            onClose={closeAllPopups} 
             onUpdate={() => loadProfile(user)} 
           />
         )}
