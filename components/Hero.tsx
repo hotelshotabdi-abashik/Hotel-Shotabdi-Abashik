@@ -64,24 +64,24 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         {/* Simple Header Text */}
-        <div className="mb-10 text-center animate-fade-in">
-          <h2 className="text-3xl md:text-5xl font-sans font-black text-white leading-tight mb-3 tracking-tighter drop-shadow-lg">
+        <div className="mb-10 text-center animate-fade-in max-w-3xl">
+          <h2 className="text-3xl md:text-5xl font-sans font-black text-white leading-tight mb-4 tracking-tighter drop-shadow-lg">
             {isEditMode ? (
               <input 
                 className="bg-transparent border-b-2 border-hotel-primary outline-none text-center"
                 value={config.title}
                 onChange={(e) => onUpdate?.({ title: e.target.value })}
               />
-            ) : "Luxury Awaits You"}
+            ) : (config.title || "Luxury Awaits You")}
           </h2>
-          <p className="text-sm md:text-base text-white/90 font-bold uppercase tracking-widest opacity-80">
+          <p className="text-sm md:text-base text-white/90 font-medium leading-relaxed opacity-90 px-4">
             {isEditMode ? (
-              <input 
-                className="bg-transparent border-b border-white/20 outline-none w-full text-center"
+              <textarea 
+                className="bg-transparent border-b border-white/20 outline-none w-full text-center resize-none h-20"
                 value={config.subtitle}
                 onChange={(e) => onUpdate?.({ subtitle: e.target.value })}
               />
-            ) : "Premium Residential Service in Sylhet"}
+            ) : "Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking"}
           </p>
         </div>
 
