@@ -11,8 +11,21 @@ interface Props {
 }
 
 const DEFAULT_RESTAURANTS: Restaurant[] = [
-  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "10-15m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta" },
-  { id: 2, name: "Pach Bhai Restaurant", cuisine: "Bengali", rating: 4.7, time: "12-18m", distance: "0.3 km", image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80", tag: "🍛 Traditional Thali" }
+  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "5-10m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta" },
+  { id: 2, name: "Pach Bhai Restaurant", cuisine: "Bengali", rating: 4.7, time: "6-12m", distance: "0.3 km", image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80", tag: "🍛 Traditional Thali" },
+  { id: 3, name: "Woondaal King Kebab", cuisine: "Mughlai", rating: 4.6, time: "8-15m", distance: "0.5 km", image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&q=80", tag: "🍢 Kebab • Biryani" },
+  { id: 4, name: "Eatopia", cuisine: "International", rating: 4.5, time: "10-20m", distance: "0.8 km", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80", tag: "🍕 Pizza • Pasta" },
+  { id: 5, name: "Handi Restaurant", cuisine: "Indian", rating: 4.7, time: "12-18m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80", tag: "🥘 Indian • Curry" },
+  { id: 6, name: "Platinum Lounge", cuisine: "Continental", rating: 4.4, time: "15-25m", distance: "1.2 km", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80", tag: "🥗 Fine Dining" },
+  { id: 7, name: "Panshee Restaurant", cuisine: "Bengali", rating: 4.8, time: "5-10m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1563379091339-03b21ef4a4f8?auto=format&fit=crop&q=80", tag: "🍛 Best Sellers" },
+  { id: 8, name: "Rice & Spice", cuisine: "Fusion", rating: 4.3, time: "10-15m", distance: "0.7 km", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80", tag: "🍲 Healthy Bowls" },
+  { id: 9, name: "KFC Sylhet", cuisine: "Fast Food", rating: 4.2, time: "8-12m", distance: "0.4 km", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80", tag: "🍗 Fried Chicken" },
+  { id: 10, name: "Cafe 17", cuisine: "Cafe", rating: 4.6, time: "10-15m", distance: "0.9 km", image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80", tag: "☕ Coffee • Snacks" },
+  { id: 11, name: "Exotica Restaurant", cuisine: "Oriental", rating: 4.5, time: "15-20m", distance: "1.0 km", image: "https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&q=80", tag: "🥢 Chinese • Thai" },
+  { id: 12, name: "Spicy Grill", cuisine: "Grill", rating: 4.4, time: "12-18m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80", tag: "🔥 BBQ • Steak" },
+  { id: 13, name: "Tea Garden Cafe", cuisine: "Snacks", rating: 4.7, time: "20-30m", distance: "2.5 km", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", tag: "🍃 Scenic Views" },
+  { id: 14, name: "Bismillah Restora", cuisine: "Local", rating: 4.1, time: "5-8m", distance: "0.1 km", image: "https://images.unsplash.com/photo-1512058560550-42749359a60b?auto=format&fit=crop&q=80", tag: "🏠 Closest Spot" },
+  { id: 15, name: "Royal Dine", cuisine: "Buffet", rating: 4.5, time: "15-25m", distance: "1.5 km", image: "https://images.unsplash.com/photo-1544124499-58912cbddaad?auto=format&fit=crop&q=80", tag: "🤴 Luxury Buffet" }
 ];
 
 const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUpdate, onImageUpload }) => {
@@ -41,7 +54,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   };
 
   const deleteRes = (id: number) => {
-    if (window.confirm("Remove this restaurant?")) {
+    if (window.confirm("Remove this restaurant from the list?")) {
       onUpdate?.(displayList.filter(r => r.id !== id));
     }
   };
@@ -52,93 +65,144 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       name: "New Restaurant",
       cuisine: "Cuisine Type",
       rating: 4.5,
-      time: "15-20m",
-      distance: "1.0 km",
+      time: "10-15m",
+      distance: "0.5 km",
       image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80",
-      tag: "🍴 Cuisine Info"
+      tag: "🍴 New Spot"
     };
-    onUpdate?.([...displayList, newItem]);
+    onUpdate?.([newItem, ...displayList]);
   };
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full">
-      <div className="mb-10 text-center flex flex-col items-center">
-        <span className="text-hotel-primary font-bold text-[10px] uppercase tracking-[0.3em] mb-2 block">Nearby Dining</span>
-        <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-4 font-black">Food & Drinks</h2>
-        <p className="text-gray-500 text-sm max-w-xl mx-auto font-light leading-relaxed mb-6">
-          Great places to eat just minutes away from your room.
+      <div className="mb-12 text-center flex flex-col items-center">
+        <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy</span>
+        <h2 className="text-3xl md:text-5xl font-sans text-gray-900 mb-6 font-black tracking-tighter">Nearby Dining</h2>
+        <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-8">
+          A curated selection of the finest eateries in Sylhet, all located within a short distance of <span className="text-hotel-primary font-bold">Hotel Shotabdi</span>.
         </p>
+        
         {isEditMode && (
-          <button onClick={addRes} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all">
-            <Plus size={14} /> Add Place
+          <button 
+            onClick={addRes}
+            className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 hover:scale-105 transition-all mb-10"
+          >
+            <Plus size={18} /> Add New Restaurant
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {displayList.slice(0, visibleItems).map((res) => (
-          <div key={res.id} className="bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col md:flex-row overflow-hidden hover:shadow-xl transition-all duration-300 h-auto md:h-44 group relative">
-            <div className="w-full md:w-2/5 relative shrink-0 h-32 md:h-full overflow-hidden">
-              <img src={res.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={res.name} />
-              <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-white/90 backdrop-blur shadow-sm px-2 md:px-2.5 py-1 rounded-md text-[8px] md:text-[10px] font-bold text-gray-800">
+          <div key={res.id} className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative">
+            {/* Image Section */}
+            <div className="h-48 relative overflow-hidden shrink-0">
+              <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
+              <div className="absolute top-4 left-4">
                 {isEditMode ? (
-                  <input className="bg-transparent border-none outline-none w-20" value={res.tag} onChange={(e) => updateRes(res.id, 'tag', e.target.value)} />
-                ) : res.tag}
+                  <input 
+                    className="bg-white/95 backdrop-blur shadow-sm px-3 py-1 rounded-xl text-[9px] font-black text-gray-800 outline-none border border-blue-200"
+                    value={res.tag}
+                    onChange={(e) => updateRes(res.id, 'tag', e.target.value)}
+                  />
+                ) : (
+                  <span className="bg-white/95 backdrop-blur shadow-sm px-3 py-1 rounded-xl text-[9px] font-black text-gray-800">
+                    {res.tag}
+                  </span>
+                )}
               </div>
+              
               {isEditMode && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <label className="cursor-pointer bg-white p-2 rounded-full text-hotel-primary">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <label className="cursor-pointer bg-white p-3 rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all">
                       <input type="file" className="hidden" onChange={(e) => handleImageChange(res.id, e)} />
-                      {uploadingId === res.id ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
+                      {uploadingId === res.id ? <RefreshCw size={20} className="animate-spin" /> : <Camera size={20} />}
                    </label>
-                   <button onClick={() => deleteRes(res.id)} className="bg-white p-2 rounded-full text-hotel-primary hover:text-red-600"><Trash2 size={14} /></button>
+                   <button 
+                    onClick={() => deleteRes(res.id)}
+                    className="bg-white p-3 rounded-2xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                   >
+                     <Trash2 size={20} />
+                   </button>
                 </div>
               )}
             </div>
 
-            <div className="flex-1 p-4 md:p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start mb-1">
+            {/* Content Section */}
+            <div className="p-6 flex-1 flex flex-col">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
                   {isEditMode ? (
-                    <input className="text-sm md:text-xl font-bold text-gray-900 border-b border-hotel-primary outline-none flex-1" value={res.name} onChange={(e) => updateRes(res.id, 'name', e.target.value)} />
+                    <input 
+                      className="text-xl font-black text-gray-900 border-b-2 border-blue-600 outline-none w-full"
+                      value={res.name}
+                      onChange={(e) => updateRes(res.id, 'name', e.target.value)}
+                    />
                   ) : (
-                    <h3 className="text-sm md:text-xl font-bold text-gray-900 truncate leading-tight pr-1">{res.name}</h3>
+                    <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{res.name}</h3>
                   )}
-                  <div className="flex items-center gap-0.5 text-green-600 font-bold text-[10px] md:text-xs">
-                    {res.rating} <Star size={10} fill="currentColor" />
-                  </div>
+                  {isEditMode ? (
+                    <input 
+                      className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 w-full outline-none"
+                      value={res.cuisine}
+                      onChange={(e) => updateRes(res.id, 'cuisine', e.target.value)}
+                    />
+                  ) : (
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{res.cuisine}</p>
+                  )}
                 </div>
+                <div className="flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded-lg">
+                  <span className="text-xs font-black">{res.rating}</span>
+                  <Star size={10} fill="currentColor" />
+                </div>
+              </div>
 
-                <div className="flex flex-col md:flex-row gap-1 md:gap-4 mb-3">
-                  <div className="flex items-center gap-1 text-[9px] md:text-[11px] text-gray-400 font-medium">
-                    <Clock size={10} />
+              <div className="grid grid-cols-2 gap-4 mt-auto pt-6 border-t border-gray-50">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">Travel Time</span>
+                  <div className="flex items-center gap-2 text-[11px] font-black text-gray-700">
+                    <Clock size={12} className="text-blue-600" />
                     {isEditMode ? (
-                      <input className="bg-transparent border-none outline-none w-12" value={res.time} onChange={(e) => updateRes(res.id, 'time', e.target.value)} />
+                      <input 
+                        className="w-full bg-gray-50 rounded px-1 outline-none border-b border-blue-200"
+                        value={res.time}
+                        onChange={(e) => updateRes(res.id, 'time', e.target.value)}
+                      />
                     ) : res.time}
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] md:text-[11px] text-gray-400 font-medium">
-                    <MapPin size={10} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">From Hotel</span>
+                  <div className="flex items-center gap-2 text-[11px] font-black text-gray-700">
+                    <MapPin size={12} className="text-blue-600" />
                     {isEditMode ? (
-                      <input className="bg-transparent border-none outline-none w-12" value={res.distance} onChange={(e) => updateRes(res.id, 'distance', e.target.value)} />
+                      <input 
+                        className="w-full bg-gray-50 rounded px-1 outline-none border-b border-blue-200"
+                        value={res.distance}
+                        onChange={(e) => updateRes(res.id, 'distance', e.target.value)}
+                      />
                     ) : res.distance}
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button className="flex-1 bg-hotel-primary text-white flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-bold">
-                  <MapIcon size={12} /> Map
+              {!isEditMode && (
+                <button className="mt-6 w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2">
+                  <MapIcon size={14} /> View on Map
                 </button>
-              </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {visibleItems < displayList.length && (
-        <div className="mt-12 text-center">
-          <button onClick={() => setVisibleItems(prev => prev + 8)} className="group px-8 py-3.5 bg-white border border-gray-200 text-hotel-secondary font-black text-[10px] md:text-[11px] uppercase tracking-widest rounded-xl hover:bg-hotel-primary hover:text-white transition-all shadow-sm">
-            See More Places <ChevronRight size={14} className="inline ml-2" />
+        <div className="mt-16 text-center">
+          <button 
+            onClick={() => setVisibleItems(prev => prev + 6)}
+            className="group px-10 py-5 bg-white border-2 border-gray-100 text-gray-900 font-black text-[11px] uppercase tracking-[0.2em] rounded-[2rem] hover:border-blue-600 hover:text-blue-600 transition-all shadow-xl shadow-gray-100/50"
+          >
+            Show More Local Eateries <ChevronRight size={16} className="inline ml-2 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}
