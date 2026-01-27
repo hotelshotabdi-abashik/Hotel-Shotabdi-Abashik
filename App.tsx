@@ -312,7 +312,7 @@ const AppContent = () => {
 
         {/* Floating Map Pin for Mobile */}
         <a 
-          href="https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100"
+          href="https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+Kumargaon,+Bus+Stand,+Sylhet+3100"
           target="_blank"
           rel="noopener noreferrer"
           className="lg:hidden fixed bottom-28 right-6 z-50 bg-hotel-primary text-white p-4 rounded-full shadow-2xl animate-bounce hover:animate-none active:scale-90 transition-all"
@@ -361,7 +361,7 @@ const AppContent = () => {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <MapPin size={18} className="text-white/60 shrink-0" />
-                  <span className="text-sm">WR6H+Q2P, Humayun Rashid Square, Sylhet 3100</span>
+                  <span className="text-sm">Kumargaon, Bus Stand, Sylhet 3100</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone size={18} className="text-white/60 shrink-0" />
@@ -398,7 +398,7 @@ const AppContent = () => {
                       height="100%"
                       frameBorder="0"
                       scrolling="no"
-                      src="https://maps.google.com/maps?q=Hotel%20Shotabdi%20Residential,%20WR6H+Q2P,%20Sylhet%203100&t=&z=14&ie=UTF8&iwloc=addr&output=embed"
+                      src="https://maps.google.com/maps?q=Hotel%20Shotabdi%20Residential,%20Kumargaon,%20Bus%20Stand,%20Sylhet%203100&t=&z=14&ie=UTF8&iwloc=addr&output=embed"
                     ></iframe>
                   </div>
                 </li>

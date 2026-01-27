@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -96,7 +95,7 @@ const Hero: React.FC = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Location</span>
-                <p className="text-sm font-black text-hotel-text truncate">Sylhet, Humayun Rashid Square</p>
+                <p className="text-sm font-black text-hotel-text truncate">Sylhet, Kumargaon, Bus Stand</p>
               </div>
             </div>
 
