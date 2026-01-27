@@ -2,22 +2,25 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getAuth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
   onAuthStateChanged, 
+  signOut, 
   GoogleAuthProvider, 
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithCredential,
-  sendEmailVerification,
-  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { 
+  getDatabase, 
+  ref, 
+  set, 
+  get, 
+  child,
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAk6x2Mt9IqmQftA5YI-wBbPEP9KBH2wFQ",
   authDomain: "hotel-shotabdi.firebaseapp.com",
+  databaseURL: "https://hotel-shotabdi-default-rtdb.asia-southeast1.firebasedatabase.app/",
   projectId: "hotel-shotabdi",
   storageBucket: "hotel-shotabdi.firebasestorage.app",
   messagingSenderId: "682102275681",
@@ -27,20 +30,43 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getDatabase(app);
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
+// Function to handle profile synchronization in Realtime Database
+export const syncUserProfile = async (user: any) => {
+  if (!user) return;
+  const userRef = ref(db, `profiles/${user.uid}`);
+  const snapshot = await get(userRef);
+
+  if (!snapshot.exists()) {
+    // First time login - create social profile
+    await set(userRef, {
+      uid: user.uid,
+      displayName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      username: user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, ''),
+      bio: "Checking in at Shotabdi Residential!",
+      createdAt: serverTimestamp(),
+      lastLogin: serverTimestamp()
+    });
+  } else {
+    // Returning user - update last login
+    const lastLoginRef = ref(db, `profiles/${user.uid}/lastLogin`);
+    await set(lastLoginRef, serverTimestamp());
+  }
+};
+
 export { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
   onAuthStateChanged, 
+  signOut, 
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
-  sendEmailVerification,
-  sendPasswordResetEmail
+  ref,
+  get,
+  set
 };

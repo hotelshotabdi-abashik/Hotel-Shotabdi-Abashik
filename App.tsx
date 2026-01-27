@@ -12,15 +12,18 @@ import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
 import { 
   auth, 
+  db,
   onAuthStateChanged, 
   signOut, 
   signInWithCredential, 
-  GoogleAuthProvider 
+  GoogleAuthProvider,
+  syncUserProfile,
+  ref,
+  get
 } from './services/firebase';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, AlertCircle } from 'lucide-react';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
-// Updated to the user-provided Google Client ID
 const GOOGLE_CLIENT_ID = "682102275681-le7slsv9pnljvq34ht8llnbrkn5mumpg.apps.googleusercontent.com";
 
 const ScrollToTop = () => {
@@ -31,9 +34,10 @@ const ScrollToTop = () => {
   return null;
 };
 
-const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfileOpen, setIsProfileOpen }: { 
+const Header = ({ user, isAdmin, isOwner, openAuth, handleSignOut, isAuthLoading, isProfileOpen, setIsProfileOpen }: { 
   user: any, 
   isAdmin: boolean, 
+  isOwner: boolean,
   openAuth: () => void, 
   handleSignOut: () => void,
   isAuthLoading: boolean,
@@ -108,8 +112,8 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
                   <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
                     {user.displayName || 'Guest User'}
                   </p>
-                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                    {isAdmin ? 'Admin Portal' : 'Verified Member'}
+                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isOwner ? 'text-purple-600' : isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                    {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : 'Verified Member'}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
@@ -144,7 +148,7 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
                 </div>
               </div>
               
-              {isAdmin && (
+              {(isAdmin || isOwner) && (
                 <Link 
                   to="/admin" 
                   onClick={() => setIsProfileOpen(false)}
@@ -179,9 +183,27 @@ const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const roleRef = ref(db, `roles/${userId}`);
+      const roleSnap = await get(roleRef);
+      if (roleSnap.exists()) {
+        const role = roleSnap.val();
+        setIsAdmin(role === 'admin' || role === 'owner');
+        setIsOwner(role === 'owner');
+      } else {
+        setIsAdmin(false);
+        setIsOwner(false);
+      }
+    } catch (err) {
+      console.error("Error fetching user role:", err);
+    }
+  };
 
   const initializeGoogleOneTap = () => {
     if ((window as any).google && !user) {
@@ -193,6 +215,7 @@ const AppContent = () => {
             try {
               const credential = GoogleAuthProvider.credential(response.credential);
               const result = await signInWithCredential(auth, credential);
+              await syncUserProfile(result.user);
               setUser(result.user);
             } catch (err) {
               console.error("One Tap Authentication Failed:", err);
@@ -213,18 +236,16 @@ const AppContent = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        await syncUserProfile(currentUser);
+        await fetchUserRole(currentUser.uid);
+      }
       setUser(currentUser);
       setIsAuthLoading(false);
       
-      if (currentUser) {
-        try {
-          const idTokenResult = await currentUser.getIdTokenResult(true);
-          setIsAdmin(!!idTokenResult.claims.admin);
-        } catch (e) {
-          console.error("Claims fetch error:", e);
-        }
-      } else {
+      if (!currentUser) {
         setIsAdmin(false);
+        setIsOwner(false);
         if ((window as any).google) {
           initializeGoogleOneTap();
         } else {
@@ -254,12 +275,13 @@ const AppContent = () => {
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
-      <Sidebar isAdmin={isAdmin} />
+      <Sidebar isAdmin={isAdmin || isOwner} />
 
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full overflow-x-hidden">
         <Header 
           user={user} 
           isAdmin={isAdmin} 
+          isOwner={isOwner}
           openAuth={openAuth} 
           handleSignOut={handleSignOut} 
           isAuthLoading={isAuthLoading}
@@ -299,7 +321,11 @@ const AppContent = () => {
         <AuthModal 
           isOpen={isAuthModalOpen} 
           onClose={() => setIsAuthModalOpen(false)} 
-          onSuccess={(u) => setUser(u)}
+          onSuccess={async (u) => {
+            await syncUserProfile(u);
+            await fetchUserRole(u.uid);
+            setUser(u);
+          }}
         />
 
         {/* Floating Map Pin for Mobile */}
@@ -314,7 +340,7 @@ const AppContent = () => {
 
         <MobileBottomNav 
           user={user} 
-          isAdmin={isAdmin} 
+          isAdmin={isAdmin || isOwner} 
           openAuth={openAuth} 
           toggleProfile={() => setIsProfileOpen(!isProfileOpen)}
         />
