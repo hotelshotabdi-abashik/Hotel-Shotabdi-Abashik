@@ -7,6 +7,8 @@ import {
   signOut, 
   onAuthStateChanged, 
   GoogleAuthProvider, 
+  FacebookAuthProvider,
+  TwitterAuthProvider,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
@@ -27,12 +29,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
 
-// Custom parameters to improve the redirect experience
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+export const facebookProvider = new FacebookAuthProvider();
+export const twitterProvider = new TwitterAuthProvider();
 
 export { 
   signInWithEmailAndPassword, 
