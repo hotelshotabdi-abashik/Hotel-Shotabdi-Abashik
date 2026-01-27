@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { Room } from '../types';
 
 interface RoomGridProps {
@@ -42,7 +42,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
   });
 
   const formatPriceString = (price: string) => {
-    // CRITICAL FIX: Guard against undefined or null price strings to prevent replace() crash
     const safePrice = price || "";
     const numeric = parseFloat(safePrice.replace(/[^0-9.]/g, ''));
     return isNaN(numeric) ? safePrice : formatter.format(numeric);
@@ -118,18 +117,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
           return (
             <div key={room.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 group transition-all duration-500 flex flex-col h-full relative shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
               
-              {/* Image Header */}
               <div className="h-64 relative overflow-hidden shrink-0">
                 <img 
                   src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} 
                   className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" 
                   alt={room.title} 
                 />
-                
-                {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-                {/* Status Tag */}
                 <div className="absolute top-5 left-6 z-10">
                   {isEditMode ? (
                     <input 
@@ -160,7 +154,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
                 )}
               </div>
               
-              {/* Card Body */}
               <div className="p-8 flex flex-col flex-1">
                 <div className="mb-6">
                   {isEditMode ? (
@@ -171,12 +164,16 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
                       onChange={(e) => updateRoom(room.id, 'title', e.target.value)}
                     />
                   ) : (
-                    <h3 className="text-xl md:text-2xl font-sans text-hotel-primary font-black leading-tight mb-2">
-                      {room.title}
-                    </h3>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="text-xl md:text-2xl font-sans text-hotel-primary font-black leading-tight">
+                        {room.title}
+                      </h3>
+                      <span className="inline-flex items-center gap-1 bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full animate-pulse shadow-lg shadow-red-100 uppercase tracking-widest">
+                        <Tag size={10} fill="currentColor" /> 25% OFF
+                      </span>
+                    </div>
                   )}
                   
-                  {/* Detailed Pricing Logic Display */}
                   <div className="flex flex-wrap items-center gap-3">
                     {isEditMode ? (
                       <div className="space-y-2 w-full">
@@ -231,7 +228,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
                   <RoomDescription text={room.desc} />
                 )}
 
-                {/* Features Section */}
                 <div className="mb-10">
                   <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-4">Room Features</p>
                   {isEditMode ? (
@@ -253,7 +249,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
                   )}
                 </div>
 
-                {/* Book Button */}
                 <div className="mt-auto">
                   <button className="w-full bg-[#9B1C1C] hover:bg-hotel-primary text-white py-6 rounded-[2.5rem] font-black text-[13px] uppercase tracking-[0.25em] shadow-xl shadow-red-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98] group/btn">
                     Confirm Booking <ChevronRight size={18} className="group-hover/btn:translate-x-1.5 transition-transform" />

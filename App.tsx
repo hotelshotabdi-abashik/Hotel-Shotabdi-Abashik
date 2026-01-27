@@ -152,7 +152,6 @@ const AppContent = () => {
   };
 
   const uploadToR2 = async (file: File, folder: string): Promise<string> => {
-    // CRITICAL FIX: Guard against undefined or empty folder string to prevent replace() crash
     const safeFolder = folder || "uploads";
     const cleanFolderName = safeFolder.replace(/^\/|\/$/g, '');
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
@@ -413,12 +412,11 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        {/* Updated Amazing Footer */}
+        {/* Professional Interactive Footer */}
         <footer className="bg-white border-t border-gray-50 py-16 px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-20 mb-16">
               
-              {/* Brand Information */}
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Logo" />
@@ -436,14 +434,13 @@ const AppContent = () => {
                 </div>
               </div>
 
-              {/* Location & Contact Details */}
               <div className="space-y-8">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <MapPin size={16} className="text-hotel-primary" />
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Address</p>
                   </div>
-                  <p className="text-[13px] text-gray-600 font-bold leading-relaxed">
+                  <p className="text-[11px] text-gray-600 font-bold leading-relaxed">
                     Kumar Gaon Bus Stand,<br />
                     Sunamganj Road, Sylhet
                   </p>
@@ -454,23 +451,34 @@ const AppContent = () => {
                     <Phone size={16} className="text-hotel-primary" />
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Phone Numbers</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[13px] text-gray-600 font-bold">01717-425702</p>
-                    <p className="text-[13px] text-gray-600 font-bold">0133-4935566</p>
+                  <div className="flex flex-col gap-2">
+                    <a href="tel:+8801717425702" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors flex items-center gap-2 group">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                      01717-425702
+                    </a>
+                    <a href="tel:+8801334935566" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors flex items-center gap-2 group">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                      0133-4935566
+                    </a>
                   </div>
                 </div>
               </div>
 
-              {/* Email & Support */}
               <div className="space-y-8">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <Mail size={16} className="text-hotel-primary" />
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email Correspondence</p>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-[13px] text-gray-600 font-bold break-all">kahar.info@gmail.com</p>
-                    <p className="text-[13px] text-gray-600 font-bold break-all">hotelshotabdiabashik@gmail.com</p>
+                  <div className="flex flex-col gap-2">
+                    <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                      kahar.info@gmail.com
+                    </a>
+                    <a href="mailto:hotelshotabdiabashik@gmail.com" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                      hotelshotabdiabashik@gmail.com
+                    </a>
                   </div>
                 </div>
 
@@ -482,7 +490,6 @@ const AppContent = () => {
 
             </div>
 
-            {/* Bottom Bar */}
             <div className="pt-10 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
               <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
                 © 2024 Hotel Shotabdi Residential • All Rights Reserved
