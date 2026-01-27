@@ -9,15 +9,16 @@ interface RoomGridProps {
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const RoomDescription: React.FC<{ text: string }> = ({ text }) => {
+const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const limit = 100;
-  const isLong = text.length > limit;
+  const safeText = text || "";
+  const isLong = safeText.length > limit;
 
   return (
     <div className="mb-8">
       <p className="text-[12px] text-gray-500 leading-relaxed font-light">
-        {isExpanded || !isLong ? text : `${text.substring(0, limit)}...`}
+        {isExpanded || !isLong ? safeText : `${safeText.substring(0, limit)}...`}
         {isLong && (
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
@@ -32,7 +33,7 @@ const RoomDescription: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImageUpload }) => {
+const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, onImageUpload }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   // Modern currency formatter for BDT (৳)
@@ -41,8 +42,10 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
   });
 
   const formatPriceString = (price: string) => {
-    const numeric = parseFloat(price.replace(/[^0-9.]/g, ''));
-    return isNaN(numeric) ? price : formatter.format(numeric);
+    // CRITICAL FIX: Guard against undefined or null price strings
+    const safePrice = price || "";
+    const numeric = parseFloat(safePrice.replace(/[^0-9.]/g, ''));
+    return isNaN(numeric) ? safePrice : formatter.format(numeric);
   };
 
   const handleImageChange = async (roomId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +121,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
               {/* Image Header */}
               <div className="h-64 relative overflow-hidden shrink-0">
                 <img 
-                  src={room.image} 
+                  src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} 
                   className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" 
                   alt={room.title} 
                 />
@@ -131,7 +134,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                   {isEditMode ? (
                     <input 
                       className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[8px] font-black text-gray-900 uppercase tracking-widest shadow-sm outline-none border border-hotel-primary/20"
-                      value={room.tag}
+                      value={room.tag || ""}
                       onChange={(e) => updateRoom(room.id, 'tag', e.target.value)}
                     />
                   ) : (
@@ -163,7 +166,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                   {isEditMode ? (
                     <input 
                       className="text-xl font-sans text-hotel-primary font-black w-full bg-gray-50 border-b border-gray-200 outline-none py-1 mb-2"
-                      value={room.title}
+                      value={room.title || ""}
                       placeholder="Room Title"
                       onChange={(e) => updateRoom(room.id, 'title', e.target.value)}
                     />
@@ -183,7 +186,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                               <span className="text-[10px] font-bold text-gray-400">৳</span>
                               <input 
                                 className="text-[12px] font-bold text-gray-500 bg-transparent outline-none py-1 w-full"
-                                value={room.price}
+                                value={room.price || ""}
                                 placeholder="Reg. Price"
                                 onChange={(e) => updateRoom(room.id, 'price', e.target.value)}
                               />
@@ -195,7 +198,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                               <span className="text-[10px] font-bold text-hotel-primary">৳</span>
                               <input 
                                 className="text-[12px] font-black text-hotel-primary bg-transparent outline-none py-1 w-full"
-                                value={room.discountPrice}
+                                value={room.discountPrice || ""}
                                 placeholder="Offer Price"
                                 onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)}
                               />
@@ -220,7 +223,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                 {isEditMode ? (
                   <textarea 
                     className="text-[12px] text-gray-500 mb-8 w-full bg-gray-50 outline-none p-4 rounded-2xl h-24 border border-gray-100 font-medium leading-relaxed resize-none"
-                    value={room.desc}
+                    value={room.desc || ""}
                     placeholder="Room description..."
                     onChange={(e) => updateRoom(room.id, 'desc', e.target.value)}
                   />
@@ -234,13 +237,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                   {isEditMode ? (
                     <textarea 
                       className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-[11px] font-bold text-gray-600 outline-none focus:border-hotel-primary min-h-[80px] resize-none"
-                      value={room.features.join(', ')}
+                      value={(room.features || []).join(', ')}
                       placeholder="Features (comma separated)"
                       onChange={(e) => updateRoom(room.id, 'features', e.target.value.split(',').map((s: string) => s.trim()).filter((s: string) => s !== ""))}
                     />
                   ) : (
                     <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                      {room.features.map((feat, idx) => (
+                      {(room.features || []).map((feat, idx) => (
                         <div key={idx} className="flex items-center gap-2.5">
                           <CheckCircle2 size={14} className="text-hotel-primary shrink-0" />
                           <span className="text-[11px] font-bold text-gray-600 whitespace-nowrap">{feat}</span>

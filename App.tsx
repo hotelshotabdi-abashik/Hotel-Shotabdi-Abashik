@@ -92,7 +92,9 @@ const AppContent = () => {
       const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
       if (res.ok) {
         const data = await res.json();
-        setSiteConfig(prev => data.lastUpdated > prev.lastUpdated ? data : prev);
+        if (data && typeof data === 'object') {
+          setSiteConfig(prev => (data.lastUpdated || 0) > prev.lastUpdated ? data : prev);
+        }
       }
     } catch (e) {
       console.warn("Using default settings.");
@@ -150,7 +152,9 @@ const AppContent = () => {
   };
 
   const uploadToR2 = async (file: File, folder: string): Promise<string> => {
-    const cleanFolderName = folder.replace(/^\/|\/$/g, '');
+    // CRITICAL FIX: Guard against undefined folder
+    const safeFolder = folder || "uploads";
+    const cleanFolderName = safeFolder.replace(/^\/|\/$/g, '');
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
     const res = await fetch(`${CMS_WORKER_URL}/${filename}`, {
       method: 'PUT',
@@ -243,7 +247,7 @@ const AppContent = () => {
     );
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = (notifications || []).filter(n => !n.read).length;
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
@@ -342,7 +346,7 @@ const AppContent = () => {
                       </button>
                     </div>
                     <div className="max-h-[350px] overflow-y-auto no-scrollbar p-4 space-y-3">
-                      {notifications.length > 0 ? (
+                      {(notifications || []).length > 0 ? (
                         notifications.map((n) => (
                           <div key={n.id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-white border-gray-50 opacity-60' : 'bg-red-50/50 border-hotel-primary/10'}`}>
                             <div className="flex gap-3">
