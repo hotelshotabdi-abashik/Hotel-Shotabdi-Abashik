@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink } from 'lucide-react';
+import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare } from 'lucide-react';
 import { Attraction } from '../types';
 
 interface Props {
@@ -31,6 +31,10 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
     spot.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const generateMapUrl = (name: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet')}`;
+  };
+
   const handleImageChange = async (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onImageUpload) {
@@ -50,6 +54,13 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
     onUpdate?.(updated);
   };
 
+  const syncMapLink = (id: number) => {
+    const spot = displayList.find(s => s.id === id);
+    if (spot && spot.name) {
+      updateSpot(id, 'mapUrl', generateMapUrl(spot.name));
+    }
+  };
+
   const deleteSpot = (id: number) => {
     if (window.confirm("Delete this attraction permanently?")) {
       onUpdate?.(displayList.filter(r => r.id !== id));
@@ -64,7 +75,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
       distance: "5.0 km",
       description: "A short but engaging description of this local treasure.",
       image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80",
-      mapUrl: "https://www.google.com/maps"
+      mapUrl: ""
     };
     onUpdate?.([newItem, ...displayList]);
   };
@@ -180,7 +191,27 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                 <div className="mt-auto pt-6 border-t border-gray-50">
                   {isEditMode ? (
                     <div className="flex flex-col gap-2">
-                       <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                       <div className="flex justify-between items-center">
+                          <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                          <div className="flex gap-2">
+                             <button 
+                                onClick={() => syncMapLink(spot.id)}
+                                className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                title="Generate link based on name"
+                              >
+                                <Wand2 size={10} /> Sync
+                              </button>
+                              {spot.mapUrl && (
+                                <a 
+                                  href={spot.mapUrl} 
+                                  target="_blank" 
+                                  className="text-[8px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                >
+                                  <CheckSquare size={10} /> Verify
+                                </a>
+                              )}
+                          </div>
+                       </div>
                        <div className="relative">
                          <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                          <input 
@@ -193,7 +224,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                     </div>
                   ) : (
                     <a 
-                      href={spot.mapUrl.startsWith('http') ? spot.mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.mapUrl || spot.name)}`} 
+                      href={spot.mapUrl.startsWith('http') ? spot.mapUrl : generateMapUrl(spot.mapUrl || spot.name)} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="inline-flex items-center gap-2 text-gray-900 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-colors group/btn"

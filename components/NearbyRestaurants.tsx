@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink } from 'lucide-react';
+import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare } from 'lucide-react';
 import { Restaurant } from '../types';
 
 interface Props {
@@ -25,6 +25,10 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
 
   const displayList = restaurants.length > 0 ? restaurants : DEFAULT_RESTAURANTS;
 
+  const generateMapUrl = (name: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet')}`;
+  };
+
   const handleImageChange = async (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onImageUpload) {
@@ -44,6 +48,13 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
     onUpdate?.(updated);
   };
 
+  const syncMapLink = (id: number) => {
+    const res = displayList.find(r => r.id === id);
+    if (res && res.name) {
+      updateRes(id, 'mapUrl', generateMapUrl(res.name));
+    }
+  };
+
   const deleteRes = (id: number) => {
     if (window.confirm("Remove this restaurant from the list?")) {
       onUpdate?.(displayList.filter(r => r.id !== id));
@@ -60,7 +71,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       distance: "0.5 km",
       image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80",
       tag: "🍴 New Spot",
-      mapUrl: "https://www.google.com/maps"
+      mapUrl: ""
     };
     onUpdate?.([newItem, ...displayList]);
   };
@@ -178,8 +189,28 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
 
               <div className="mt-6">
                 {isEditMode ? (
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                       <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                       <div className="flex gap-2">
+                         <button 
+                            onClick={() => syncMapLink(res.id)}
+                            className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                            title="Generate link based on name"
+                          >
+                            <Wand2 size={10} /> Sync
+                          </button>
+                          {res.mapUrl && (
+                            <a 
+                              href={res.mapUrl} 
+                              target="_blank" 
+                              className="text-[8px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                            >
+                              <CheckSquare size={10} /> Verify
+                            </a>
+                          )}
+                       </div>
+                    </div>
                     <div className="relative">
                       <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                       <input 
@@ -192,7 +223,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                   </div>
                 ) : (
                   <a 
-                    href={res.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name + ' Sylhet')}`} 
+                    href={res.mapUrl || generateMapUrl(res.name)} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/map"
