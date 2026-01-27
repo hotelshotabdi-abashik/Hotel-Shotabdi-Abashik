@@ -321,7 +321,7 @@ const AppContent = () => {
                 >
                   <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                     <img 
-                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=B22222&color=fff`} 
+                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
                       className="w-full h-full object-cover" 
                       alt="User"
                     />
@@ -412,7 +412,7 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        {/* Professional Interactive Footer */}
+        {/* Updated Modern Gray Footer */}
         <footer className="bg-white border-t border-gray-50 py-16 px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-20 mb-16">
@@ -430,6 +430,7 @@ const AppContent = () => {
                 </p>
                 <div className="flex gap-4">
                   <Link to="/privacypolicy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy Policy</Link>
+                  <span className="text-gray-200">|</span>
                   <Link to="/termsofservice" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms</Link>
                 </div>
               </div>
@@ -437,10 +438,10 @@ const AppContent = () => {
               <div className="space-y-8">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <MapPin size={16} className="text-hotel-primary" />
+                    <MapPin size={16} className="text-gray-400" />
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Address</p>
                   </div>
-                  <p className="text-[11px] text-gray-600 font-bold leading-relaxed">
+                  <p className="text-[11px] text-gray-500 font-normal leading-relaxed">
                     Kumar Gaon Bus Stand,<br />
                     Sunamganj Road, Sylhet
                   </p>
@@ -448,16 +449,16 @@ const AppContent = () => {
 
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <Phone size={16} className="text-hotel-primary" />
+                    <Phone size={16} className="text-gray-400" />
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Phone Numbers</p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <a href="tel:+8801717425702" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                    <a href="tel:+8801717425702" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors flex items-center gap-2 group">
+                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
                       01717-425702
                     </a>
-                    <a href="tel:+8801334935566" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                    <a href="tel:+8801334935566" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors flex items-center gap-2 group">
+                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
                       0133-4935566
                     </a>
                   </div>
@@ -467,16 +468,16 @@ const AppContent = () => {
               <div className="space-y-8">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <Mail size={16} className="text-hotel-primary" />
+                    <Mail size={16} className="text-gray-400" />
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email Correspondence</p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                    <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
+                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
                       kahar.info@gmail.com
                     </a>
-                    <a href="mailto:hotelshotabdiabashik@gmail.com" className="text-[11px] text-gray-600 font-bold hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
+                    <a href="mailto:hotelshotabdiabashik@gmail.com" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
+                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
                       hotelshotabdiabashik@gmail.com
                     </a>
                   </div>
@@ -484,7 +485,7 @@ const AppContent = () => {
 
                 <div className="pt-4">
                   <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em] mb-2">Service Standard</p>
-                  <p className="text-[10px] text-gray-400 font-bold italic">"Your comfort and trust are our highest priorities."</p>
+                  <p className="text-[10px] text-gray-400 font-normal italic">"Your comfort and trust are our highest priorities."</p>
                 </div>
               </div>
 

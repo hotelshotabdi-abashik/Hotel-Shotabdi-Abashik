@@ -1,10 +1,11 @@
-import React from 'react';
-import { Phone, LayoutDashboard } from 'lucide-react';
+import React, { useState } from 'react';
+import { Phone, LayoutDashboard, ChevronRight, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 
 const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
+  const [showCallChoices, setShowCallChoices] = useState(false);
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
 
   return (
@@ -79,14 +80,48 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
 
       <div className="p-6 pt-0">
         <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 group hover:border-hotel-primary/20 transition-all">
-          <div className="flex items-center gap-3 mb-2">
-            <Phone size={14} className="text-hotel-primary" />
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helpline</span>
+          <div className="flex items-center gap-3 mb-3">
+            <Phone size={14} className="text-gray-400 group-hover:text-hotel-primary transition-colors" />
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helplines</span>
           </div>
-          <p className="text-[12px] text-gray-900 font-normal mb-4">+8801717425702</p>
-          <a href="tel:+8801717425702" className="block w-full bg-white text-hotel-primary py-3.5 text-[9px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center">
-            Call Reception
-          </a>
+          <div className="space-y-1 mb-5">
+            <p className="text-[11px] text-gray-500 font-medium tracking-tight">01717-425702</p>
+            <p className="text-[11px] text-gray-500 font-medium tracking-tight">0133-4935566</p>
+          </div>
+          
+          {!showCallChoices ? (
+            <button 
+              onClick={() => setShowCallChoices(true)}
+              className="block w-full bg-white text-gray-500 py-3.5 text-[9px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center active:scale-95"
+            >
+              Call Reception
+            </button>
+          ) : (
+            <div className="space-y-2 animate-fade-in">
+              <div className="flex flex-col gap-2">
+                <a 
+                  href="tel:+8801717425702" 
+                  className="flex items-center justify-between w-full bg-hotel-primary text-white py-3 px-4 rounded-xl shadow-lg shadow-red-100 hover:brightness-110 transition-all active:scale-95 group/call"
+                >
+                  <span className="text-[9px] font-black uppercase tracking-widest">Line 1</span>
+                  <ChevronRight size={14} className="group-hover/call:translate-x-1 transition-transform" />
+                </a>
+                <a 
+                  href="tel:+8801334935566" 
+                  className="flex items-center justify-between w-full bg-hotel-primary text-white py-3 px-4 rounded-xl shadow-lg shadow-red-100 hover:brightness-110 transition-all active:scale-95 group/call"
+                >
+                  <span className="text-[9px] font-black uppercase tracking-widest">Line 2</span>
+                  <ChevronRight size={14} className="group-hover/call:translate-x-1 transition-transform" />
+                </a>
+              </div>
+              <button 
+                onClick={() => setShowCallChoices(false)}
+                className="w-full flex items-center justify-center gap-2 mt-2 text-[8px] font-black uppercase tracking-widest text-gray-400 hover:text-hotel-primary transition-colors"
+              >
+                <X size={12} /> Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>
