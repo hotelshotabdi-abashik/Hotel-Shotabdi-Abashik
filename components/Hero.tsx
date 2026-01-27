@@ -11,7 +11,9 @@ import {
   Users, 
   Search,
   MapPin,
-  Building2
+  Building2,
+  ShieldCheck,
+  Wifi
 } from 'lucide-react';
 
 const Hero: React.FC = () => {
@@ -175,17 +177,21 @@ const Hero: React.FC = () => {
 
         </div>
 
-        {/* Feature Highlights */}
-        <div className="mt-8 md:mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
+        {/* Feature Highlights (Minimal - Box Removed) */}
+        <div className="mt-12 md:mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-center">
           {[
-            { label: '24/7 Security', icon: <div className="text-hotel-primary mx-auto mb-1 md:mb-2"><Home size={20} /></div> },
-            { label: 'Fast Wi-Fi', icon: <div className="text-hotel-primary mx-auto mb-1 md:mb-2"><Compass size={20} /></div> },
-            { label: 'City Central', icon: <div className="text-hotel-primary mx-auto mb-1 md:mb-2"><MapPin size={20} /></div> },
-            { label: 'Great Dining', icon: <div className="text-hotel-primary mx-auto mb-1 md:mb-2"><Utensils size={20} /></div> },
+            { label: '24/7 Security', icon: <ShieldCheck size={24} /> },
+            { label: 'Fast Wi-Fi', icon: <Wifi size={24} /> },
+            { label: 'City Central', icon: <MapPin size={24} /> },
+            { label: 'Great Dining', icon: <Utensils size={24} /> },
           ].map((feature, i) => (
-            <div key={i} className="bg-white/50 backdrop-blur-sm p-4 md:p-6 rounded-2xl md:rounded-3xl border border-white transition-all hover:shadow-lg">
-              {feature.icon}
-              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{feature.label}</p>
+            <div key={i} className="flex flex-col items-center justify-center text-center group">
+              <div className="text-hotel-primary mb-3 transition-transform duration-300 group-hover:scale-110">
+                {feature.icon}
+              </div>
+              <p className="text-[9px] md:text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-hotel-primary transition-colors">
+                {feature.label}
+              </p>
             </div>
           ))}
         </div>
