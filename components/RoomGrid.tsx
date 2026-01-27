@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, Star, ShieldCheck, Sparkles, BedDouble } from 'lucide-react';
+import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, Star, ShieldCheck, Sparkles } from 'lucide-react';
 import { Room } from '../types';
 
 interface RoomGridProps {
@@ -64,25 +63,26 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
 
   return (
     <section id="rooms" className="max-w-7xl mx-auto pt-16 md:pt-24 pb-24 px-4 md:px-6 bg-white w-full">
-      <div className="flex flex-col md:flex-row justify-between items-end mb-12 md:mb-16 gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-16 md:mb-20 gap-8">
         <div className="max-w-2xl text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/10 text-hotel-primary text-[9px] font-black uppercase tracking-[0.3em] mb-4">
-            <Sparkles size={12} fill="currentColor" /> Limited Availability
+          <div className="inline-flex items-center gap-3 px-4 py-1 rounded-full bg-hotel-primary/5 text-hotel-primary text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+            <Zap size={12} fill="currentColor" /> Seasonal Offer
           </div>
-          <h2 className="text-3xl md:text-6xl font-sans text-gray-900 mb-4 font-black tracking-tighter">
-            Curated Stays
+          <h2 className="text-4xl md:text-6xl font-serif text-gray-900 mb-4 font-black tracking-tight">
+            Our Rooms
           </h2>
-          <p className="text-gray-400 text-sm md:text-lg leading-relaxed font-light">
-            Luxury defined by comfort. Enjoy a <span className="text-hotel-primary font-bold">25% discount</span> on all selections.
+          <p className="text-gray-400 text-sm md:text-lg leading-relaxed font-light max-w-lg mx-auto md:mx-0">
+            A selection of refined spaces designed for the discerning traveler. 
+            Enjoy <span className="text-hotel-primary font-bold">25% off</span> this month.
           </p>
         </div>
         
         {isEditMode && (
           <button 
             onClick={addNewRoom}
-            className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-hotel-primary transition-all active:scale-95 shadow-xl"
+            className="bg-gray-900 text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-hotel-primary transition-all active:scale-95 shadow-xl shadow-gray-200"
           >
-            <Plus size={16} /> New Category
+            <Plus size={18} /> Add Category
           </button>
         )}
       </div>
@@ -91,36 +91,36 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
         {rooms.map((room) => {
           const pricing = calculateDiscount(room.price);
           return (
-            <div key={room.id} className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 group transition-all duration-500 flex flex-col h-full relative hover:shadow-[0_30px_60px_rgba(0,0,0,0.06)]">
+            <div key={room.id} className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 group transition-all duration-700 flex flex-col h-full relative hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] hover:-translate-y-2">
               
-              {/* Image Section - Shorter & More Modern */}
-              <div className="h-56 relative overflow-hidden shrink-0">
+              {/* Image Section */}
+              <div className="h-60 relative overflow-hidden shrink-0">
                 <img 
                   src={room.image} 
-                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" 
+                  className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110" 
                   alt={room.title} 
                 />
                 
-                {/* Modern Overlaid Pricing */}
+                {/* Modern Price Overlay */}
                 <div className="absolute bottom-4 left-4 z-10">
-                  <div className="glass-badge px-3 py-2 rounded-xl border border-white/20 flex flex-col backdrop-blur-md">
-                    <span className="text-[8px] font-black text-white/70 uppercase tracking-widest leading-none mb-1">From</span>
+                  <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/50 flex flex-col">
+                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Nightly</span>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xl font-black text-white">৳{pricing.discounted}</span>
-                      <span className="text-[10px] font-bold text-white/50 line-through">৳{pricing.original}</span>
+                      <span className="text-xl font-black text-gray-900">৳{pricing.discounted}</span>
+                      <span className="text-[10px] font-bold text-gray-300 line-through">৳{pricing.original}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* 25% OFF Integrated Badge */}
-                <div className="absolute top-4 left-4 z-10">
-                  <div className="bg-hotel-primary text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1.5 animate-pulse">
-                    <Zap size={10} fill="currentColor" /> 25% OFF
+                {/* Status Badges */}
+                <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                  <div className="bg-hotel-primary text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1.5 animate-pulse">
+                    <Sparkles size={10} fill="currentColor" /> 25% OFF
                   </div>
                 </div>
 
                 <div className="absolute top-4 right-4 z-10">
-                  <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg text-[8px] font-black text-gray-800 uppercase tracking-widest border border-white/20 flex items-center gap-1.5">
+                  <div className="bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg text-[9px] font-black text-gray-800 uppercase tracking-widest border border-white/40 flex items-center gap-1.5">
                     <Users size={10} /> {room.capacity} Guests
                   </div>
                 </div>
@@ -141,29 +141,29 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                 )}
               </div>
               
-              <div className="p-6 flex flex-col flex-1">
+              <div className="p-7 md:p-8 flex flex-col flex-1">
                 <div className="mb-4">
-                  {isEditMode ? (
-                    <input 
-                      className="text-lg font-sans text-gray-900 font-black w-full bg-gray-50 border-b border-gray-200 outline-none py-1 mb-1"
-                      value={room.title}
-                      onChange={(e) => updateRoom(room.id, 'title', e.target.value)}
-                    />
-                  ) : (
-                    <h3 className="text-lg font-sans text-gray-900 font-black leading-tight group-hover:text-hotel-primary transition-colors mb-1">
-                      {room.title}
-                    </h3>
-                  )}
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">{room.tag}</p>
+                  <div className="flex justify-between items-start mb-2">
+                    {isEditMode ? (
+                      <input 
+                        className="text-xl font-serif text-gray-900 font-black w-full bg-gray-50 border-b border-gray-200 outline-none py-1"
+                        value={room.title}
+                        onChange={(e) => updateRoom(room.id, 'title', e.target.value)}
+                      />
+                    ) : (
+                      <h3 className="text-xl md:text-2xl font-serif text-gray-900 font-black leading-tight group-hover:text-hotel-primary transition-colors">
+                        {room.title}
+                      </h3>
+                    )}
+                  </div>
+                  <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">{room.tag}</span>
                 </div>
 
-                {/* Shorter Features Layout */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5 opacity-70">
+                {/* Elegant Dot-Separated Features */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-6">
                    {room.features.map((feat, idx) => (
                      <React.Fragment key={idx}>
-                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap">
-                          {feat}
-                       </span>
+                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em]">{feat}</span>
                        {idx < room.features.length - 1 && <span className="w-1 h-1 bg-gray-200 rounded-full"></span>}
                      </React.Fragment>
                    ))}
@@ -171,21 +171,26 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
 
                 {isEditMode ? (
                   <textarea 
-                    className="text-[11px] text-gray-400 mb-6 w-full bg-gray-50 outline-none p-4 rounded-xl h-20 border border-gray-100 font-medium"
+                    className="text-[11px] text-gray-400 mb-8 w-full bg-gray-50 outline-none p-4 rounded-xl h-24 border border-gray-100 font-medium leading-relaxed"
                     value={room.desc}
                     onChange={(e) => updateRoom(room.id, 'desc', e.target.value)}
                   />
                 ) : (
-                  <p className="text-[11px] text-gray-400 mb-6 leading-relaxed line-clamp-2 font-medium">
+                  <p className="text-[11px] text-gray-400 mb-8 leading-relaxed line-clamp-2 font-medium">
                     {room.desc}
                   </p>
                 )}
 
                 <div className="mt-auto">
-                  <button className="w-full group/btn flex items-center justify-between py-4 px-6 bg-gray-50 hover:bg-hotel-primary rounded-2xl transition-all duration-300">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 group-hover/btn:text-white transition-colors">Book Stay</span>
-                    <ChevronRight size={16} className="text-hotel-primary group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all" />
+                  <button className="w-full group/btn flex items-center justify-center gap-3 py-4.5 bg-gray-50 hover:bg-hotel-primary rounded-2xl transition-all duration-300 border border-gray-100 hover:border-hotel-primary">
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-900 group-hover/btn:text-white transition-colors">Select Room</span>
+                    <ChevronRight size={14} className="text-gray-400 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all" />
                   </button>
+                  
+                  <div className="mt-4 flex items-center justify-center gap-2 opacity-20">
+                    <ShieldCheck size={12} />
+                    <span className="text-[8px] font-black uppercase tracking-widest">Instant Confirmation</span>
+                  </div>
                 </div>
               </div>
             </div>

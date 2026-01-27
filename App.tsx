@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -273,9 +272,9 @@ const AppContent = () => {
                   alt="Logo" 
                 />
               </div>
-              <div className="flex flex-col select-none leading-none -space-y-0.5 md:-space-y-1">
-                <h1 className="text-xl md:text-3xl font-sans font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h1>
-                <p className="text-[10px] md:text-[11px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
+              <div className="flex flex-col select-none leading-none -space-y-1">
+                <h1 className="text-lg md:text-xl font-serif font-black text-gray-900 tracking-tight">Hotel Shotabdi</h1>
+                <p className="text-[8px] md:text-[9px] text-hotel-primary font-black uppercase tracking-[0.3em]">Residential</p>
               </div>
             </div>
           </div>
