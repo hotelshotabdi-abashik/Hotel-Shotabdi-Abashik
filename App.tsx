@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
@@ -23,10 +23,11 @@ import {
   db,
   ref,
   onValue,
-  update
+  update,
+  set
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -76,6 +77,10 @@ const AppContent = () => {
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
+  // Offer Claim Logic
+  const [activeDiscount, setActiveDiscount] = useState<number>(0);
+  const [claimedOfferId, setClaimedOfferId] = useState<string | null>(null);
+
   // CMS States
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,32 +95,7 @@ const AppContent = () => {
       locationLabel: "Sylhet HQ District"
     },
     rooms: ROOMS_DATA,
-    offers: [
-      {
-        id: 'offer-1',
-        title: 'Summer Getaway: 25% Off Premium Suites',
-        description: 'Escape to the beauty of Sylhet this summer and enjoy massive savings on our best rooms. This offer includes early check-in and late check-out, subject to availability. Experience the lush tea gardens and the spiritual calm of the city while staying in absolute comfort.',
-        mediaUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80',
-        mediaType: 'image',
-        ctaText: 'Claim Offer'
-      },
-      {
-        id: 'offer-2',
-        title: 'Business Elite Package: High-Speed Connectivity',
-        description: 'Designed for the modern professional. Enjoy dedicated fiber-optic internet, priority access to our lounge, and complimentary laundry services for your suits. Stay productive while exploring the vibrant commercial hubs of Sylhet.',
-        mediaUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80',
-        mediaType: 'image',
-        ctaText: 'Learn More'
-      },
-      {
-        id: 'offer-3',
-        title: 'Honeymoon Special: Romantic Tea Garden Tour',
-        description: 'Celebrate your union with a romantic journey through Sylhet. This exclusive offer features a floral-decorated suite, candle-lit dinner for two, and a private guided tour of Malnicherra Tea Estate.',
-        mediaUrl: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&q=80',
-        mediaType: 'image',
-        ctaText: 'Explore Romance'
-      }
-    ],
+    offers: [],
     restaurants: [],
     touristGuides: [],
     announcement: "25% OFF DISCOUNT",
@@ -144,6 +124,17 @@ const AppContent = () => {
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
+
+  // Filter Expired Offers
+  // Fix: Added useMemo to React imports
+  const validOffers = useMemo(() => {
+    const now = Date.now();
+    return (siteConfig.offers || []).filter(o => {
+      const start = o.startDate || 0;
+      const end = o.endDate || Infinity;
+      return now >= start && now <= end;
+    });
+  }, [siteConfig.offers]);
 
   useEffect(() => {
     if (!user) {
@@ -276,6 +267,30 @@ const AppContent = () => {
     setTimeout(() => setIsLogoSpinning(false), 2000);
   };
 
+  const handleClaimOffer = async (offer: Offer) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (offer.isOneTime) {
+      const claimed = profile?.claims || [];
+      if (claimed.includes(offer.id)) {
+        alert("This exclusive offer has already been redeemed by you.");
+        return;
+      }
+      
+      // Mark as claimed in profile
+      const newClaims = [...claimed, offer.id];
+      await update(ref(db, `profiles/${user.uid}`), { claims: newClaims });
+      setProfile(prev => prev ? { ...prev, claims: newClaims } : null);
+    }
+
+    setActiveDiscount(offer.discountPercent || 0);
+    setClaimedOfferId(offer.id);
+    alert(`Offer Claimed! ${offer.discountPercent}% discount will be applied at checkout.`);
+  };
+
   if (isConfigLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -334,6 +349,14 @@ const AppContent = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {activeDiscount > 0 && (
+              <div className="hidden md:flex items-center gap-2 bg-hotel-primary/10 text-hotel-primary px-4 py-1.5 rounded-full border border-hotel-primary/20 animate-pulse">
+                {/* Fix: Added Tag to lucide-react imports */}
+                <Tag size={14} />
+                <span className="text-[10px] font-black uppercase tracking-widest">{activeDiscount}% Discount Active</span>
+              </div>
+            )}
+            
             {isAuthLoading ? (
               <Loader2 className="animate-spin text-gray-300" size={18} />
             ) : user ? (
@@ -416,14 +439,17 @@ const AppContent = () => {
                   onImageUpload={(f) => uploadToR2(f, 'Hero Section')}
                 />
                 <ExclusiveOffers 
-                  offers={siteConfig.offers}
+                  offers={validOffers}
                   isEditMode={isEditMode}
+                  claimedOfferId={claimedOfferId}
+                  onClaim={handleClaimOffer}
                   onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))}
                   onImageUpload={(f) => uploadToR2(f, 'Offers')}
                 />
                 <RoomGrid 
                   rooms={siteConfig.rooms} 
                   isEditMode={isEditMode}
+                  activeDiscount={activeDiscount}
                   onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))}
                   onImageUpload={(f) => uploadToR2(f, 'Rooms')}
                 />
@@ -436,7 +462,6 @@ const AppContent = () => {
               </div>
             } />
             
-            {/* Dedicated Route for Offers List */}
             <Route path="/offers" element={
               <div className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
                 <div className="max-w-7xl mx-auto px-6 mb-12">
@@ -444,16 +469,18 @@ const AppContent = () => {
                    <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals and residential packages designed for your comfort and savings.</p>
                 </div>
                 <ExclusiveOffers 
-                  offers={siteConfig.offers}
+                  offers={validOffers}
                   isEditMode={isEditMode}
+                  claimedOfferId={claimedOfferId}
+                  onClaim={handleClaimOffer}
                   onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))}
                   onImageUpload={(f) => uploadToR2(f, 'Offers')}
                 />
               </div>
             } />
 
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />} />
-            <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />} />
+            <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} onClaim={handleClaimOffer} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Tourist Guides')} />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
@@ -473,7 +500,7 @@ const AppContent = () => {
                     <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
                   </div>
                 </div>
-                <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-w-sm">Experience world-class hospitality at the heart of Sylhet.</p>
+                <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-sm">Experience world-class hospitality at the heart of Sylhet.</p>
                 <div className="flex gap-4">
                   <Link to="/privacypolicy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary">Privacy Policy</Link>
                   <span className="text-gray-200">|</span>
@@ -497,6 +524,7 @@ const AppContent = () => {
                 <div>
                   <div className="flex items-center gap-3 mb-4"><Mail size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email</p></div>
                   <div className="flex flex-col gap-2">
+                    <a href="mailto:hotelshotabdiabashik@gmail.com" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors break-all">hotelshotabdiabashik@gmail.com</a>
                     <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">kahar.info@gmail.com</a>
                   </div>
                 </div>

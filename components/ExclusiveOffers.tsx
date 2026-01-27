@@ -1,41 +1,61 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Play, Image as ImageIcon, Plus, Trash2, Camera } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  ChevronLeft, ChevronRight, Play, Image as ImageIcon, Plus, Trash2, Camera, 
+  Tag, Clock, Settings2, ShieldCheck, X 
+} from 'lucide-react';
 import { Offer } from '../types';
 
 interface Props {
   offers: Offer[];
   isEditMode?: boolean;
+  claimedOfferId?: string | null;
+  onClaim?: (offer: Offer) => void;
   onUpdate?: (offers: Offer[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, onUpdate, onImageUpload }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
+const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOfferId, onClaim, onUpdate, onImageUpload }) => {
+  const navigate = useNavigate();
+  const [activeSettingsId, setActiveSettingsId] = useState<string | null>(null);
+  const swiperRef = useRef<any>(null);
 
-  // Auto-play logic
+  // Initialize Swiper.js
   useEffect(() => {
-    if (isEditMode || offers.length <= 3) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % (offers.length - 2));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [offers.length, isEditMode]);
+    // Fix: Cast window to any to access Swiper property
+    if (!(window as any).Swiper) return;
+    
+    // Fix: Swiper constructor accessed via cast window
+    swiperRef.current = new (window as any).Swiper('.offers-swiper', {
+      slidesPerView: 1,
+      spaceBetween: 24,
+      loop: offers.length > 3,
+      autoplay: isEditMode ? false : {
+        delay: 5000,
+        disableOnInteraction: false,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      breakpoints: {
+        768: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 },
+      },
+    });
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      const cardWidth = scrollRef.current.offsetWidth / (window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1);
-      scrollRef.current.scrollTo({
-        left: currentIndex * cardWidth,
-        behavior: 'smooth'
-      });
-    }
-  }, [currentIndex]);
+    return () => {
+      if (swiperRef.current) swiperRef.current.destroy();
+    };
+  }, [offers, isEditMode]);
 
   const deleteOffer = (id: string) => {
-    if (window.confirm("Delete this offer?")) {
+    if (window.confirm("Delete this offer permanently?")) {
       onUpdate?.(offers.filter(o => o.id !== id));
     }
   };
@@ -43,11 +63,15 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, onUpdate, o
   const addOffer = () => {
     const newOffer: Offer = {
       id: `offer-${Date.now()}`,
-      title: "New Exclusive Offer",
-      description: "Enter a detailed description here (up to 400 words). This will appear on the dedicated offer page.",
+      title: "New Exclusive Season Deal",
+      description: "Discover unmatched luxury with this limited time residential offer. Includes fiber-optic connectivity and priority lounge access.",
       mediaUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       mediaType: 'image',
-      ctaText: "View Details"
+      ctaText: "Claim Now",
+      discountPercent: 10,
+      isOneTime: true,
+      startDate: Date.now(),
+      endDate: Date.now() + (7 * 24 * 60 * 60 * 1000)
     };
     onUpdate?.([...offers, newOffer]);
   };
@@ -71,112 +95,198 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, onUpdate, o
   };
 
   return (
-    <section className="py-20 bg-gray-50/30 overflow-hidden">
+    <section className="py-24 bg-white overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Opportunities</span>
-            <h2 className="text-3xl md:text-5xl font-sans text-gray-900 font-black tracking-tighter">Exclusive Offers</h2>
+        <div className="flex justify-between items-end mb-16">
+          <div className="max-w-xl">
+            <span className="text-[#B22222] font-black text-[10px] uppercase tracking-[0.4em] mb-4 block">Limited Opportunities</span>
+            <h2 className="text-4xl md:text-6xl font-sans text-gray-900 font-black tracking-tighter leading-tight">Exclusive Offers</h2>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-4 mb-4">
             {isEditMode && (
               <button 
                 onClick={addOffer}
-                className="bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-hotel-primary transition-all"
+                className="bg-[#B22222] text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:brightness-110 shadow-xl shadow-red-100 transition-all"
               >
-                <Plus size={16} /> New Offer
+                <Plus size={18} /> Add New Deal
               </button>
-            )}
-            {offers.length > 3 && (
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-                  className="p-3 rounded-full border border-gray-200 bg-white hover:border-hotel-primary hover:text-hotel-primary transition-all"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button 
-                  onClick={() => setCurrentIndex(prev => Math.min(offers.length - 3, prev + 1))}
-                  className="p-3 rounded-full border border-gray-200 bg-white hover:border-hotel-primary hover:text-hotel-primary transition-all"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
             )}
           </div>
         </div>
 
-        <div 
-          ref={scrollRef}
-          className="flex gap-6 overflow-hidden no-scrollbar"
-        >
-          {offers.map((offer) => (
-            <div 
-              key={offer.id}
-              className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] group"
-            >
-              <div className="bg-white rounded-[1rem] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-full flex flex-col">
-                <div className="aspect-video relative overflow-hidden bg-gray-100">
+        <div className="swiper offers-swiper !overflow-visible">
+          <div className="swiper-wrapper">
+            {offers.map((offer) => (
+              <div key={offer.id} className="swiper-slide h-auto">
+                <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden group shadow-2xl bg-gray-100 transition-all duration-700 hover:-translate-y-2">
                   {offer.mediaType === 'video' ? (
                     <video src={offer.mediaUrl} className="w-full h-full object-cover" muted loop autoPlay />
                   ) : (
                     <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} />
                   )}
                   
+                  {/* Media Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                  
+                  {/* Discount Badge */}
+                  <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
+                    <span className="bg-[#B22222] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
+                      <Tag size={12} /> {offer.discountPercent}% OFF
+                    </span>
+                    {offer.isOneTime && (
+                      <span className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl text-[8px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                        <ShieldCheck size={10} /> One-Time Claim
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Claim Button - Card View */}
+                  <div className="absolute bottom-8 left-0 right-0 px-8 flex flex-col items-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                     <div className="flex gap-3 w-full">
+                        <button 
+                          onClick={() => onClaim?.(offer)}
+                          disabled={claimedOfferId === offer.id}
+                          className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-2xl ${
+                            claimedOfferId === offer.id 
+                            ? 'bg-green-500 text-white cursor-default' 
+                            : 'bg-white text-gray-900 hover:bg-[#B22222] hover:text-white'
+                          }`}
+                        >
+                          {claimedOfferId === offer.id ? 'Already Claimed' : (offer.ctaText || 'Claim Now')}
+                        </button>
+                        <Link 
+                          to={`/offers/${offer.id}`}
+                          className="w-12 h-12 bg-white/20 backdrop-blur-md flex items-center justify-center rounded-2xl text-white hover:bg-white hover:text-[#B22222] transition-all"
+                        >
+                          <ChevronRight size={20} />
+                        </Link>
+                     </div>
+                  </div>
+
+                  {/* Admin Controls UI */}
                   {isEditMode && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <label className="cursor-pointer bg-white p-3 rounded-xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all">
-                        <input type="file" className="hidden" onChange={(e) => handleMediaUpload(offer.id, e)} />
-                        <Camera size={18} />
-                      </label>
+                    <div className="absolute top-6 right-6 z-20 flex gap-2">
+                      <button 
+                        onClick={() => setActiveSettingsId(offer.id)}
+                        className="bg-white/95 p-3 rounded-xl text-gray-700 hover:text-[#B22222] shadow-xl"
+                      >
+                        <Settings2 size={16} />
+                      </button>
                       <button 
                         onClick={() => deleteOffer(offer.id)}
-                        className="bg-white p-3 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                        className="bg-red-600 p-3 rounded-xl text-white shadow-xl hover:bg-red-700"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   )}
-
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[8px] font-black text-hotel-primary uppercase tracking-widest shadow-sm">
-                      {offer.mediaType === 'video' ? <Play size={10} className="inline mr-1" /> : <ImageIcon size={10} className="inline mr-1" />}
-                      Exclusive
-                    </span>
-                  </div>
                 </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-12 flex justify-center gap-4">
+             <div className="swiper-button-prev !static !w-12 !h-12 !mt-0 bg-gray-50 hover:bg-[#B22222] hover:text-white rounded-full transition-all after:!text-sm"></div>
+             <div className="swiper-pagination !static !w-auto !flex items-center gap-2"></div>
+             <div className="swiper-button-next !static !w-12 !h-12 !mt-0 bg-gray-50 hover:bg-[#B22222] hover:text-white rounded-full transition-all after:!text-sm"></div>
+          </div>
+        </div>
+      </div>
 
-                <div className="p-6 flex flex-col flex-1">
-                  {isEditMode ? (
+      {/* Modern Admin Modal for Offer Settings */}
+      {activeSettingsId && isEditMode && (
+        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-10 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-2xl font-black text-gray-900">Offer Configuration</h3>
+              <button onClick={() => setActiveSettingsId(null)} className="p-3 text-gray-400 hover:text-hotel-primary"><X size={24}/></button>
+            </div>
+            
+            <div className="p-10 overflow-y-auto max-h-[70vh] space-y-8 no-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Offer Title (Max 15 words)</label>
+                  <input 
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-[#B22222]"
+                    value={offers.find(o => o.id === activeSettingsId)?.title}
+                    onChange={(e) => updateOffer(activeSettingsId, 'title', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Discount Percentage</label>
+                  <div className="relative">
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-[#B22222]">%</span>
                     <input 
-                      className="text-lg font-black text-[#B22222] border-b border-gray-100 outline-none w-full mb-2"
-                      value={offer.title}
-                      onChange={(e) => updateOffer(offer.id, 'title', e.target.value)}
+                      type="number"
+                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-[#B22222]"
+                      value={offers.find(o => o.id === activeSettingsId)?.discountPercent}
+                      onChange={(e) => updateOffer(activeSettingsId, 'discountPercent', parseInt(e.target.value))}
                     />
-                  ) : (
-                    <h3 className="text-lg font-black text-[#B22222] mb-3 line-clamp-2 leading-tight">
-                      {offer.title}
-                    </h3>
-                  )}
-
-                  <p className="text-[11px] text-gray-500 font-medium leading-relaxed mb-6 line-clamp-3">
-                    {offer.description}
-                  </p>
-
-                  <div className="mt-auto">
-                    <Link 
-                      to={`/offers/${offer.id}`}
-                      className="inline-flex items-center gap-2 text-[#B22222] font-black text-[10px] uppercase tracking-widest hover:gap-3 transition-all"
-                    >
-                      {offer.ctaText} <ChevronRight size={14} />
-                    </Link>
                   </div>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Description (Max 400 words)</label>
+                <textarea 
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-6 text-sm font-medium outline-none h-40 resize-none focus:border-[#B22222]"
+                  value={offers.find(o => o.id === activeSettingsId)?.description}
+                  onChange={(e) => updateOffer(activeSettingsId, 'description', e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Start Date</label>
+                  <input 
+                    type="date"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none"
+                    value={new Date(offers.find(o => o.id === activeSettingsId)?.startDate || Date.now()).toISOString().split('T')[0]}
+                    onChange={(e) => updateOffer(activeSettingsId, 'startDate', new Date(e.target.value).getTime())}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">End Date</label>
+                  <input 
+                    type="date"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none"
+                    value={new Date(offers.find(o => o.id === activeSettingsId)?.endDate || Date.now()).toISOString().split('T')[0]}
+                    onChange={(e) => updateOffer(activeSettingsId, 'endDate', new Date(e.target.value).getTime())}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                 <div className="flex items-center gap-3">
+                    <ShieldCheck className="text-[#B22222]" />
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-600">One-Time Redemable</span>
+                 </div>
+                 <button 
+                  onClick={() => updateOffer(activeSettingsId, 'isOneTime', !offers.find(o => o.id === activeSettingsId)?.isOneTime)}
+                  className={`w-14 h-8 rounded-full relative transition-all ${offers.find(o => o.id === activeSettingsId)?.isOneTime ? 'bg-[#B22222]' : 'bg-gray-200'}`}
+                 >
+                   <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${offers.find(o => o.id === activeSettingsId)?.isOneTime ? 'left-7' : 'left-1'}`}></div>
+                 </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Visual Asset (16:9 Image/Video)</label>
+                <div className="relative border-2 border-dashed border-gray-100 rounded-[2rem] p-10 bg-gray-50/50 flex flex-col items-center gap-4 text-center group/upload">
+                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleMediaUpload(activeSettingsId, e)} />
+                   <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[#B22222]">
+                      <Camera size={32} />
+                   </div>
+                   <p className="text-xs font-black uppercase tracking-widest text-gray-400">Replace 1080p Media</p>
+                </div>
+              </div>
             </div>
-          ))}
+
+            <div className="p-10 bg-gray-50 flex gap-4">
+              <button onClick={() => setActiveSettingsId(null)} className="flex-1 bg-[#B22222] text-white py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl">Confirm Updates</button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };

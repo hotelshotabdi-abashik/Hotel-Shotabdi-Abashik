@@ -50,6 +50,10 @@ export interface Offer {
   mediaUrl: string;
   mediaType: 'image' | 'video';
   ctaText: string;
+  discountPercent?: number;
+  isOneTime?: boolean;
+  startDate?: number;
+  endDate?: number;
 }
 
 export interface SiteConfig {
@@ -84,6 +88,7 @@ export interface UserProfile {
   lastUpdated: number;
   lastLogin: number;
   isComplete: boolean;
+  claims?: string[];
 }
 
 export interface Booking {
