@@ -186,8 +186,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
 
                 {/* Book Button */}
                 <div className="mt-auto">
-                  <button className="w-full bg-[#9B1C1C] hover:bg-hotel-primary text-white py-4.5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-red-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98] group/btn">
-                    Book This Room <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                  <button className="w-full bg-[#9B1C1C] hover:bg-hotel-primary text-white py-6 rounded-[2.5rem] font-black text-[13px] uppercase tracking-[0.25em] shadow-xl shadow-red-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98] group/btn">
+                    Book Now <ChevronRight size={18} className="group-hover/btn:translate-x-1.5 transition-transform" />
                   </button>
                 </div>
               </div>
