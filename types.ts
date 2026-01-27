@@ -27,6 +27,7 @@ export interface Restaurant {
   distance: string;
   image: string;
   tag: string;
+  mapUrl?: string;
 }
 
 export interface Attraction {

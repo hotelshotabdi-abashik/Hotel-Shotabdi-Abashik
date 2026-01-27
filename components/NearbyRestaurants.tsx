@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus } from 'lucide-react';
+import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink } from 'lucide-react';
 import { Restaurant } from '../types';
 
 interface Props {
@@ -11,21 +11,12 @@ interface Props {
 }
 
 const DEFAULT_RESTAURANTS: Restaurant[] = [
-  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "5-10m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta" },
-  { id: 2, name: "Pach Bhai Restaurant", cuisine: "Bengali", rating: 4.7, time: "6-12m", distance: "0.3 km", image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80", tag: "🍛 Traditional Thali" },
-  { id: 3, name: "Woondaal King Kebab", cuisine: "Mughlai", rating: 4.6, time: "8-15m", distance: "0.5 km", image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&q=80", tag: "🍢 Kebab • Biryani" },
-  { id: 4, name: "Eatopia", cuisine: "International", rating: 4.5, time: "10-20m", distance: "0.8 km", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80", tag: "🍕 Pizza • Pasta" },
-  { id: 5, name: "Handi Restaurant", cuisine: "Indian", rating: 4.7, time: "12-18m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80", tag: "🥘 Indian • Curry" },
-  { id: 6, name: "Platinum Lounge", cuisine: "Continental", rating: 4.4, time: "15-25m", distance: "1.2 km", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80", tag: "🥗 Fine Dining" },
-  { id: 7, name: "Panshee Restaurant", cuisine: "Bengali", rating: 4.8, time: "5-10m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1563379091339-03b21ef4a4f8?auto=format&fit=crop&q=80", tag: "🍛 Best Sellers" },
-  { id: 8, name: "Rice & Spice", cuisine: "Fusion", rating: 4.3, time: "10-15m", distance: "0.7 km", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80", tag: "🍲 Healthy Bowls" },
-  { id: 9, name: "KFC Sylhet", cuisine: "Fast Food", rating: 4.2, time: "8-12m", distance: "0.4 km", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80", tag: "🍗 Fried Chicken" },
-  { id: 10, name: "Cafe 17", cuisine: "Cafe", rating: 4.6, time: "10-15m", distance: "0.9 km", image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80", tag: "☕ Coffee • Snacks" },
-  { id: 11, name: "Exotica Restaurant", cuisine: "Oriental", rating: 4.5, time: "15-20m", distance: "1.0 km", image: "https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&q=80", tag: "🥢 Chinese • Thai" },
-  { id: 12, name: "Spicy Grill", cuisine: "Grill", rating: 4.4, time: "12-18m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80", tag: "🔥 BBQ • Steak" },
-  { id: 13, name: "Tea Garden Cafe", cuisine: "Snacks", rating: 4.7, time: "20-30m", distance: "2.5 km", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", tag: "🍃 Scenic Views" },
-  { id: 14, name: "Bismillah Restora", cuisine: "Local", rating: 4.1, time: "5-8m", distance: "0.1 km", image: "https://images.unsplash.com/photo-1512058560550-42749359a60b?auto=format&fit=crop&q=80", tag: "🏠 Closest Spot" },
-  { id: 15, name: "Royal Dine", cuisine: "Buffet", rating: 4.5, time: "15-25m", distance: "1.5 km", image: "https://images.unsplash.com/photo-1544124499-58912cbddaad?auto=format&fit=crop&q=80", tag: "🤴 Luxury Buffet" }
+  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "5-10m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pansi+Restaurant+Sylhet" },
+  { id: 2, name: "Pach Bhai Restaurant", cuisine: "Bengali", rating: 4.7, time: "6-12m", distance: "0.3 km", image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80", tag: "🍛 Traditional Thali", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pach+Bhai+Restaurant+Sylhet" },
+  { id: 3, name: "Woondaal King Kebab", cuisine: "Mughlai", rating: 4.6, time: "8-15m", distance: "0.5 km", image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&q=80", tag: "🍢 Kebab • Biryani", mapUrl: "https://www.google.com/maps/search/?api=1&query=Woondaal+King+Kebab+Sylhet" },
+  { id: 4, name: "Eatopia", cuisine: "International", rating: 4.5, time: "10-20m", distance: "0.8 km", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80", tag: "🍕 Pizza • Pasta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Eatopia+Sylhet" },
+  { id: 5, name: "Handi Restaurant", cuisine: "Indian", rating: 4.7, time: "12-18m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80", tag: "🥘 Indian • Curry", mapUrl: "https://www.google.com/maps/search/?api=1&query=Handi+Restaurant+Sylhet" },
+  { id: 6, name: "Platinum Lounge", cuisine: "Continental", rating: 4.4, time: "15-25m", distance: "1.2 km", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80", tag: "🥗 Fine Dining", mapUrl: "https://www.google.com/maps/search/?api=1&query=Platinum+Lounge+Sylhet" }
 ];
 
 const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUpdate, onImageUpload }) => {
@@ -68,13 +59,14 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       time: "10-15m",
       distance: "0.5 km",
       image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80",
-      tag: "🍴 New Spot"
+      tag: "🍴 New Spot",
+      mapUrl: "https://www.google.com/maps"
     };
     onUpdate?.([newItem, ...displayList]);
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full">
+    <section id="restaurants" className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full">
       <div className="mb-12 text-center flex flex-col items-center">
         <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy</span>
         <h2 className="text-3xl md:text-5xl font-sans text-gray-900 mb-6 font-black tracking-tighter">Nearby Dining</h2>
@@ -95,7 +87,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {displayList.slice(0, visibleItems).map((res) => (
           <div key={res.id} className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative">
-            {/* Image Section */}
             <div className="h-48 relative overflow-hidden shrink-0">
               <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
               <div className="absolute top-4 left-4">
@@ -128,7 +119,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
               )}
             </div>
 
-            {/* Content Section */}
             <div className="p-6 flex-1 flex flex-col">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
@@ -186,11 +176,31 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                 </div>
               </div>
 
-              {!isEditMode && (
-                <button className="mt-6 w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2">
-                  <MapIcon size={14} /> View on Map
-                </button>
-              )}
+              <div className="mt-6">
+                {isEditMode ? (
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Link (URL)</label>
+                    <div className="relative">
+                      <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
+                      <input 
+                        className="w-full bg-gray-50 rounded-xl py-3 pl-8 pr-4 text-[10px] font-medium outline-none border border-gray-100 focus:border-blue-600"
+                        placeholder="https://maps.google.com/..."
+                        value={res.mapUrl || ''}
+                        onChange={(e) => updateRes(res.id, 'mapUrl', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <a 
+                    href={res.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name + ' Sylhet')}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/map"
+                  >
+                    <MapIcon size={14} className="group-hover/map:text-white transition-colors" /> View on Map
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         ))}
