@@ -9,6 +9,7 @@ import RoomGrid from './components/RoomGrid';
 import TouristGuide from './components/TouristGuide';
 import NearbyRestaurants from './components/NearbyRestaurants';
 import AuthModal from './components/AuthModal';
+import BookingModal from './components/BookingModal';
 import ProfileOnboarding from './components/ProfileOnboarding';
 import ManageAccount from './components/ManageAccount';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -26,22 +27,18 @@ import {
   update,
   set
 } from './services/firebase';
-import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag } from 'lucide-react';
+import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
 const ADMIN_SECRET = "kahar02";
 
-// SEO & Scroll Helper
 const RouteMetadata = () => {
   const { pathname } = useLocation();
-  
   useEffect(() => {
     window.scrollTo(0, 0);
-    
-    // Dynamic Title Management for Google Sitelinks
     const titles: Record<string, string> = {
       '/': 'Hotel Shotabdi Residential | Premium Stay in Sylhet',
       '/offers': 'Exclusive Offers & Promotions | Hotel Shotabdi',
@@ -52,15 +49,12 @@ const RouteMetadata = () => {
       '/termsofservice': 'Terms of Service | Hotel Shotabdi',
       '/admin': 'Admin Dashboard | Hotel Shotabdi'
     };
-    
-    // For dynamic individual offers
     if (pathname.startsWith('/offers/')) {
        document.title = 'Exclusive Offers | Hotel Shotabdi Residential';
     } else {
        document.title = titles[pathname] || 'Hotel Shotabdi Residential';
     }
   }, [pathname]);
-  
   return null;
 };
 
@@ -68,6 +62,7 @@ const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
   
   const [user, setUser] = useState<any>(null);
@@ -76,12 +71,11 @@ const AppContent = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [hasPendingBooking, setHasPendingBooking] = useState(false);
 
-  // Offer Claim Logic
   const [activeDiscount, setActiveDiscount] = useState<number>(0);
   const [claimedOfferId, setClaimedOfferId] = useState<string | null>(null);
 
-  // CMS States
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
@@ -125,8 +119,6 @@ const AppContent = () => {
     fetchConfig();
   }, [fetchConfig]);
 
-  // Filter Expired Offers
-  // Fix: Added useMemo to React imports
   const validOffers = useMemo(() => {
     const now = Date.now();
     return (siteConfig.offers || []).filter(o => {
@@ -139,10 +131,13 @@ const AppContent = () => {
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      setHasPendingBooking(false);
       return;
     }
+
+    // Real-time notification tracking
     const notificationsRef = ref(db, `notifications/${user.uid}`);
-    const unsubscribe = onValue(notificationsRef, (snapshot) => {
+    const nUnsub = onValue(notificationsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         const list = Object.values(data) as AppNotification[];
@@ -151,7 +146,20 @@ const AppContent = () => {
         setNotifications([]);
       }
     });
-    return () => unsubscribe();
+
+    // Track pending booking status to lock UI
+    const bookingsRef = ref(db, `bookings`);
+    const bUnsub = onValue(bookingsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const allBookings = Object.values(snapshot.val()) as Booking[];
+        const userPending = allBookings.some(b => b.userId === user.uid && b.status === 'pending');
+        setHasPendingBooking(userPending);
+      } else {
+        setHasPendingBooking(false);
+      }
+    });
+
+    return () => { nUnsub(); bUnsub(); };
   }, [user]);
 
   const saveConfig = async () => {
@@ -239,6 +247,7 @@ const AppContent = () => {
     setIsAuthModalOpen(false);
     setIsNotificationsOpen(false);
     setIsManageAccountOpen(false);
+    setSelectedRoomToBook(null);
   };
 
   const toggleAuth = () => {
@@ -272,6 +281,10 @@ const AppContent = () => {
       setIsAuthModalOpen(true);
       return;
     }
+    if (hasPendingBooking) {
+      alert("You have a booking request already under review. Please wait for the registry update.");
+      return;
+    }
 
     if (offer.isOneTime) {
       const claimed = profile?.claims || [];
@@ -279,8 +292,6 @@ const AppContent = () => {
         alert("This exclusive offer has already been redeemed by you.");
         return;
       }
-      
-      // Mark as claimed in profile
       const newClaims = [...claimed, offer.id];
       await update(ref(db, `profiles/${user.uid}`), { claims: newClaims });
       setProfile(prev => prev ? { ...prev, claims: newClaims } : null);
@@ -289,6 +300,18 @@ const AppContent = () => {
     setActiveDiscount(offer.discountPercent || 0);
     setClaimedOfferId(offer.id);
     alert(`Offer Claimed! ${offer.discountPercent}% discount will be applied at checkout.`);
+  };
+
+  const handleRoomBookingInit = (room: Room) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (hasPendingBooking) {
+      alert("System Lock: You have a pending booking. We process one request at a time for security.");
+      return;
+    }
+    setSelectedRoomToBook(room);
   };
 
   if (isConfigLoading) {
@@ -314,7 +337,6 @@ const AppContent = () => {
           >
             {isEditMode ? <><Eye size={18} /> View Site</> : <><Edit3 size={18} /> Edit Site</>}
           </button>
-          
           {isEditMode && (
             <button 
               onClick={saveConfig}
@@ -335,11 +357,7 @@ const AppContent = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
               <div onClick={handleLogoClick} className="cursor-pointer select-none">
-                <img 
-                  src={LOGO_ICON_URL} 
-                  className={`w-10 h-10 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
-                  alt="Logo" 
-                />
+                <img src={LOGO_ICON_URL} className={`w-10 h-10 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Logo" />
               </div>
               <div className="flex flex-col select-none leading-none -space-y-1">
                 <h1 className="text-lg md:text-xl font-serif font-black text-gray-900 tracking-tight">Hotel Shotabdi</h1>
@@ -349,22 +367,23 @@ const AppContent = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {hasPendingBooking && (
+              <div className="hidden lg:flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full border border-amber-100 animate-pulse-slow">
+                 <ShieldAlert size={14} />
+                 <span className="text-[9px] font-black uppercase tracking-widest">Pending Review</span>
+              </div>
+            )}
             {activeDiscount > 0 && (
-              <div className="hidden md:flex items-center gap-2 bg-hotel-primary/10 text-hotel-primary px-4 py-1.5 rounded-full border border-hotel-primary/20 animate-pulse">
-                {/* Fix: Added Tag to lucide-react imports */}
+              <div className="hidden md:flex items-center gap-2 bg-hotel-primary/10 text-hotel-primary px-4 py-1.5 rounded-full border border-hotel-primary/20">
                 <Tag size={14} />
                 <span className="text-[10px] font-black uppercase tracking-widest">{activeDiscount}% Discount Active</span>
               </div>
             )}
-            
             {isAuthLoading ? (
               <Loader2 className="animate-spin text-gray-300" size={18} />
             ) : user ? (
               <div className="flex items-center gap-2 md:gap-4 relative">
-                <button 
-                  onClick={toggleNotifications}
-                  className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
-                >
+                <button onClick={toggleNotifications} className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}>
                   <Bell size={24} />
                   {unreadCount > 0 && (
                     <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
@@ -372,26 +391,15 @@ const AppContent = () => {
                     </span>
                   )}
                 </button>
-
-                <button 
-                  onClick={toggleManageAccount}
-                  className={`flex items-center gap-3 bg-gray-50 hover:bg-white border p-1.5 pr-4 rounded-2xl transition-all group ${isManageAccountOpen ? 'border-hotel-primary/30 ring-4 ring-hotel-primary/5' : 'border-gray-100'}`}
-                >
-                  <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
-                    <img 
-                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
-                      className="w-full h-full object-cover" 
-                      alt="User"
-                    />
+                <button onClick={toggleManageAccount} className={`flex items-center gap-3 bg-gray-50 hover:bg-white border p-1.5 pr-4 rounded-2xl transition-all group ${isManageAccountOpen ? 'border-hotel-primary/30 ring-4 ring-hotel-primary/5' : 'border-gray-100'}`}>
+                  <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm">
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} className="w-full h-full object-cover" alt="User" />
                   </div>
                   <div className="text-left hidden md:block">
-                    <p className="text-[10px] font-black text-gray-900 leading-tight">
-                      {profile?.username ? `@${profile.username}` : 'Guest'}
-                    </p>
+                    <p className="text-[10px] font-black text-gray-900 leading-tight">{profile?.username ? `@${profile.username}` : 'Guest'}</p>
                     {isOwner && <span className="text-[8px] font-black text-hotel-primary uppercase tracking-widest">Owner</span>}
                   </div>
                 </button>
-
                 {isNotificationsOpen && (
                   <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[100]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
@@ -412,9 +420,7 @@ const AppContent = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="py-12 text-center text-gray-400">
-                          <p className="text-[10px] font-black uppercase tracking-widest">No alerts</p>
-                        </div>
+                        <div className="py-12 text-center text-gray-400"><p className="text-[10px] font-black uppercase tracking-widest">No alerts</p></div>
                       )}
                     </div>
                   </div>
@@ -432,54 +438,22 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               <div className="animate-fade-in">
-                <Hero 
-                  config={siteConfig.hero} 
-                  isEditMode={isEditMode}
-                  onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))}
-                  onImageUpload={(f) => uploadToR2(f, 'Hero Section')}
-                />
-                <ExclusiveOffers 
-                  offers={validOffers}
-                  isEditMode={isEditMode}
-                  claimedOfferId={claimedOfferId}
-                  onClaim={handleClaimOffer}
-                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))}
-                  onImageUpload={(f) => uploadToR2(f, 'Offers')}
-                />
-                <RoomGrid 
-                  rooms={siteConfig.rooms} 
-                  isEditMode={isEditMode}
-                  activeDiscount={activeDiscount}
-                  onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))}
-                  onImageUpload={(f) => uploadToR2(f, 'Rooms')}
-                />
-                <NearbyRestaurants 
-                  restaurants={siteConfig.restaurants}
-                  isEditMode={isEditMode}
-                  onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))}
-                  onImageUpload={(f) => uploadToR2(f, 'Restaurants')}
-                />
+                <Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Hero Section')} />
+                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Offers')} />
+                <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />
+                <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} />
               </div>
             } />
-            
             <Route path="/offers" element={
               <div className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
                 <div className="max-w-7xl mx-auto px-6 mb-12">
                    <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Current Promotions</h1>
                    <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals and residential packages designed for your comfort and savings.</p>
                 </div>
-                <ExclusiveOffers 
-                  offers={validOffers}
-                  isEditMode={isEditMode}
-                  claimedOfferId={claimedOfferId}
-                  onClaim={handleClaimOffer}
-                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))}
-                  onImageUpload={(f) => uploadToR2(f, 'Offers')}
-                />
+                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Offers')} />
               </div>
             } />
-
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />} />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} onClaim={handleClaimOffer} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Tourist Guides')} />} />
@@ -538,6 +512,15 @@ const AppContent = () => {
         </footer>
 
         <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
+        {selectedRoomToBook && profile && (
+          <BookingModal 
+            room={selectedRoomToBook} 
+            profile={profile} 
+            activeDiscount={activeDiscount} 
+            onClose={closeAllPopups} 
+            onImageUpload={(f) => uploadToR2(f, `Bookings/${profile.uid}`)}
+          />
+        )}
         {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
         {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
         <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={toggleAuth} toggleProfile={toggleManageAccount} />

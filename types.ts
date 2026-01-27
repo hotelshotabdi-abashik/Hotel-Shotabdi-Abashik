@@ -66,11 +66,32 @@ export interface SiteConfig {
   lastUpdated: number;
 }
 
-export type ViewType = 'overview' | 'rooms' | 'guide' | 'restaurants' | 'privacy' | 'terms';
+export interface GuestInfo {
+  legalName: string;
+  age: string;
+  nidNumber: string;
+  phone: string;
+  guardianPhone: string;
+  nidImageUrl: string;
+}
 
-export interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
+export interface Booking {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  roomTitle: string;
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  totalGuests: number;
+  guests: GuestInfo[];
+  price: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  roomNumber?: string;
+  rejectionReason?: string;
+  hasEdited: boolean;
+  createdAt: number;
 }
 
 export interface UserProfile {
@@ -83,28 +104,13 @@ export interface UserProfile {
   nidNumber: string;
   nidImageUrl: string;
   photoURL: string;
+  age: string;
   bio: string;
   createdAt: number;
   lastUpdated: number;
   lastLogin: number;
   isComplete: boolean;
   claims?: string[];
-}
-
-export interface Booking {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  roomTitle: string;
-  roomId: string;
-  checkIn: string;
-  checkOut: string;
-  guests: string;
-  price: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed';
-  roomNumber?: string;
-  createdAt: number;
 }
 
 export interface AppNotification {
@@ -114,4 +120,12 @@ export interface AppNotification {
   type: 'booking_update' | 'system';
   read: boolean;
   createdAt: number;
+}
+
+/**
+ * ChatMessage interface for AI Concierge conversation history
+ */
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
 }
