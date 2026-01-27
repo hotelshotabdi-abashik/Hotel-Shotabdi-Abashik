@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Phone, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -84,7 +83,7 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
             <Phone size={14} className="text-hotel-primary" />
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helpline</span>
           </div>
-          <p className="text-[12px] text-gray-900 font-black mb-4">+8801717425702</p>
+          <p className="text-[12px] text-gray-900 font-normal mb-4">+8801717425702</p>
           <a href="tel:+8801717425702" className="block w-full bg-white text-hotel-primary py-3.5 text-[9px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center">
             Call Reception
           </a>

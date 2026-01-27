@@ -23,7 +23,7 @@ import {
   update
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -258,7 +258,7 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Modern Header - Adjusted Font & Size */}
+        {/* Modern Header */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
@@ -393,24 +393,81 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        <footer className="bg-white border-t border-gray-50 py-12 px-6">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-4">
-              <img src={LOGO_ICON_URL} className="w-8 h-8 opacity-20 grayscale" alt="Logo" />
-              <div className="text-left">
-                <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">Hotel Shotabdi Residential</p>
-                <p className="text-[9px] text-gray-200 font-bold uppercase mt-0.5">Premium Hotel • Sylhet</p>
+        {/* Updated Amazing Footer */}
+        <footer className="bg-white border-t border-gray-50 py-16 px-6 md:px-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-20 mb-16">
+              
+              {/* Brand Information */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Logo" />
+                  <div>
+                    <p className="text-[12px] font-black text-gray-900 uppercase tracking-[0.4em]">Hotel Shotabdi</p>
+                    <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-w-sm">
+                  Experience world-class hospitality at the heart of Sylhet. We offer premium residential services for travellers, families, and corporate guests.
+                </p>
+                <div className="flex gap-4">
+                  <Link to="/privacypolicy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy Policy</Link>
+                  <Link to="/termsofservice" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms</Link>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex gap-10">
-              <Link to="/privacypolicy" className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-hotel-primary">Privacy Policy</Link>
-              <Link to="/termsofservice" className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-hotel-primary">Terms</Link>
+
+              {/* Location & Contact Details */}
+              <div className="space-y-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <MapPin size={16} className="text-hotel-primary" />
+                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Address</p>
+                  </div>
+                  <p className="text-[13px] text-gray-600 font-bold leading-relaxed">
+                    Kumar Gaon Bus Stand,<br />
+                    Sunamganj Road, Sylhet
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Phone size={16} className="text-hotel-primary" />
+                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Phone Numbers</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[13px] text-gray-600 font-bold">01717-425702</p>
+                    <p className="text-[13px] text-gray-600 font-bold">0133-4935566</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email & Support */}
+              <div className="space-y-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Mail size={16} className="text-hotel-primary" />
+                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email Correspondence</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[13px] text-gray-600 font-bold break-all">kahar.info@gmail.com</p>
+                    <p className="text-[13px] text-gray-600 font-bold break-all">hotelshotabdiabashik@gmail.com</p>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em] mb-2">Service Standard</p>
+                  <p className="text-[10px] text-gray-400 font-bold italic">"Your comfort and trust are our highest priorities."</p>
+                </div>
+              </div>
+
             </div>
 
-            <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">
-              © 2024 • All Rights Reserved
-            </p>
+            {/* Bottom Bar */}
+            <div className="pt-10 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
+              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+                © 2024 Hotel Shotabdi Residential • All Rights Reserved
+              </p>
+            </div>
           </div>
         </footer>
 

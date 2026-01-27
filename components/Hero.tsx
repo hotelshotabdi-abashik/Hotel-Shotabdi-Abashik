@@ -61,15 +61,20 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
             ) : config.title}
           </h2>
           
-          <p className="text-xl md:text-2xl text-white/60 mb-12 leading-relaxed font-light">
-             {isEditMode ? (
-              <textarea 
-                className="bg-transparent border-b border-white/20 outline-none w-full resize-none h-24"
-                value={config.subtitle}
-                onChange={(e) => onUpdate?.({ subtitle: e.target.value })}
-              />
-            ) : config.subtitle}
-          </p>
+          <div className="mb-12">
+            <p className="text-xl md:text-2xl text-white/60 mb-4 leading-relaxed font-light">
+               {isEditMode ? (
+                <textarea 
+                  className="bg-transparent border-b border-white/20 outline-none w-full resize-none h-24"
+                  value={config.subtitle}
+                  onChange={(e) => onUpdate?.({ subtitle: e.target.value })}
+                />
+              ) : config.subtitle}
+            </p>
+            <p className="text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.2em] leading-relaxed max-w-xl border-l-2 border-hotel-primary/30 pl-4">
+              Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking.
+            </p>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-6">
             <button 
