@@ -10,6 +10,20 @@ export interface Room {
   capacity: number;
 }
 
+export interface HeroConfig {
+  title: string;
+  subtitle: string;
+  backgroundImage: string;
+  buttonText: string;
+}
+
+export interface SiteConfig {
+  hero: HeroConfig;
+  rooms: Room[];
+  announcement: string;
+  lastUpdated: number;
+}
+
 export type ViewType = 'overview' | 'rooms' | 'guide' | 'restaurants' | 'privacy' | 'terms';
 
 export interface TouristSpot {
