@@ -38,3 +38,28 @@ export interface UserProfile {
   lastLogin: number;
   isComplete: boolean;
 }
+
+export interface Booking {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  roomTitle: string;
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  guests: string;
+  price: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  roomNumber?: string;
+  createdAt: number;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'booking_update' | 'system';
+  read: boolean;
+  createdAt: number;
+}

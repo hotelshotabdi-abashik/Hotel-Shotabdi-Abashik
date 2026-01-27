@@ -14,6 +14,8 @@ import {
   set, 
   get, 
   update,
+  push,
+  onValue,
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -31,6 +33,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getDatabase(app);
+
+export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -77,6 +81,36 @@ export const syncUserProfile = async (user: any) => {
   }
 };
 
+/** Admin Helpers **/
+export const getAllUsers = async () => {
+  const usersRef = ref(db, 'profiles');
+  const snapshot = await get(usersRef);
+  if (snapshot.exists()) {
+    return Object.values(snapshot.val());
+  }
+  return [];
+};
+
+export const getAllBookings = async () => {
+  const bookingsRef = ref(db, 'bookings');
+  const snapshot = await get(bookingsRef);
+  if (snapshot.exists()) {
+    return Object.values(snapshot.val());
+  }
+  return [];
+};
+
+export const createNotification = async (userId: string, notification: any) => {
+  const notificationsRef = ref(db, `notifications/${userId}`);
+  const newNotificationRef = push(notificationsRef);
+  await set(newNotificationRef, {
+    ...notification,
+    id: newNotificationRef.key,
+    read: false,
+    createdAt: Date.now()
+  });
+};
+
 export { 
   onAuthStateChanged, 
   signOut, 
@@ -87,5 +121,7 @@ export {
   get, 
   set, 
   update, 
+  push,
+  onValue,
   serverTimestamp 
 };

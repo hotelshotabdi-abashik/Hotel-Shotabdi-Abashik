@@ -12,6 +12,7 @@ import ManageAccount from './components/ManageAccount';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
+import AdminDashboard from './components/AdminDashboard';
 import { 
   auth, 
   db,
@@ -21,10 +22,13 @@ import {
   GoogleAuthProvider,
   syncUserProfile,
   ref,
-  get
+  get,
+  onValue,
+  update,
+  OWNER_EMAIL
 } from './services/firebase';
-import { UserProfile } from './types';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, Settings, UserCheck } from 'lucide-react';
+import { UserProfile, AppNotification } from './types';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, Settings, UserCheck, Bell, CheckCircle2, Circle } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const GOOGLE_CLIENT_ID = "682102275681-le7slsv9pnljvq34ht8llnbrkn5mumpg.apps.googleusercontent.com";
@@ -52,6 +56,8 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isRotating, setIsRotating] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,6 +70,31 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+
+  useEffect(() => {
+    if (user) {
+      const notifRef = ref(db, `notifications/${user.uid}`);
+      return onValue(notifRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = Object.values(snapshot.val()) as AppNotification[];
+          setNotifications(data.sort((a, b) => b.createdAt - a.createdAt));
+        } else {
+          setNotifications([]);
+        }
+      });
+    }
+  }, [user]);
+
+  const markAllAsRead = async () => {
+    if (!user || notifications.length === 0) return;
+    const updates: any = {};
+    notifications.forEach(n => {
+      if (!n.read) updates[`notifications/${user.uid}/${n.id}/read`] = true;
+    });
+    await update(ref(db), updates);
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleLogoClick = () => {
     if (isRotating) return;
@@ -108,32 +139,77 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Verifying Identity...</span>
             </div>
           ) : user ? (
-            <div className="relative">
-              <button 
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-4 pr-2 py-2 transition-all duration-300 hover:shadow-md group"
-              >
-                <div className="text-right flex flex-col justify-center hidden sm:flex">
-                  <div className="flex items-center gap-1.5 justify-end">
-                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none truncate max-w-[120px]">
-                      {profile?.legalName?.split(' ')[0] || user.displayName?.split(' ')[0] || 'Member'}
-                    </p>
-                    {profile?.isComplete && <ShieldCheck size={10} className="text-green-500" />}
+            <>
+              {/* Notification Bell */}
+              <div className="relative">
+                <button 
+                  onClick={() => {
+                    setIsNotifOpen(!isNotifOpen);
+                    if (!isNotifOpen) markAllAsRead();
+                  }}
+                  className="p-3.5 bg-gray-50 hover:bg-white rounded-2xl border border-gray-100 text-gray-400 hover:text-hotel-primary transition-all relative"
+                >
+                  <Bell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2.5 right-2.5 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full ring-2 ring-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {isNotifOpen && (
+                  <div className="absolute top-full right-0 mt-3 w-80 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
+                    <div className="p-5 border-b border-gray-50 flex justify-between items-center">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notifications</span>
+                      <button onClick={() => setIsNotifOpen(false)} className="text-[9px] font-bold text-hotel-primary">Close</button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto no-scrollbar">
+                      {notifications.length > 0 ? notifications.map(n => (
+                        <div key={n.id} className={`p-5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-hotel-primary/5' : ''}`}>
+                          <div className="flex gap-3">
+                            <CheckCircle2 size={16} className="text-hotel-primary shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[11px] font-black text-gray-900 leading-tight mb-1">{n.title}</p>
+                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">{n.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-10 text-center">
+                          <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No notifications yet</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none mt-1 ${isOwner ? 'text-purple-600' : isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                    {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : `@${profile?.username || 'member'}`}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
-                  <img 
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
+                )}
+              </div>
+
+              <div className="relative">
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-4 pr-2 py-2 transition-all duration-300 hover:shadow-md group"
+                >
+                  <div className="text-right flex flex-col justify-center hidden sm:flex">
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none truncate max-w-[120px]">
+                        {profile?.legalName?.split(' ')[0] || user.displayName?.split(' ')[0] || 'Member'}
+                      </p>
+                      {profile?.isComplete && <ShieldCheck size={10} className="text-green-500" />}
+                    </div>
+                    <p className={`text-[8px] font-bold uppercase tracking-widest leading-none mt-1 ${isOwner ? 'text-purple-600' : isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                      {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : `@${profile?.username || 'member'}`}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
+                    <img 
+                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+            </>
           ) : (
             <button 
               onClick={openAuth}
@@ -154,10 +230,12 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
                    <p className="text-[11px] font-black text-gray-800 truncate">{profile?.legalName || user.displayName}</p>
                    <p className="text-[8px] font-bold text-gray-400 truncate tracking-tight">{user.email}</p>
                 </div>
-                <div className="mt-3 py-1.5 px-3 bg-white rounded-xl border border-gray-100 flex items-center gap-2">
-                   <UserCheck size={12} className="text-green-500" />
-                   <span className="text-[8px] font-black text-green-700 uppercase tracking-widest">Verified Member</span>
-                </div>
+                {profile?.isComplete && (
+                  <div className="mt-3 py-1.5 px-3 bg-white rounded-xl border border-gray-100 flex items-center gap-2">
+                     <UserCheck size={12} className="text-green-500" />
+                     <span className="text-[8px] font-black text-green-700 uppercase tracking-widest">Verified Member</span>
+                  </div>
+                )}
               </div>
 
               <button 
@@ -176,7 +254,7 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
                   onClick={() => setIsProfileOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
                 >
-                  <LayoutDashboard size={14} /> Admin Controls
+                  <LayoutDashboard size={14} /> Admin HQ
                 </Link>
               )}
 
@@ -214,7 +292,15 @@ const AppContent = () => {
   const loadProfile = async (u: any) => {
     const data = await syncUserProfile(u);
     setProfile(data);
-    if (u) await fetchUserRole(u.uid);
+    if (u) {
+      // Owner Logic
+      if (u.email === OWNER_EMAIL) {
+        setIsOwner(true);
+        setIsAdmin(true);
+      } else {
+        await fetchUserRole(u.uid);
+      }
+    }
   };
 
   const fetchUserRole = async (userId: string) => {
@@ -231,35 +317,6 @@ const AppContent = () => {
     }
   };
 
-  const initializeGoogleOneTap = () => {
-    if ((window as any).google && !user) {
-      try {
-        (window as any).google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: async (response: any) => {
-            setIsAuthLoading(true);
-            try {
-              const credential = GoogleAuthProvider.credential(response.credential);
-              const result = await signInWithCredential(auth, credential);
-              await loadProfile(result.user);
-              setUser(result.user);
-            } catch (err) {
-              console.error("Auth Fail:", err);
-            } finally {
-              setIsAuthLoading(false);
-            }
-          },
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          context: 'signin'
-        });
-        (window as any).google.accounts.id.prompt();
-      } catch (err) {
-        console.warn("One Tap Warning:", err);
-      }
-    }
-  };
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -272,7 +329,6 @@ const AppContent = () => {
         setIsAdmin(false);
         setIsOwner(false);
         setProfile(null);
-        initializeGoogleOneTap();
       }
     });
 
@@ -332,13 +388,17 @@ const AppContent = () => {
           <Route path="/privacypolicy" element={<PrivacyPolicy />} />
           <Route path="/termsofservice" element={<TermsOfService />} />
           <Route path="/admin" element={
-            <div className="p-10 md:p-20 text-center min-h-screen flex flex-col items-center justify-center">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-600 mb-6 shadow-inner ring-1 ring-amber-100">
-                <LayoutDashboard size={32} />
+            (isAdmin || isOwner) ? (
+              <AdminDashboard />
+            ) : (
+              <div className="p-10 md:p-20 text-center min-h-screen flex flex-col items-center justify-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-red-50 rounded-3xl flex items-center justify-center text-hotel-primary mb-6 shadow-inner ring-1 ring-red-100">
+                  <LayoutDashboard size={32} />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-serif font-black">Secure Admin Gateway</h1>
+                <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm font-medium">Access restricted to authorized HQ personnel only.</p>
               </div>
-              <h1 className="text-2xl md:text-3xl font-serif font-black">Admin Management Panel</h1>
-              <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm font-medium">Accessing secure administrative memory.</p>
-            </div>
+            )
           } />
         </Routes>
 
