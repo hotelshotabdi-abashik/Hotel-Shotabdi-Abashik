@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
@@ -58,17 +58,16 @@ const AppContent = () => {
   const [isConfigLoading, setIsConfigLoading] = useState(true);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
-      title: "Luxury Reimagined in Sylhet",
-      subtitle: "Experience world-class hospitality at the heart of the city's heritage.",
+      title: "Luxury Rooms in Sylhet",
+      subtitle: "Enjoy the best stay at the heart of the city.",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
-      buttonText: "Check Availability"
+      buttonText: "Book Now"
     },
     rooms: ROOMS_DATA,
-    announcement: "25% OFF SEASONAL DISCOUNT",
+    announcement: "25% OFF DISCOUNT",
     lastUpdated: 0
   });
 
-  // Fetch Config
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
@@ -77,7 +76,7 @@ const AppContent = () => {
         setSiteConfig(prev => data.lastUpdated > prev.lastUpdated ? data : prev);
       }
     } catch (e) {
-      console.warn("Using default local configuration.");
+      console.warn("Using default settings.");
     } finally {
       setIsConfigLoading(false);
     }
@@ -87,7 +86,6 @@ const AppContent = () => {
     fetchConfig();
   }, [fetchConfig]);
 
-  // Notifications Listener
   useEffect(() => {
     if (!user) {
       setNotifications([]);
@@ -120,13 +118,13 @@ const AppContent = () => {
       });
       if (res.ok) {
         setSiteConfig(updatedConfig);
-        alert("Website published live!");
+        alert("Website published!");
         setIsEditMode(false);
       } else {
-        throw new Error("Publish failed");
+        throw new Error("Save failed");
       }
     } catch (e) {
-      alert("Error publishing: Check ADMIN_SECRET and Worker status.");
+      alert("Error saving settings.");
     } finally {
       setIsSaving(false);
     }
@@ -157,7 +155,7 @@ const AppContent = () => {
         setIsAdmin(true);
       }
     } catch (error) {
-      console.warn("Sync Warning:", error);
+      console.warn("Profile Sync Issue");
     }
   }, []);
 
@@ -186,10 +184,10 @@ const AppContent = () => {
     await update(ref(db), updates);
   };
 
-  const openAuth = () => {
+  const toggleAuth = () => {
     setIsNotificationsOpen(false);
     setIsManageAccountOpen(false);
-    setIsAuthModalOpen(true);
+    setIsAuthModalOpen(!isAuthModalOpen);
   };
 
   const toggleNotifications = () => {
@@ -214,7 +212,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Sanctuary...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading...</p>
       </div>
     );
   }
@@ -223,7 +221,6 @@ const AppContent = () => {
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
-      {/* CMS Toolbar for Owner */}
       {isOwner && (
         <div className="fixed bottom-24 right-6 z-[200] flex flex-col items-end gap-3 pointer-events-auto">
           <button 
@@ -232,7 +229,7 @@ const AppContent = () => {
               isEditMode ? 'bg-hotel-primary text-white' : 'bg-white text-gray-900 border border-gray-100'
             }`}
           >
-            {isEditMode ? <><Eye size={18} /> View Site</> : <><Edit3 size={18} /> Edit Design</>}
+            {isEditMode ? <><Eye size={18} /> View Site</> : <><Edit3 size={18} /> Edit Site</>}
           </button>
           
           {isEditMode && (
@@ -242,7 +239,7 @@ const AppContent = () => {
               className="px-6 py-4 bg-green-600 text-white rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:scale-105"
             >
               {isSaving ? <RefreshCw size={18} className="animate-spin" /> : <Globe size={18} />}
-              Publish Changes
+              Save Site
             </button>
           )}
         </div>
@@ -251,8 +248,8 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Refined Sticky Header */}
-        <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-4 flex justify-between items-center">
+        {/* Main Header */}
+        <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
               <div 
@@ -261,13 +258,13 @@ const AppContent = () => {
               >
                 <img 
                   src={LOGO_ICON_URL} 
-                  className={`w-9 h-9 md:w-12 md:h-12 object-contain ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
-                  alt="Hotel Shotabdi Logo" 
+                  className={`w-10 h-10 md:w-14 md:h-14 object-contain ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
+                  alt="Logo" 
                 />
               </div>
-              <div className="flex flex-col select-none leading-none -space-y-0.5">
-                <h2 className="text-xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h2>
-                <p className="text-[10px] md:text-[11px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
+              <div className="flex flex-col select-none leading-none -space-y-0.5 md:-space-y-1">
+                <h1 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h1>
+                <p className="text-[10px] md:text-[12px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
               </div>
             </div>
           </div>
@@ -281,9 +278,9 @@ const AppContent = () => {
                   onClick={toggleNotifications}
                   className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
                 >
-                  <Bell size={22} />
+                  <Bell size={24} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
+                    <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">
                       {unreadCount}
                     </span>
                   )}
@@ -297,29 +294,28 @@ const AppContent = () => {
                     <img 
                       src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
                       className="w-full h-full object-cover" 
-                      alt="Avatar"
+                      alt="User"
                     />
                   </div>
                   <div className="text-left hidden md:block">
                     <p className="text-[10px] font-black text-gray-900 leading-tight">
-                      {profile?.username ? `@${profile.username}` : 'Resident'}
+                      {profile?.username ? `@${profile.username}` : 'Guest'}
                     </p>
-                    {isOwner && <span className="text-[8px] font-black text-hotel-primary uppercase tracking-widest">Proprietor</span>}
+                    {isOwner && <span className="text-[8px] font-black text-hotel-primary uppercase tracking-widest">Owner</span>}
                   </div>
                 </button>
 
                 {isNotificationsOpen && (
-                  <div className="absolute top-16 right-0 w-[320px] bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-fade-in z-[100]">
+                  <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[100]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
                       <div>
-                        <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
-                        <p className="text-[9px] opacity-70 font-bold uppercase tracking-widest mt-0.5">Hotel Alerts</p>
+                        <h3 className="text-sm font-black uppercase tracking-widest">Alerts</h3>
                       </div>
-                      <button onClick={() => setIsNotificationsOpen(false)} className="opacity-60 hover:opacity-100 transition-opacity">
+                      <button onClick={() => setIsNotificationsOpen(false)}>
                         <X size={18} />
                       </button>
                     </div>
-                    <div className="max-h-[400px] overflow-y-auto no-scrollbar p-4 space-y-3">
+                    <div className="max-h-[350px] overflow-y-auto no-scrollbar p-4 space-y-3">
                       {notifications.length > 0 ? (
                         notifications.map((n) => (
                           <div key={n.id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-white border-gray-50 opacity-60' : 'bg-red-50/50 border-hotel-primary/10'}`}>
@@ -327,22 +323,16 @@ const AppContent = () => {
                               <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'booking_update' ? 'bg-[#B22222] text-white' : 'bg-blue-500 text-white'}`}>
                                 <Info size={14} />
                               </div>
-                              <div>
-                                <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{n.title}</h4>
-                                <p className="text-[10px] text-gray-500 leading-relaxed mt-1">{n.message}</p>
-                                <p className="text-[8px] text-gray-400 font-bold mt-2 uppercase tracking-widest">
-                                  {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
+                              <div className="flex-1">
+                                <h4 className="text-[11px] font-black text-gray-900 uppercase">{n.title}</h4>
+                                <p className="text-[10px] text-gray-500 mt-1">{n.message}</p>
                               </div>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="py-12 text-center">
-                          <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
-                            <Bell size={24} />
-                          </div>
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">No new alerts</p>
+                        <div className="py-10 text-center text-gray-400">
+                          <p className="text-[10px] font-black uppercase tracking-widest">No new alerts</p>
                         </div>
                       )}
                     </div>
@@ -351,10 +341,10 @@ const AppContent = () => {
               </div>
             ) : (
               <button 
-                onClick={openAuth}
+                onClick={toggleAuth}
                 className="flex items-center gap-3 bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
               >
-                <LogIn size={16} /> Sign In
+                <LogIn size={16} /> Login
               </button>
             )}
           </div>
@@ -374,17 +364,17 @@ const AppContent = () => {
                   rooms={siteConfig.rooms} 
                   isEditMode={isEditMode}
                   onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))}
-                  onImageUpload={(f) => uploadToR2(f, 'Rooms Images')}
+                  onImageUpload={(f) => uploadToR2(f, 'Rooms')}
                 />
                 <NearbyRestaurants />
               </div>
             } />
-            <Route path="/rooms" element={<div className="py-10"><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms Images')} /></div>} />
+            <Route path="/rooms" element={<div className="py-10"><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} /></div>} />
             <Route path="/restaurants" element={<div className="py-10 min-h-screen"><NearbyRestaurants /></div>} />
             <Route path="/guide" element={<div className="py-10"><TouristGuide /></div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
-            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Unauthorized</div>} />
+            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Denied</div>} />
           </Routes>
         </div>
 
@@ -394,13 +384,13 @@ const AppContent = () => {
               <img src={LOGO_ICON_URL} className="w-8 h-8 opacity-20 grayscale" alt="Logo" />
               <div className="text-left">
                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">Hotel Shotabdi Residential</p>
-                <p className="text-[9px] text-gray-200 font-bold uppercase tracking-widest mt-0.5">Premium Housing • Sylhet</p>
+                <p className="text-[9px] text-gray-200 font-bold uppercase mt-0.5">Premium Hotel • Sylhet</p>
               </div>
             </div>
             
             <div className="flex gap-10">
-              <Link to="/privacypolicy" className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy Policy</Link>
-              <Link to="/termsofservice" className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms of Service</Link>
+              <Link to="/privacypolicy" className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-hotel-primary">Privacy Policy</Link>
+              <Link to="/termsofservice" className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-hotel-primary">Terms</Link>
             </div>
 
             <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">
@@ -427,7 +417,7 @@ const AppContent = () => {
         <MobileBottomNav 
           user={user} 
           isAdmin={isAdmin || isOwner} 
-          openAuth={openAuth} 
+          openAuth={toggleAuth} 
           toggleProfile={toggleManageAccount} 
         />
       </main>

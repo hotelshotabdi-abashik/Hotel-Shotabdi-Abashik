@@ -10,7 +10,7 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
-      {/* Map Section - Now the top element */}
+      {/* Map Section */}
       <div className="relative group h-32 mx-6 mt-8 rounded-[2rem] overflow-hidden border border-gray-50">
         <a 
           href={mapUrl} 
@@ -34,7 +34,7 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
       </div>
 
       <div className="p-6 flex-1 overflow-y-auto no-scrollbar pt-8">
-        <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-6 px-4">Sanctuary Access</p>
+        <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-6 px-4">Menu</p>
         <nav className="space-y-2 mb-8">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
@@ -70,7 +70,7 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
               >
                 <LayoutDashboard size={20} />
                 <span className="text-[10px] tracking-[0.15em] font-black uppercase">
-                  Control Center
+                  Admin Panel
                 </span>
               </Link>
             </div>
@@ -82,9 +82,9 @@ const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
         <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 group hover:border-hotel-primary/20 transition-all">
           <div className="flex items-center gap-3 mb-2">
             <Phone size={14} className="text-hotel-primary" />
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Quick Helpline</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Helpline</span>
           </div>
-          <p className="text-[12px] text-gray-900 font-black mb-4 tracking-tight">+8801717425702</p>
+          <p className="text-[12px] text-gray-900 font-black mb-4">+8801717425702</p>
           <a href="tel:+8801717425702" className="block w-full bg-white text-hotel-primary py-3.5 text-[9px] font-black uppercase tracking-widest rounded-xl border border-gray-200 hover:bg-hotel-primary hover:text-white transition-all shadow-sm text-center">
             Call Reception
           </a>
