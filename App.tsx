@@ -1,7 +1,10 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
+import ExclusiveOffers from './components/ExclusiveOffers';
+import OfferPage from './components/OfferPage';
 import RoomGrid from './components/RoomGrid';
 import TouristGuide from './components/TouristGuide';
 import NearbyRestaurants from './components/NearbyRestaurants';
@@ -22,7 +25,7 @@ import {
   onValue,
   update
 } from './services/firebase';
-import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction } from './types';
+import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer } from './types';
 import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
@@ -40,6 +43,7 @@ const RouteMetadata = () => {
     // Dynamic Title Management for Google Sitelinks
     const titles: Record<string, string> = {
       '/': 'Hotel Shotabdi Residential | Premium Stay in Sylhet',
+      '/offers': 'Exclusive Offers & Promotions | Hotel Shotabdi',
       '/rooms': 'Our Luxury Rooms & Suites | Hotel Shotabdi',
       '/restaurants': 'Nearby Dining & Restaurants | Hotel Shotabdi',
       '/guide': 'Sylhet Tourist Guide & Landmarks | Hotel Shotabdi',
@@ -48,7 +52,12 @@ const RouteMetadata = () => {
       '/admin': 'Admin Dashboard | Hotel Shotabdi'
     };
     
-    document.title = titles[pathname] || 'Hotel Shotabdi Residential';
+    // For dynamic individual offers
+    if (pathname.startsWith('/offers/')) {
+       document.title = 'Exclusive Offers | Hotel Shotabdi Residential';
+    } else {
+       document.title = titles[pathname] || 'Hotel Shotabdi Residential';
+    }
   }, [pathname]);
   
   return null;
@@ -81,6 +90,32 @@ const AppContent = () => {
       locationLabel: "Sylhet HQ District"
     },
     rooms: ROOMS_DATA,
+    offers: [
+      {
+        id: 'offer-1',
+        title: 'Summer Getaway: 25% Off Premium Suites',
+        description: 'Escape to the beauty of Sylhet this summer and enjoy massive savings on our best rooms. This offer includes early check-in and late check-out, subject to availability. Experience the lush tea gardens and the spiritual calm of the city while staying in absolute comfort.',
+        mediaUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80',
+        mediaType: 'image',
+        ctaText: 'Claim Offer'
+      },
+      {
+        id: 'offer-2',
+        title: 'Business Elite Package: High-Speed Connectivity',
+        description: 'Designed for the modern professional. Enjoy dedicated fiber-optic internet, priority access to our lounge, and complimentary laundry services for your suits. Stay productive while exploring the vibrant commercial hubs of Sylhet.',
+        mediaUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80',
+        mediaType: 'image',
+        ctaText: 'Learn More'
+      },
+      {
+        id: 'offer-3',
+        title: 'Honeymoon Special: Romantic Tea Garden Tour',
+        description: 'Celebrate your union with a romantic journey through Sylhet. This exclusive offer features a floral-decorated suite, candle-lit dinner for two, and a private guided tour of Malnicherra Tea Estate.',
+        mediaUrl: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&q=80',
+        mediaType: 'image',
+        ctaText: 'Explore Romance'
+      }
+    ],
     restaurants: [],
     touristGuides: [],
     announcement: "25% OFF DISCOUNT",
@@ -93,7 +128,10 @@ const AppContent = () => {
       if (res.ok) {
         const data = await res.json();
         if (data && typeof data === 'object') {
-          setSiteConfig(prev => (data.lastUpdated || 0) > prev.lastUpdated ? data : prev);
+          setSiteConfig(prev => {
+             const merged = { ...prev, ...data };
+             return (data.lastUpdated || 0) > prev.lastUpdated ? merged : prev;
+          });
         }
       }
     } catch (e) {
@@ -235,7 +273,6 @@ const AppContent = () => {
     e.preventDefault();
     if (isLogoSpinning) return;
     setIsLogoSpinning(true);
-    // Matches the 2s duration in index.html
     setTimeout(() => setIsLogoSpinning(false), 2000);
   };
 
@@ -279,14 +316,10 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Modern Header */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
-              <div 
-                onClick={handleLogoClick}
-                className="cursor-pointer select-none"
-              >
+              <div onClick={handleLogoClick} className="cursor-pointer select-none">
                 <img 
                   src={LOGO_ICON_URL} 
                   className={`w-10 h-10 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
@@ -339,21 +372,15 @@ const AppContent = () => {
                 {isNotificationsOpen && (
                   <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[100]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
-                      <div>
-                        <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
-                      </div>
-                      <button onClick={closeAllPopups}>
-                        <X size={18} />
-                      </button>
+                      <div><h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3></div>
+                      <button onClick={closeAllPopups}><X size={18} /></button>
                     </div>
                     <div className="max-h-[350px] overflow-y-auto no-scrollbar p-4 space-y-3">
                       {(notifications || []).length > 0 ? (
                         notifications.map((n) => (
                           <div key={n.id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-white border-gray-50 opacity-60' : 'bg-red-50/50 border-hotel-primary/10'}`}>
                             <div className="flex gap-3">
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'booking_update' ? 'bg-[#B22222] text-white' : 'bg-blue-500 text-white'}`}>
-                                <Info size={14} />
-                              </div>
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'booking_update' ? 'bg-[#B22222] text-white' : 'bg-blue-500 text-white'}`}><Info size={14} /></div>
                               <div className="flex-1">
                                 <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{n.title}</h4>
                                 <p className="text-[10px] text-gray-500 mt-1">{n.message}</p>
@@ -371,10 +398,7 @@ const AppContent = () => {
                 )}
               </div>
             ) : (
-              <button 
-                onClick={toggleAuth}
-                className="flex items-center gap-3 bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
-              >
+              <button onClick={toggleAuth} className="flex items-center gap-3 bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all">
                 <LogIn size={16} /> Login
               </button>
             )}
@@ -391,6 +415,12 @@ const AppContent = () => {
                   onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))}
                   onImageUpload={(f) => uploadToR2(f, 'Hero Section')}
                 />
+                <ExclusiveOffers 
+                  offers={siteConfig.offers}
+                  isEditMode={isEditMode}
+                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))}
+                  onImageUpload={(f) => uploadToR2(f, 'Offers')}
+                />
                 <RoomGrid 
                   rooms={siteConfig.rooms} 
                   isEditMode={isEditMode}
@@ -405,7 +435,25 @@ const AppContent = () => {
                 />
               </div>
             } />
+            
+            {/* Dedicated Route for Offers List */}
+            <Route path="/offers" element={
+              <div className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
+                <div className="max-w-7xl mx-auto px-6 mb-12">
+                   <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Current Promotions</h1>
+                   <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals and residential packages designed for your comfort and savings.</p>
+                </div>
+                <ExclusiveOffers 
+                  offers={siteConfig.offers}
+                  isEditMode={isEditMode}
+                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))}
+                  onImageUpload={(f) => uploadToR2(f, 'Offers')}
+                />
+              </div>
+            } />
+
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />} />
+            <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Tourist Guides')} />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
@@ -414,11 +462,9 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        {/* Updated Modern Gray Footer */}
         <footer className="bg-white border-t border-gray-50 py-16 px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-20 mb-16">
-              
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Logo" />
@@ -427,101 +473,46 @@ const AppContent = () => {
                     <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
                   </div>
                 </div>
-                <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-w-sm">
-                  Experience world-class hospitality at the heart of Sylhet. We offer premium residential services for travellers, families, and corporate guests.
-                </p>
+                <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-w-sm">Experience world-class hospitality at the heart of Sylhet.</p>
                 <div className="flex gap-4">
-                  <Link to="/privacypolicy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy Policy</Link>
+                  <Link to="/privacypolicy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary">Privacy Policy</Link>
                   <span className="text-gray-200">|</span>
-                  <Link to="/termsofservice" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms</Link>
+                  <Link to="/termsofservice" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary">Terms</Link>
                 </div>
               </div>
-
               <div className="space-y-8">
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <MapPin size={16} className="text-gray-400" />
-                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Address</p>
-                  </div>
-                  <p className="text-[11px] text-gray-500 font-normal leading-relaxed">
-                    Kumar Gaon Bus Stand,<br />
-                    Sunamganj Road, Sylhet
-                  </p>
+                  <div className="flex items-center gap-3 mb-4"><MapPin size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Address</p></div>
+                  <p className="text-[11px] text-gray-500">Kumar Gaon Bus Stand, Sunamganj Road, Sylhet</p>
                 </div>
-
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Phone size={16} className="text-gray-400" />
-                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Phone Numbers</p>
-                  </div>
+                  <div className="flex items-center gap-3 mb-4"><Phone size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Phone</p></div>
                   <div className="flex flex-col gap-2">
-                    <a href="tel:+8801717425702" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
-                      01717-425702
-                    </a>
-                    <a href="tel:+8801334935566" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
-                      0133-4935566
-                    </a>
+                    <a href="tel:+8801717425702" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">01717-425702</a>
+                    <a href="tel:+8801334935566" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">0133-4935566</a>
                   </div>
                 </div>
               </div>
-
               <div className="space-y-8">
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Mail size={16} className="text-gray-400" />
-                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email Correspondence</p>
-                  </div>
+                  <div className="flex items-center gap-3 mb-4"><Mail size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email</p></div>
                   <div className="flex flex-col gap-2">
-                    <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
-                      kahar.info@gmail.com
-                    </a>
-                    <a href="mailto:hotelshotabdiabashik@gmail.com" className="text-[11px] text-gray-500 font-normal hover:text-hotel-primary transition-colors break-all flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></span>
-                      hotelshotabdiabashik@gmail.com
-                    </a>
+                    <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">kahar.info@gmail.com</a>
                   </div>
                 </div>
-
-                <div className="pt-4">
-                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em] mb-2">Service Standard</p>
-                  <p className="text-[10px] text-gray-400 font-normal italic">"Your comfort and trust are our highest priorities."</p>
-                </div>
+                <div className="pt-4"><p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em]">Service Standard</p><p className="text-[10px] text-gray-400 italic">"Your comfort and trust are our highest priorities."</p></div>
               </div>
-
             </div>
-
             <div className="pt-10 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
-              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
-                © 2024 Hotel Shotabdi Residential • All Rights Reserved
-              </p>
+              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">© 2024 Hotel Shotabdi Residential • All Rights Reserved</p>
             </div>
           </div>
         </footer>
 
-        <AuthModal 
-          isOpen={isAuthModalOpen} 
-          onClose={closeAllPopups} 
-        />
-        
+        <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
         {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
-        
-        {user && profile && isManageAccountOpen && (
-          <ManageAccount 
-            profile={profile} 
-            onClose={closeAllPopups} 
-            onUpdate={() => loadProfile(user)} 
-          />
-        )}
-        
-        <MobileBottomNav 
-          user={user} 
-          isAdmin={isAdmin || isOwner} 
-          openAuth={toggleAuth} 
-          toggleProfile={toggleManageAccount} 
-        />
+        {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
+        <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={toggleAuth} toggleProfile={toggleManageAccount} />
       </main>
     </div>
   );

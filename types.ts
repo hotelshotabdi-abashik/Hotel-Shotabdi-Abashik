@@ -1,3 +1,4 @@
+
 export interface Room {
   id: string;
   title: string;
@@ -42,11 +43,21 @@ export interface Attraction {
   phone?: string;
 }
 
+export interface Offer {
+  id: string;
+  title: string;
+  description: string;
+  mediaUrl: string;
+  mediaType: 'image' | 'video';
+  ctaText: string;
+}
+
 export interface SiteConfig {
   hero: HeroConfig;
   rooms: Room[];
   restaurants: Restaurant[];
   touristGuides: Attraction[];
+  offers: Offer[];
   announcement: string;
   lastUpdated: number;
 }

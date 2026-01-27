@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Home, Bed, Map, Utensils } from 'lucide-react';
+import { Home, Bed, Map, Utensils, Tag } from 'lucide-react';
 import { Room } from './types';
 
 export const ROOMS_DATA: Room[] = [
@@ -51,6 +52,7 @@ export const ROOMS_DATA: Room[] = [
 
 export const NAV_ITEMS = [
   { id: 'overview', path: '/', label: 'Overview', icon: <Home size={20} /> },
+  { id: 'offers', path: '/offers', label: 'Exclusive Offers', icon: <Tag size={20} /> },
   { id: 'rooms', path: '/rooms', label: 'Our Rooms', icon: <Bed size={20} /> },
   { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
   { id: 'guide', path: '/guide', label: 'Tourist Guide', icon: <Map size={20} /> },
