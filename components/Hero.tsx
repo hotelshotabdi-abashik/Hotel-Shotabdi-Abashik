@@ -40,7 +40,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   ];
 
   return (
-    <section className="relative min-h-[75vh] flex flex-col items-center justify-center pt-20 pb-32 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
+    <section className="relative min-h-[75vh] flex flex-col items-center justify-center pt-8 md:pt-12 pb-24 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
       {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">
         <img 
@@ -64,7 +64,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         {/* Simple Header Text (Title Removed per request) */}
-        <div className="mb-10 text-center animate-fade-in max-w-3xl">
+        <div className="mb-8 text-center animate-fade-in max-w-3xl">
           <p className="text-sm md:text-base text-white/90 font-medium leading-relaxed opacity-90 px-4">
             {isEditMode ? (
               <textarea 
@@ -217,7 +217,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
         </div>
 
         {/* Floating Quick Action */}
-        <div className="mt-12 flex items-center gap-6 animate-bounce">
+        <div className="mt-8 flex items-center gap-6 animate-bounce">
             <div className="flex flex-col items-center gap-2">
                 <div className="w-10 h-10 bg-white/10 backdrop-blur rounded-full flex items-center justify-center text-white border border-white/20">
                     <ChevronDown size={20} />

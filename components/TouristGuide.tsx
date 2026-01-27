@@ -81,7 +81,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
 
   return (
     <section id="guide" className="bg-gray-50/50 min-h-screen w-full">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-16 md:pt-24 pb-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-12">
         <div className="text-center flex flex-col items-center">
             <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6 shadow-sm">
               <Compass size={32} />

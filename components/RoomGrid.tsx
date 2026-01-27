@@ -86,7 +86,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
   };
 
   return (
-    <section id="rooms" className="max-w-7xl mx-auto pt-16 md:pt-24 pb-24 px-4 md:px-6 bg-white w-full">
+    <section id="rooms" className="max-w-7xl mx-auto pt-8 md:pt-12 pb-24 px-4 md:px-6 bg-white w-full">
       <div className="flex flex-col md:flex-row justify-between items-end mb-12 md:mb-16 gap-6">
         <div className="max-w-2xl text-center md:text-left">
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[10px] font-black uppercase tracking-[0.3em] mb-4">
