@@ -40,23 +40,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
     maximumFractionDigits: 0,
   });
 
-  const calculateDiscount = (price: string) => {
-    // Robust parsing: remove everything except digits and decimal point
-    const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
-    
-    if (isNaN(numericPrice)) {
-      return { original: price, discounted: price, savings: "0" };
-    }
-
-    // 25% Discount logic: Final = Price * 0.75
-    const discountedValue = Math.round(numericPrice * 0.75);
-    const savingsValue = numericPrice - discountedValue;
-
-    return {
-      original: formatter.format(numericPrice),
-      discounted: formatter.format(discountedValue),
-      savings: formatter.format(savingsValue)
-    };
+  const formatPriceString = (price: string) => {
+    const numeric = parseFloat(price.replace(/[^0-9.]/g, ''));
+    return isNaN(numeric) ? price : formatter.format(numeric);
   };
 
   const handleImageChange = async (roomId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +75,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
       id: `room-${Date.now()}`,
       title: "New Room Type",
       price: "2000",
+      discountPrice: "1500",
       tag: "NEW",
       desc: "Clean and comfortable room for your stay. Features high-quality bedding and modern amenities for a relaxing experience.",
       features: ["Wi-Fi", "AC", "TV"],
@@ -125,7 +112,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         {rooms.map((room) => {
-          const pricing = calculateDiscount(room.price);
           return (
             <div key={room.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 group transition-all duration-500 flex flex-col h-full relative shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
               
@@ -153,15 +139,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                       {room.tag}
                     </span>
                   )}
-                </div>
-
-                {/* Overlaid Price (Discounted) */}
-                <div className="absolute bottom-6 left-6 z-10 text-white">
-                  <p className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">Book Now For</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-serif font-black tracking-tighter">৳{pricing.discounted}</span>
-                    <span className="text-[11px] font-bold opacity-70">/night</span>
-                  </div>
                 </div>
 
                 {isEditMode && (
@@ -199,24 +176,44 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                   {/* Detailed Pricing Logic Display */}
                   <div className="flex flex-wrap items-center gap-3">
                     {isEditMode ? (
-                      <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-2 rounded">
-                        <span className="text-[10px] font-bold text-gray-400">৳</span>
-                        <input 
-                          className="text-[12px] font-bold text-gray-500 bg-transparent outline-none py-1 w-16"
-                          value={room.price}
-                          placeholder="Price"
-                          onChange={(e) => updateRoom(room.id, 'price', e.target.value)}
-                        />
+                      <div className="space-y-2 w-full">
+                        <div className="flex items-center gap-2">
+                           <span className="text-[9px] font-black text-gray-400 uppercase w-20">Regular Price:</span>
+                           <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-2 rounded flex-1">
+                              <span className="text-[10px] font-bold text-gray-400">৳</span>
+                              <input 
+                                className="text-[12px] font-bold text-gray-500 bg-transparent outline-none py-1 w-full"
+                                value={room.price}
+                                placeholder="Reg. Price"
+                                onChange={(e) => updateRoom(room.id, 'price', e.target.value)}
+                              />
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <span className="text-[9px] font-black text-hotel-primary uppercase w-20">Offer Price:</span>
+                           <div className="flex items-center gap-1 border-b border-hotel-primary/20 bg-hotel-primary/5 px-2 rounded flex-1">
+                              <span className="text-[10px] font-bold text-hotel-primary">৳</span>
+                              <input 
+                                className="text-[12px] font-black text-hotel-primary bg-transparent outline-none py-1 w-full"
+                                value={room.discountPrice}
+                                placeholder="Offer Price"
+                                onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)}
+                              />
+                           </div>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-bold text-gray-300 line-through">৳{pricing.original}</span>
-                        <span className="text-[14px] font-black text-gray-900">৳{pricing.discounted}</span>
+                        <span className="text-[12px] font-bold text-gray-300 line-through">৳{formatPriceString(room.price)}</span>
+                        <span className="text-2xl font-serif font-black text-gray-900">৳{formatPriceString(room.discountPrice)}</span>
+                        <span className="text-[10px] font-bold text-gray-400 ml-1">/night</span>
                       </div>
                     )}
-                    <span className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-100 flex items-center gap-1.5">
-                      Save 25%
-                    </span>
+                    {!isEditMode && (
+                      <span className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-100 flex items-center gap-1.5">
+                        Special Offer
+                      </span>
+                    )}
                   </div>
                 </div>
 

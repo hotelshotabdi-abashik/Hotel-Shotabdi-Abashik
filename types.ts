@@ -1,8 +1,8 @@
-
 export interface Room {
   id: string;
   title: string;
   price: string;
+  discountPrice: string;
   tag: string;
   desc: string;
   features: string[];
