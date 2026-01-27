@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ShieldCheck, User, Phone, IdentificationCard, Camera, Loader2, AlertCircle } from 'lucide-react';
+import { ShieldCheck, User, Phone, IdCard, Camera, Loader2, AlertCircle } from 'lucide-react';
 import { db, set, ref, checkUsernameUnique, serverTimestamp } from '../services/firebase';
 
 interface Props {
@@ -166,7 +166,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">17-Digit NID Number</label>
             <div className="relative">
-              <IdentificationCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
               <input 
                 type="text" 
                 maxLength={17}
