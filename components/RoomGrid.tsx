@@ -35,13 +35,27 @@ const RoomDescription: React.FC<{ text: string }> = ({ text }) => {
 const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImageUpload }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
+  // Modern currency formatter for BDT (৳)
+  const formatter = new Intl.NumberFormat('en-BD', {
+    maximumFractionDigits: 0,
+  });
+
   const calculateDiscount = (price: string) => {
-    const numericPrice = parseInt(price.replace(/,/g, ''), 10);
-    if (isNaN(numericPrice)) return { original: price, discounted: price };
+    // Robust parsing: remove everything except digits and decimal point
+    const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+    
+    if (isNaN(numericPrice)) {
+      return { original: price, discounted: price, savings: "0" };
+    }
+
+    // 25% Discount logic: Final = Price * 0.75
     const discountedValue = Math.round(numericPrice * 0.75);
+    const savingsValue = numericPrice - discountedValue;
+
     return {
-      original: numericPrice.toLocaleString(),
-      discounted: discountedValue.toLocaleString()
+      original: formatter.format(numericPrice),
+      discounted: formatter.format(discountedValue),
+      savings: formatter.format(savingsValue)
     };
   };
 
@@ -74,7 +88,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
     const newRoom: Room = {
       id: `room-${Date.now()}`,
       title: "New Room Type",
-      price: "1500",
+      price: "2000",
       tag: "NEW",
       desc: "Clean and comfortable room for your stay. Features high-quality bedding and modern amenities for a relaxing experience.",
       features: ["Wi-Fi", "AC", "TV"],
@@ -89,13 +103,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
       <div className="flex flex-col md:flex-row justify-between items-end mb-12 md:mb-16 gap-6">
         <div className="max-w-2xl text-center md:text-left">
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[10px] font-black uppercase tracking-[0.3em] mb-4">
-            <Zap size={12} fill="currentColor" /> Live Deals
+            <Zap size={12} fill="currentColor" /> Exclusive Offer
           </div>
           <h2 className="text-4xl md:text-6xl font-sans text-gray-900 mb-4 font-black tracking-tighter">
             Our Rooms
           </h2>
           <p className="text-gray-400 text-sm md:text-lg leading-relaxed font-light">
-            Luxury spaces designed for comfort. Reserve today and enjoy an automatic <span className="text-hotel-primary font-bold">25% discount</span>.
+            Luxury spaces designed for comfort. Reserve today and enjoy an automatic <span className="text-hotel-primary font-bold">25% discount</span> on all bookings.
           </p>
         </div>
         
@@ -141,9 +155,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                   )}
                 </div>
 
-                {/* Overlaid Price */}
+                {/* Overlaid Price (Discounted) */}
                 <div className="absolute bottom-6 left-6 z-10 text-white">
-                  <p className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">Starting From</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">Book Now For</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-serif font-black tracking-tighter">৳{pricing.discounted}</span>
                     <span className="text-[11px] font-bold opacity-70">/night</span>
@@ -182,8 +196,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                     </h3>
                   )}
                   
-                  {/* Pricing Line with 25% Badge */}
-                  <div className="flex items-center gap-3">
+                  {/* Detailed Pricing Logic Display */}
+                  <div className="flex flex-wrap items-center gap-3">
                     {isEditMode ? (
                       <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-2 rounded">
                         <span className="text-[10px] font-bold text-gray-400">৳</span>
@@ -195,7 +209,10 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                         />
                       </div>
                     ) : (
-                      <span className="text-[12px] font-bold text-gray-300 line-through">৳{pricing.original}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] font-bold text-gray-300 line-through">৳{pricing.original}</span>
+                        <span className="text-[14px] font-black text-gray-900">৳{pricing.discounted}</span>
+                      </div>
                     )}
                     <span className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-100 flex items-center gap-1.5">
                       Save 25%
@@ -239,7 +256,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                 {/* Book Button */}
                 <div className="mt-auto">
                   <button className="w-full bg-[#9B1C1C] hover:bg-hotel-primary text-white py-6 rounded-[2.5rem] font-black text-[13px] uppercase tracking-[0.25em] shadow-xl shadow-red-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98] group/btn">
-                    Book Now <ChevronRight size={18} className="group-hover/btn:translate-x-1.5 transition-transform" />
+                    Confirm Booking <ChevronRight size={18} className="group-hover/btn:translate-x-1.5 transition-transform" />
                   </button>
                 </div>
               </div>
