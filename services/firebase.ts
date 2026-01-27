@@ -41,7 +41,8 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 /**
- * Checks if a username is already taken by another user
+ * Checks if a username is already taken by another user.
+ * Wrapped in try-catch to prevent permission errors from breaking the UI.
  */
 export const checkUsernameUnique = async (username: string, currentUid: string) => {
   try {
@@ -53,12 +54,14 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
     }
     return true;
   } catch (e) {
-    return true; // Safe fallback for availability check
+    console.warn("Username uniqueness check bypassed due to permission restriction.");
+    return true;
   }
 };
 
 /**
  * Syncs profile data. Returns a blank onboarding-ready profile if read fails or data doesn't exist.
+ * This ensures that even if a user was deleted from the DB, they get prompted to re-onboard.
  */
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
@@ -83,7 +86,7 @@ export const syncUserProfile = async (user: any) => {
   try {
     const snapshot = await get(userRef);
     if (!snapshot.exists()) {
-      await set(userRef, freshProfile);
+      // User has no profile record (new or deleted)
       return freshProfile;
     } else {
       const currentData = snapshot.val();
@@ -91,8 +94,9 @@ export const syncUserProfile = async (user: any) => {
       return { ...currentData, lastLogin: now };
     }
   } catch (e) {
-    console.warn("Profile sync blocked (new user or permission denied):", e);
-    return freshProfile; // Return uncompleted profile to trigger onboarding
+    // If permission is denied, assume it's a new user needing onboarding
+    console.warn("Database access restricted. Treating as new resident.");
+    return freshProfile;
   }
 };
 

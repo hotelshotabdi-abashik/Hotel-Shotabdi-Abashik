@@ -57,8 +57,8 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
         if (!isUnique) throw new Error('Username already claimed');
       }
 
-      if (form.nidNumber.length !== 17) {
-        throw new Error(`Invalid NID: ${form.nidNumber.length}/17 digits`);
+      if (form.nidNumber.length < 10 || form.nidNumber.length > 17) {
+        throw new Error(`Invalid NID: ${form.nidNumber.length} digits (Must be 10-17)`);
       }
 
       const timestamp = Date.now();
@@ -207,7 +207,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
             </div>
 
             <div className="space-y-6">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Government ID Details</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Government ID (10-17 Digits)</label>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 <div className="space-y-4">

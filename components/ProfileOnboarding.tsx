@@ -43,14 +43,14 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
     
     if (username.includes(' ')) throw new Error('Username cannot contain spaces');
     
-    // Validate Phone Format: +[Country Code][11 Digits]
-    const phoneRegex = /^\+\d{11,15}$/;
-    if (!phoneRegex.test(phone)) throw new Error('Format: +[CountryCode][11 Digits] (e.g. +8801712345678)');
+    // Validate Phone Format: +[Country Code][Digits]
+    const phoneRegex = /^\+\d{10,15}$/;
+    if (!phoneRegex.test(phone)) throw new Error('Format: +[CountryCode][Number] (e.g. +88017XXXXXXXX)');
     if (!phoneRegex.test(guardianPhone)) throw new Error('Guardian Phone must be in international format');
     
-    // Strict 17-Digit NID Validation
-    if (nidNumber.length !== 17) {
-      throw new Error(`NID must be exactly 17 digits. Currently: ${nidNumber.length}`);
+    // Flexible NID Validation (10-17 digits)
+    if (nidNumber.length < 10 || nidNumber.length > 17) {
+      throw new Error(`NID must be between 10 to 17 digits. Currently: ${nidNumber.length}`);
     }
     
     const isUnique = await checkUsernameUnique(username, user.uid);
@@ -153,7 +153,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
                 <input 
                   type="text" 
-                  placeholder="+8801712345678"
+                  placeholder="+88017XXXXXXXX"
                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5"
                   value={form.phone}
                   onChange={e => setForm({...form, phone: e.target.value})}
@@ -167,7 +167,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
                 <input 
                   type="text" 
-                  placeholder="+8801312345678"
+                  placeholder="+880XXXXXXXXXX"
                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5"
                   value={form.guardianPhone}
                   onChange={e => setForm({...form, guardianPhone: e.target.value})}
@@ -178,8 +178,8 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center px-1">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">17-Digit NID Number</label>
-              <span className={`text-[9px] font-bold ${form.nidNumber.length === 17 ? 'text-green-500' : 'text-gray-300'}`}>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">NID Number (10-17 digits)</label>
+              <span className={`text-[9px] font-bold ${(form.nidNumber.length >= 10 && form.nidNumber.length <= 17) ? 'text-green-500' : 'text-gray-300'}`}>
                 {form.nidNumber.length} / 17
               </span>
             </div>
@@ -188,7 +188,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
               <input 
                 type="text" 
                 maxLength={17}
-                placeholder="1990XXXXXXXXXXXXX"
+                placeholder="NID Digits"
                 className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5 font-mono tracking-widest"
                 value={form.nidNumber}
                 onChange={e => setForm({...form, nidNumber: e.target.value.replace(/\D/g, '')})}
@@ -224,7 +224,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
                     <Camera size={24} />
                   </div>
                   <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Upload NID Front Side</p>
-                  <p className="text-[9px] text-gray-400/60 mt-1 font-medium italic">Supports JPG, PNG up to 1MB</p>
+                  <p className="text-[9px] text-gray-400/60 mt-1 font-medium italic">JPG or PNG (max 1MB)</p>
                 </div>
               )}
             </div>

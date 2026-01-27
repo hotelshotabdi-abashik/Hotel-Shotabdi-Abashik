@@ -198,14 +198,12 @@ const AppContent = () => {
       const data = await syncUserProfile(u);
       setProfile(data);
       
-      // Step 1: Immediate owner check locally based on email
       if (u.email === OWNER_EMAIL) {
         setIsOwner(true);
         setIsAdmin(true);
-        return; // Don't even try to read roles if they're already owner
+        return;
       }
 
-      // Step 2: Check roles for non-owners (this might trigger PERMISSION_DENIED if rules are strict)
       const roleRef = ref(db, `roles/${u.uid}`);
       const roleSnap = await get(roleRef);
       if (roleSnap.exists()) {
@@ -213,20 +211,19 @@ const AppContent = () => {
         setIsAdmin(role === 'admin' || role === 'owner');
       }
     } catch (error) {
-      console.warn("Background Profile sync issue (expected for new users):", error);
+      console.warn("Background Sync Warning:", error);
     }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      // 1. Immediately set User and clear loading
       setUser(currentUser);
       
       if (currentUser) {
-        // 2. Perform background sync
-        loadProfile(currentUser).finally(() => {
-          setIsAuthLoading(false);
-        });
+        // Clear loading state as soon as we have a user object
+        // Even if the profile is still loading in background
+        setIsAuthLoading(false);
+        loadProfile(currentUser);
       } else {
         setProfile(null);
         setIsAdmin(false);
