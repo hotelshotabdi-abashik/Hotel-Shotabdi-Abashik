@@ -49,36 +49,43 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
 };
 
 /**
- * Syncs basic profile data and returns the full profile status
+ * Syncs profile data and updates the login memory
  */
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
   const userRef = ref(db, `profiles/${user.uid}`);
   const snapshot = await get(userRef);
 
+  const now = Date.now();
+
   if (!snapshot.exists()) {
     const basicProfile = {
       uid: user.uid,
       email: user.email,
       photoURL: user.photoURL,
-      createdAt: serverTimestamp(),
+      createdAt: now,
+      lastLogin: now,
       isComplete: false
     };
     await set(userRef, basicProfile);
     return basicProfile;
+  } else {
+    // Update memory of the last login
+    const currentData = snapshot.val();
+    await update(userRef, { lastLogin: now });
+    return { ...currentData, lastLogin: now };
   }
-  return snapshot.val();
 };
 
 export { 
   onAuthStateChanged, 
   signOut, 
-  signInWithPopup,
-  signInWithCredential,
-  GoogleAuthProvider,
-  ref,
-  get,
-  set,
-  update,
-  serverTimestamp
+  signInWithPopup, 
+  signInWithCredential, 
+  GoogleAuthProvider, 
+  ref, 
+  get, 
+  set, 
+  update, 
+  serverTimestamp 
 };

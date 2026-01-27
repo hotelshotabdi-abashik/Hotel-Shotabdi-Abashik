@@ -35,5 +35,6 @@ export interface UserProfile {
   bio: string;
   createdAt: number;
   lastUpdated: number;
+  lastLogin: number;
   isComplete: boolean;
 }

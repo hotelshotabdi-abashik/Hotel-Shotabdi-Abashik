@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertTriangle, Calendar, Loader2, ShieldCheck, Image as ImageIcon } from 'lucide-react';
+import { X, Save, AlertTriangle, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History } from 'lucide-react';
 import { db, ref, set, get, checkUsernameUnique, serverTimestamp } from '../services/firebase';
 import { UserProfile } from '../types';
 
@@ -16,17 +16,26 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
   const [success, setSuccess] = useState(false);
   const [pendingDays, setPendingDays] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [nidPreview, setNidPreview] = useState(profile.nidImageUrl);
   
-  const [form, setForm] = useState({ ...profile });
+  const [form, setForm] = useState({ 
+    legalName: profile.legalName,
+    username: profile.username,
+    phone: profile.phone,
+    guardianPhone: profile.guardianPhone,
+    nidNumber: profile.nidNumber,
+  });
 
   useEffect(() => {
-    const lastUpdate = profile.lastUpdated || 0;
+    const lastUpdate = profile.lastUpdated || profile.createdAt || 0;
     const now = Date.now();
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
     const diff = now - lastUpdate;
-    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     
-    if (diff < thirtyDays) {
-      setPendingDays(Math.ceil((thirtyDays - diff) / (1000 * 60 * 60 * 24)));
+    if (diff < thirtyDaysMs) {
+      const remainingMs = thirtyDaysMs - diff;
+      const days = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+      setPendingDays(days);
       setIsLocked(true);
     }
   }, [profile]);
@@ -39,24 +48,28 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
     setError('');
     
     try {
-      // Basic validation
-      if (form.username !== profile.username) {
-        const isUnique = await checkUsernameUnique(form.username, profile.uid);
-        if (!isUnique) throw new Error('Username already taken');
+      const normalizedUsername = form.username.toLowerCase().trim().replace(/\s/g, '');
+      
+      if (normalizedUsername !== profile.username) {
+        const isUnique = await checkUsernameUnique(normalizedUsername, profile.uid);
+        if (!isUnique) throw new Error('Username already claimed');
       }
 
-      const normalizedUsername = form.username.toLowerCase().trim();
-      
-      // Update data
+      if (form.nidNumber.length !== 17) {
+        throw new Error(`Invalid NID: ${form.nidNumber.length}/17 digits`);
+      }
+
+      const timestamp = Date.now();
       const finalProfile = {
+        ...profile,
         ...form,
         username: normalizedUsername,
-        lastUpdated: serverTimestamp()
+        nidImageUrl: nidPreview,
+        lastUpdated: timestamp
       };
 
       await set(ref(db, `profiles/${profile.uid}`), finalProfile);
       
-      // Handle username registry change
       if (normalizedUsername !== profile.username) {
         await set(ref(db, `usernames/${normalizedUsername}`), profile.uid);
       }
@@ -65,7 +78,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
       setTimeout(() => {
         onUpdate();
         onClose();
-      }, 1500);
+      }, 2000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -73,115 +86,174 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
     }
   };
 
+  const formattedDate = (ts: number) => new Date(ts).toLocaleDateString('en-US', { 
+    month: 'long', day: 'numeric', year: 'numeric' 
+  });
+
   return (
-    <div className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 animate-fade-in">
-      <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-full border border-white/20">
+    <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white/95 backdrop-blur-2xl w-full max-w-2xl rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col max-h-[90vh] border border-white/40 ring-1 ring-black/5">
         
-        {/* Header */}
-        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-          <div>
-            <h2 className="text-2xl font-serif font-black text-gray-900">Manage Identity</h2>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Shotabdi Verified User</p>
+        {/* Memory Header */}
+        <div className="p-8 md:p-10 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/40">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md">
+              <img src={profile.photoURL} className="w-full h-full object-cover" alt="User" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-serif font-black text-gray-900 tracking-tight">Account Vault</h2>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <History size={10} className="text-hotel-primary" /> Member since {new Date(profile.createdAt).getFullYear()}
+                </p>
+                <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+                <div className="flex items-center gap-1">
+                  <ShieldCheck size={10} className="text-green-500" />
+                  <span className="text-[9px] text-green-600 font-black uppercase tracking-widest">Verified</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <button onClick={onClose} className="p-3 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-colors shadow-sm">
+          <button onClick={onClose} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-8 md:p-10 no-scrollbar space-y-8">
           {isLocked && (
-            <div className="mb-8 p-5 bg-amber-50 rounded-3xl border border-amber-100 flex items-start gap-4">
-              <div className="bg-amber-100 p-2 rounded-xl text-amber-600 shrink-0">
-                <Calendar size={20} />
+            <div className="p-6 bg-hotel-primary/5 rounded-[2.5rem] border border-hotel-primary/10 flex items-start gap-5 group animate-pulse-slow">
+              <div className="bg-hotel-primary text-white p-3.5 rounded-2xl shrink-0 shadow-lg shadow-red-100">
+                <Calendar size={22} />
               </div>
               <div>
-                <p className="text-xs font-black text-amber-800 uppercase tracking-tight mb-1">Account Locked</p>
-                <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
-                  Identity profiles can only be modified once every 30 days. You have <span className="font-black underline">{pendingDays} days</span> remaining before your next allowed update.
+                <p className="text-[10px] font-black text-hotel-primary uppercase tracking-[0.2em] mb-1">Account Locked</p>
+                <p className="text-xs text-gray-600 font-medium leading-relaxed">
+                  To protect your identity, data is frozen for 30 days after an update. <br />
+                  Next modification available in <span className="text-hotel-primary font-black underline decoration-2">{pendingDays} days</span>.
                 </p>
               </div>
             </div>
           )}
 
-          <form onSubmit={handleUpdate} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
+          <form id="manage-profile-form" onSubmit={handleUpdate} className="space-y-8">
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-hotel-primary text-[10px] font-black text-center uppercase tracking-widest animate-shake">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Identity</label>
                 <input 
                   type="text" 
                   disabled={isLocked}
-                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-5 text-sm outline-none transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
+                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-semibold outline-none transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
                   value={form.legalName}
                   onChange={e => setForm({...form, legalName: e.target.value})}
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Username</label>
-                <input 
-                  type="text" 
-                  disabled={isLocked}
-                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-5 text-sm outline-none transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
-                  value={form.username}
-                  onChange={e => setForm({...form, username: e.target.value})}
-                />
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Public Handle</label>
+                <div className="relative">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">@</span>
+                  <input 
+                    type="text" 
+                    disabled={isLocked}
+                    className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-10 pr-6 text-sm font-semibold outline-none transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
+                    value={form.username}
+                    onChange={e => setForm({...form, username: e.target.value})}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Primary Phone</label>
                 <input 
                   type="text" 
                   disabled={isLocked}
-                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-5 text-sm outline-none transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
+                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-semibold outline-none transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
                   value={form.phone}
                   onChange={e => setForm({...form, phone: e.target.value})}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Guardian Phone</label>
                 <input 
                   type="text" 
                   disabled={isLocked}
-                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-5 text-sm outline-none transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
+                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-semibold outline-none transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'focus:bg-white focus:border-hotel-primary'}`}
                   value={form.guardianPhone}
                   onChange={e => setForm({...form, guardianPhone: e.target.value})}
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Information</label>
-              <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-hotel-primary">
-                    <ShieldCheck size={20} />
+            <div className="space-y-6">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Government ID Details</label>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="space-y-4">
+                  <div className={`relative ${isLocked ? 'opacity-40' : ''}`}>
+                    <IdCard size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input 
+                      type="text" 
+                      maxLength={17}
+                      disabled={isLocked}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-14 pr-6 text-sm font-mono tracking-widest outline-none"
+                      value={form.nidNumber}
+                      onChange={e => setForm({...form, nidNumber: e.target.value.replace(/\D/g, '')})}
+                    />
                   </div>
-                  <div>
-                    <p className="text-xs font-black text-gray-900">NID: {profile.nidNumber}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Verified 17-Digit ID</p>
-                  </div>
+                  {!isLocked && (
+                    <div className="relative border-2 border-dashed border-gray-100 rounded-2xl p-4 bg-gray-50/50 hover:bg-white hover:border-hotel-primary/30 transition-all cursor-pointer overflow-hidden">
+                      <input type="file" accept="image/*" onChange={(e) => {
+                         const file = e.target.files?.[0];
+                         if (file) {
+                           const reader = new FileReader();
+                           reader.onloadend = () => setNidPreview(reader.result as string);
+                           reader.readAsDataURL(file);
+                         }
+                      }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                      <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <Camera size={16} className="text-hotel-primary" /> Replace Document
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="w-16 h-10 rounded-lg overflow-hidden border border-white shadow-sm">
-                  <img src={profile.nidImageUrl} className="w-full h-full object-cover" alt="NID" />
+
+                <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-black/5 aspect-video bg-gray-100 group">
+                  <img src={nidPreview} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="NID Document" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
               </div>
             </div>
-
-            {!isLocked && (
-              <div className="pt-4">
-                <button 
-                  disabled={loading || success}
-                  className={`w-full py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 active:scale-[0.98] ${
-                    success ? 'bg-green-500 text-white shadow-green-100' : 'bg-hotel-primary text-white shadow-red-100 hover:bg-hotel-secondary'
-                  }`}
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : success ? <ShieldCheck /> : <Save size={18} />}
-                  {success ? 'Profile Secured' : 'Save Changes'}
-                </button>
-              </div>
-            )}
           </form>
+        </div>
+
+        <div className="p-8 md:p-10 bg-gray-50/50 border-t border-gray-100/50">
+          {!isLocked ? (
+            <button 
+              form="manage-profile-form"
+              type="submit"
+              disabled={loading || success}
+              className={`w-full py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl transition-all flex items-center justify-center gap-4 active:scale-[0.98] ${
+                success ? 'bg-green-500 text-white' : 'bg-hotel-primary text-white hover:bg-hotel-secondary'
+              }`}
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : success ? <CheckCircle2 size={20} /> : <Save size={18} />}
+              {success ? 'Vault Updated' : 'Authorize Update'}
+            </button>
+          ) : (
+            <div className="text-center py-2">
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+                <ShieldCheck size={14} className="text-hotel-primary" /> Secure Profile Registry
+              </p>
+              <p className="text-[9px] text-gray-300 font-bold mt-1">LOCKED UNTIL {formattedDate((profile.lastUpdated || profile.createdAt) + (30 * 24 * 60 * 60 * 1000))}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -24,7 +24,7 @@ import {
   get
 } from './services/firebase';
 import { UserProfile } from './types';
-import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, Settings } from 'lucide-react';
+import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon, Settings, UserCheck } from 'lucide-react';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const GOOGLE_CLIENT_ID = "682102275681-le7slsv9pnljvq34ht8llnbrkn5mumpg.apps.googleusercontent.com";
@@ -105,7 +105,7 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
           {isAuthLoading ? (
             <div className="p-3 bg-gray-50 rounded-2xl animate-pulse flex items-center gap-2">
               <Loader2 size={16} className="text-hotel-primary animate-spin" />
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Verifying...</span>
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Verifying Identity...</span>
             </div>
           ) : user ? (
             <div className="relative">
@@ -114,11 +114,14 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
                 className="flex items-center gap-3 bg-gray-50/80 hover:bg-white border border-gray-100 rounded-2xl pl-4 pr-2 py-2 transition-all duration-300 hover:shadow-md group"
               >
                 <div className="text-right flex flex-col justify-center hidden sm:flex">
-                  <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none mb-0.5 truncate max-w-[120px]">
-                    {profile?.legalName || user.displayName || 'Guest'}
-                  </p>
-                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none ${isOwner ? 'text-purple-600' : isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
-                    {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : `@${profile?.username || 'user'}`}
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-widest leading-none truncate max-w-[120px]">
+                      {profile?.legalName?.split(' ')[0] || user.displayName?.split(' ')[0] || 'Member'}
+                    </p>
+                    {profile?.isComplete && <ShieldCheck size={10} className="text-green-500" />}
+                  </div>
+                  <p className={`text-[8px] font-bold uppercase tracking-widest leading-none mt-1 ${isOwner ? 'text-purple-600' : isAdmin ? 'text-amber-600' : 'text-hotel-primary'}`}>
+                    {isOwner ? 'Proprietor' : isAdmin ? 'Manager' : `@${profile?.username || 'member'}`}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-hotel-primary/10 group-hover:ring-hotel-primary/30 transition-all">
@@ -145,11 +148,15 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
           <>
             <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm lg:bg-transparent" onClick={() => setIsProfileOpen(false)}></div>
             <div className="absolute top-[80%] lg:top-full right-4 lg:right-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden animate-fade-in">
-              <div className="px-4 py-4 border-b border-gray-50 mb-1 bg-gray-50/30">
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Identity Profile</p>
-                <div className="flex items-center gap-2">
-                   <p className="text-xs font-bold text-gray-800 truncate">{user.email}</p>
-                   <ShieldCheck size={12} className="text-green-500" />
+              <div className="px-4 py-5 border-b border-gray-50 mb-1 bg-gray-50/30">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Memory Brain Active</p>
+                <div className="flex flex-col gap-1">
+                   <p className="text-[11px] font-black text-gray-800 truncate">{profile?.legalName || user.displayName}</p>
+                   <p className="text-[8px] font-bold text-gray-400 truncate tracking-tight">{user.email}</p>
+                </div>
+                <div className="mt-3 py-1.5 px-3 bg-white rounded-xl border border-gray-100 flex items-center gap-2">
+                   <UserCheck size={12} className="text-green-500" />
+                   <span className="text-[8px] font-black text-green-700 uppercase tracking-widest">Verified Member</span>
                 </div>
               </div>
 
@@ -160,7 +167,7 @@ const Header = ({ user, profile, isAdmin, isOwner, openAuth, openManageAccount, 
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors text-[10px] font-black uppercase tracking-widest"
               >
-                <Settings size={14} /> Manage Account
+                <Settings size={14} className="text-hotel-primary" /> Manage Identity
               </button>
               
               {(isAdmin || isOwner) && (
@@ -203,7 +210,6 @@ const AppContent = () => {
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const location = useLocation();
 
   const loadProfile = async (u: any) => {
     const data = await syncUserProfile(u);
@@ -219,12 +225,9 @@ const AppContent = () => {
         const role = roleSnap.val();
         setIsAdmin(role === 'admin' || role === 'owner');
         setIsOwner(role === 'owner');
-      } else {
-        setIsAdmin(false);
-        setIsOwner(false);
       }
     } catch (err) {
-      console.error("Error fetching user role:", err);
+      console.error("Memory Access Error:", err);
     }
   };
 
@@ -241,7 +244,7 @@ const AppContent = () => {
               await loadProfile(result.user);
               setUser(result.user);
             } catch (err) {
-              console.error("One Tap Authentication Failed:", err);
+              console.error("Auth Fail:", err);
             } finally {
               setIsAuthLoading(false);
             }
@@ -252,7 +255,7 @@ const AppContent = () => {
         });
         (window as any).google.accounts.id.prompt();
       } catch (err) {
-        console.warn("One Tap Initialization Warning:", err);
+        console.warn("One Tap Warning:", err);
       }
     }
   };
@@ -269,17 +272,7 @@ const AppContent = () => {
         setIsAdmin(false);
         setIsOwner(false);
         setProfile(null);
-        if ((window as any).google) {
-          initializeGoogleOneTap();
-        } else {
-          const checkScript = setInterval(() => {
-            if ((window as any).google) {
-              initializeGoogleOneTap();
-              clearInterval(checkScript);
-            }
-          }, 1000);
-          setTimeout(() => clearInterval(checkScript), 10000);
-        }
+        initializeGoogleOneTap();
       }
     });
 
@@ -292,20 +285,16 @@ const AppContent = () => {
     setIsAuthLoading(false);
   };
 
-  const openAuth = () => {
-    setIsAuthModalOpen(true);
-  };
-
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <Sidebar isAdmin={isAdmin || isOwner} />
 
-      {/* Mandatory Onboarding for first-time users */}
+      {/* Persistent Onboarding Memory */}
       {user && profile && !profile.isComplete && (
         <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
       )}
 
-      {/* Profile Management Modal */}
+      {/* Account Memory Management */}
       {user && profile && isManageAccountOpen && (
         <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />
       )}
@@ -316,7 +305,7 @@ const AppContent = () => {
           profile={profile}
           isAdmin={isAdmin} 
           isOwner={isOwner}
-          openAuth={openAuth} 
+          openAuth={() => setIsAuthModalOpen(true)} 
           openManageAccount={() => setIsManageAccountOpen(true)}
           handleSignOut={handleSignOut} 
           isAuthLoading={isAuthLoading}
@@ -333,7 +322,7 @@ const AppContent = () => {
               <div className="mt-8 md:mt-12"><NearbyRestaurants /></div>
               <div className="bg-gray-50 py-16 md:py-24 text-center px-6">
                 <h3 className="text-2xl md:text-3xl font-serif font-black text-hotel-primary">Experience Excellence</h3>
-                <p className="text-gray-500 mt-4 max-w-lg mx-auto font-light text-sm md:text-base">Join thousands of happy guests who have made Shotabdi Residential their home away from home in Sylhet.</p>
+                <p className="text-gray-500 mt-4 max-w-lg mx-auto font-light text-sm md:text-base">Join thousands of verified guests who have made Shotabdi Residential their trusted choice in Sylhet.</p>
               </div>
             </div>
           } />
@@ -344,11 +333,11 @@ const AppContent = () => {
           <Route path="/termsofservice" element={<TermsOfService />} />
           <Route path="/admin" element={
             <div className="p-10 md:p-20 text-center min-h-screen flex flex-col items-center justify-center">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-600 mb-6">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-600 mb-6 shadow-inner ring-1 ring-amber-100">
                 <LayoutDashboard size={32} />
               </div>
               <h1 className="text-2xl md:text-3xl font-serif font-black">Admin Management Panel</h1>
-              <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm">Welcome back. This portal is strictly for authorized personnel of Shotabdi Residential.</p>
+              <p className="text-gray-500 mt-4 max-w-md mx-auto text-sm font-medium">Accessing secure administrative memory.</p>
             </div>
           } />
         </Routes>
@@ -362,19 +351,10 @@ const AppContent = () => {
           }}
         />
 
-        <a 
-          href="https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+Kumargaon,+Bus+Stand,+Sylhet+3100"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="lg:hidden fixed bottom-28 right-6 z-50 bg-hotel-primary text-white p-4 rounded-full shadow-2xl animate-bounce hover:animate-none active:scale-90 transition-all"
-        >
-          <MapIcon size={24} />
-        </a>
-
         <MobileBottomNav 
           user={user} 
           isAdmin={isAdmin || isOwner} 
-          openAuth={openAuth} 
+          openAuth={() => setIsAuthModalOpen(true)} 
           toggleProfile={() => setIsProfileOpen(!isProfileOpen)}
         />
 
@@ -382,33 +362,33 @@ const AppContent = () => {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
           <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
-              <Link to="/" className="flex items-center gap-4">
-                <div className="w-20 h-20 md:w-32 md:h-32 shrink-0 brightness-0 invert transition-transform duration-500 hover:scale-105">
+              <Link to="/" className="flex items-center gap-4 group">
+                <div className="w-20 h-20 md:w-32 md:h-32 shrink-0 brightness-0 invert transition-transform duration-500 group-hover:scale-105">
                   <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain" />
                 </div>
               </Link>
               <p className="text-white/70 text-[11px] leading-relaxed max-w-xs font-medium">
-                Redefining the residential experience in Sylhet since 2010. We combine modern luxury with traditional warmth and unparalleled service.
+                Redefining the residential experience in Sylhet since 2010. We combine modern luxury with professional integrity.
               </p>
               <div className="flex items-center gap-4 pt-4">
-                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-sm"><Facebook size={18}/></a>
-                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-sm"><Instagram size={18}/></a>
-                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-sm"><Twitter size={18}/></a>
+                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all"><Facebook size={18}/></a>
+                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all"><Instagram size={18}/></a>
+                <a href="#" className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-all"><Twitter size={18}/></a>
               </div>
             </div>
 
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Quick Navigation</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Direct Links</h5>
               <ul className="space-y-3">
-                <li><Link to="/" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Home Residency</Link></li>
-                <li><Link to="/rooms" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Luxury Rooms</Link></li>
-                <li><Link to="/guide" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Tourist Destinations</Link></li>
+                <li><Link to="/" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Home</Link></li>
+                <li><Link to="/rooms" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Our Suites</Link></li>
+                <li><Link to="/guide" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Tourist Guide</Link></li>
                 <li><Link to="/restaurants" className="text-sm font-medium hover:translate-x-2 transition-transform inline-block">Dining Options</Link></li>
               </ul>
             </div>
 
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Contact Detail</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">HQ Contact</h5>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <MapPin size={18} className="text-white/60 shrink-0" />
@@ -416,10 +396,7 @@ const AppContent = () => {
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone size={18} className="text-white/60 shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold">+8801717425702</span>
-                    <span className="text-sm opacity-70">01334935566</span>
-                  </div>
+                  <span className="text-sm font-bold">+8801717425702</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail size={18} className="text-white/60 shrink-0" />
@@ -429,7 +406,7 @@ const AppContent = () => {
             </div>
 
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Legal & Security</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-2">Security & Legal</h5>
               <ul className="space-y-3">
                 <li>
                   <Link to="/privacypolicy" className="flex items-center gap-2 text-sm font-medium hover:translate-x-2 transition-transform">
@@ -442,7 +419,7 @@ const AppContent = () => {
                   </Link>
                 </li>
                 <li>
-                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/20 shadow-lg brightness-110">
+                  <div className="mt-4 rounded-2xl overflow-hidden h-32 border border-white/20 shadow-lg grayscale hover:grayscale-0 transition-all duration-700">
                     <iframe
                       title="Footer Map"
                       width="100%"
@@ -460,10 +437,6 @@ const AppContent = () => {
             <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.5em]">
               © 2024 Shotabdi Residential • All Rights Reserved
             </p>
-            <div className="flex items-center gap-6">
-              <Link to="/privacypolicy" className="text-[8px] font-black text-white/30 uppercase tracking-widest hover:text-white transition-colors">Privacy</Link>
-              <Link to="/termsofservice" className="text-[8px] font-black text-white/30 uppercase tracking-widest hover:text-white transition-colors">Terms</Link>
-            </div>
           </div>
         </footer>
       </main>

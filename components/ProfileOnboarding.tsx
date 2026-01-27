@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ShieldCheck, User, Phone, IdCard, Camera, Loader2, AlertCircle } from 'lucide-react';
+import { ShieldCheck, User, Phone, IdCard, Camera, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { db, set, ref, checkUsernameUnique, serverTimestamp } from '../services/firebase';
 
 interface Props {
@@ -25,7 +25,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 1024 * 1024) {
-        setError('Image must be less than 1MB');
+        setError('Image size must be under 1MB for secure processing');
         return;
       }
       const reader = new FileReader();
@@ -35,16 +35,26 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
   };
 
   const validate = async () => {
-    if (!form.legalName || !form.username || !form.phone || !form.guardianPhone || !form.nidNumber || !nidPreview) {
-      throw new Error('All fields are mandatory');
-    }
-    if (form.username.includes(' ')) throw new Error('Username cannot contain spaces');
-    if (!/^\+\d{11,15}$/.test(form.phone)) throw new Error('Phone must start with + and include country code');
-    if (!/^\+\d{11,15}$/.test(form.guardianPhone)) throw new Error('Guardian Phone must start with + and include country code');
-    if (form.nidNumber.length !== 17) throw new Error('NID must be exactly 17 digits');
+    const { legalName, username, phone, guardianPhone, nidNumber } = form;
     
-    const isUnique = await checkUsernameUnique(form.username, user.uid);
-    if (!isUnique) throw new Error('Username is already taken');
+    if (!legalName || !username || !phone || !guardianPhone || !nidNumber || !nidPreview) {
+      throw new Error('All identity fields and NID photo are required');
+    }
+    
+    if (username.includes(' ')) throw new Error('Username cannot contain spaces');
+    
+    // Validate Phone Format: +[Country Code][11 Digits]
+    const phoneRegex = /^\+\d{11,15}$/;
+    if (!phoneRegex.test(phone)) throw new Error('Format: +[CountryCode][11 Digits] (e.g. +8801712345678)');
+    if (!phoneRegex.test(guardianPhone)) throw new Error('Guardian Phone must be in international format');
+    
+    // Strict 17-Digit NID Validation
+    if (nidNumber.length !== 17) {
+      throw new Error(`NID must be exactly 17 digits. Currently: ${nidNumber.length}`);
+    }
+    
+    const isUnique = await checkUsernameUnique(username, user.uid);
+    if (!isUnique) throw new Error('This username is already claimed by another member');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,11 +65,10 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
     try {
       await validate();
       
-      const updates: any = {};
       const normalizedUsername = form.username.toLowerCase().trim();
+      const timestamp = Date.now();
       
-      // Update profile
-      await set(ref(db, `profiles/${user.uid}`), {
+      const profileData = {
         ...form,
         username: normalizedUsername,
         uid: user.uid,
@@ -67,11 +76,11 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
         photoURL: user.photoURL,
         nidImageUrl: nidPreview,
         isComplete: true,
-        lastUpdated: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      });
+        lastUpdated: timestamp,
+        createdAt: timestamp,
+      };
 
-      // Claim username
+      await set(ref(db, `profiles/${user.uid}`), profileData);
       await set(ref(db, `usernames/${normalizedUsername}`), user.uid);
       
       onComplete();
@@ -84,34 +93,38 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
 
   return (
     <div className="fixed inset-0 z-[200] bg-white overflow-y-auto">
-      <div className="max-w-xl mx-auto px-6 py-12 md:py-20">
+      <div className="max-w-xl mx-auto px-6 py-12 md:py-20 animate-fade-in">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-hotel-primary/10 rounded-3xl flex items-center justify-center text-hotel-primary mx-auto mb-6">
-            <ShieldCheck size={32} />
+          <div className="w-20 h-20 bg-hotel-primary/10 rounded-[2rem] flex items-center justify-center text-hotel-primary mx-auto mb-6 shadow-inner ring-1 ring-hotel-primary/20">
+            <ShieldCheck size={40} strokeWidth={1.5} />
           </div>
-          <h1 className="text-3xl font-serif font-black text-gray-900 mb-2">Security Verification</h1>
-          <p className="text-sm text-gray-500 font-medium">Please complete your identity profile to unlock luxury bookings.</p>
-          <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-3 text-[10px] text-amber-700 font-bold uppercase tracking-widest justify-center">
-            <AlertCircle size={14} /> Only one edit allowed every 30 days
+          <h1 className="text-3xl font-serif font-black text-gray-900 mb-2 tracking-tight">Identity Verification</h1>
+          <p className="text-sm text-gray-500 font-medium">To maintain security, please provide your legal credentials.</p>
+          
+          <div className="mt-6 p-4 bg-amber-50/80 backdrop-blur rounded-2xl border border-amber-100/50 flex items-start gap-4 text-left">
+            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-amber-800 font-bold uppercase tracking-widest leading-relaxed">
+              Caution: Identity data is locked for 30 days after submission. Double-check all digits.
+            </p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-hotel-primary text-xs font-bold text-center animate-shake">
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-hotel-primary text-[11px] font-black text-center uppercase tracking-widest animate-shake">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
                 <input 
                   type="text" 
-                  placeholder="As per NID"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all"
+                  placeholder="Official NID Name"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5"
                   value={form.legalName}
                   onChange={e => setForm({...form, legalName: e.target.value})}
                 />
@@ -119,29 +132,29 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Username</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-bold">@</span>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Unique Username</label>
+              <div className="relative group">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-black group-focus-within:text-hotel-primary transition-colors">@</span>
                 <input 
                   type="text" 
-                  placeholder="unique_id"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-10 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all"
+                  placeholder="no_spaces"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-10 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5"
                   value={form.username}
-                  onChange={e => setForm({...form, username: e.target.value.replace(/\s/g, '')})}
+                  onChange={e => setForm({...form, username: e.target.value.replace(/\s/g, '').toLowerCase()})}
                 />
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Phone</label>
+              <div className="relative group">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
                 <input 
                   type="text" 
-                  placeholder="+88017..."
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all"
+                  placeholder="+8801712345678"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5"
                   value={form.phone}
                   onChange={e => setForm({...form, phone: e.target.value})}
                 />
@@ -150,12 +163,12 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Guardian Phone</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <div className="relative group">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
                 <input 
                   type="text" 
-                  placeholder="+88013..."
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all"
+                  placeholder="+8801312345678"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5"
                   value={form.guardianPhone}
                   onChange={e => setForm({...form, guardianPhone: e.target.value})}
                 />
@@ -164,14 +177,19 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">17-Digit NID Number</label>
-            <div className="relative">
-              <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+            <div className="flex justify-between items-center px-1">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">17-Digit NID Number</label>
+              <span className={`text-[9px] font-bold ${form.nidNumber.length === 17 ? 'text-green-500' : 'text-gray-300'}`}>
+                {form.nidNumber.length} / 17
+              </span>
+            </div>
+            <div className="relative group">
+              <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
               <input 
                 type="text" 
                 maxLength={17}
-                placeholder="19901234567890123"
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all"
+                placeholder="1990XXXXXXXXXXXXX"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5 font-mono tracking-widest"
                 value={form.nidNumber}
                 onChange={e => setForm({...form, nidNumber: e.target.value.replace(/\D/g, '')})}
               />
@@ -180,7 +198,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Front Side Photo</label>
-            <div className={`relative border-2 border-dashed rounded-3xl p-6 transition-all ${nidPreview ? 'border-green-100 bg-green-50/30' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
+            <div className={`relative border-2 border-dashed rounded-[2rem] p-8 transition-all ${nidPreview ? 'border-green-200 bg-green-50/30' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
               <input 
                 type="file" 
                 accept="image/*"
@@ -188,17 +206,25 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
               {nidPreview ? (
-                <div className="flex items-center gap-4">
-                  <img src={nidPreview} className="w-20 h-14 rounded-lg object-cover border border-white shadow-md" alt="NID Preview" />
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <img src={nidPreview} className="w-24 h-16 rounded-xl object-cover border-2 border-white shadow-xl" alt="NID Preview" />
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 shadow-lg">
+                      <CheckCircle2 size={12} />
+                    </div>
+                  </div>
                   <div>
-                    <p className="text-xs font-black text-green-700">Image Uploaded</p>
-                    <p className="text-[10px] text-green-600/70">Click to replace</p>
+                    <p className="text-xs font-black text-green-700">Digital Copy Linked</p>
+                    <p className="text-[10px] text-green-600/60 font-medium">Click to replace photo</p>
                   </div>
                 </div>
               ) : (
-                <div className="text-center">
-                  <Camera className="mx-auto text-gray-300 mb-2" size={24} />
-                  <p className="text-xs font-bold text-gray-400">Tap to upload NID front photo</p>
+                <div className="text-center py-2">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-3 shadow-sm border border-gray-50">
+                    <Camera size={24} />
+                  </div>
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Upload NID Front Side</p>
+                  <p className="text-[9px] text-gray-400/60 mt-1 font-medium italic">Supports JPG, PNG up to 1MB</p>
                 </div>
               )}
             </div>
@@ -207,9 +233,11 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
           <button 
             type="submit"
             disabled={loading}
-            className="w-full bg-hotel-primary text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-red-100 hover:bg-hotel-secondary transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+            className="w-full bg-hotel-primary text-white py-5 rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl shadow-red-100 hover:bg-hotel-secondary transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-4 mt-4"
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Finalize Registration'}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : (
+              <>Verify & Unlock Stay <ShieldCheck size={18} /></>
+            )}
           </button>
         </form>
       </div>
