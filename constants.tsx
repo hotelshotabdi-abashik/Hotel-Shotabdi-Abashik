@@ -52,6 +52,6 @@ export const ROOMS_DATA: Room[] = [
 export const NAV_ITEMS = [
   { id: 'overview', path: '/', label: 'Overview', icon: <Home size={20} /> },
   { id: 'rooms', path: '/rooms', label: 'Our Rooms', icon: <Bed size={20} /> },
-  { id: 'restaurants', path: '/restaurants', label: 'Nearby Dining', icon: <Utensils size={20} /> },
+  { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
   { id: 'guide', path: '/guide', label: 'Tourist Guide', icon: <Map size={20} /> },
 ];

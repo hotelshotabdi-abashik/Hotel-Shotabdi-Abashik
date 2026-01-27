@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { Room } from '../types';
 
@@ -35,11 +36,25 @@ const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
 
 const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, onImageUpload }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const location = useLocation();
 
   // Modern currency formatter for BDT (৳)
   const formatter = new Intl.NumberFormat('en-BD', {
     maximumFractionDigits: 0,
   });
+
+  // Handle auto-selection highlight from URL search params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get('category');
+    if (category) {
+      setHighlightedId(category);
+      // Remove highlight after a few seconds
+      const timer = setTimeout(() => setHighlightedId(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.search]);
 
   const formatPriceString = (price: string) => {
     const safePrice = price || "";
@@ -88,7 +103,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
   };
 
   return (
-    <section id="rooms" className="max-w-7xl mx-auto pt-8 md:pt-12 pb-24 px-4 md:px-6 bg-white w-full">
+    <section id="rooms" className="max-w-7xl mx-auto pt-8 md:pt-12 pb-24 px-4 md:px-6 bg-white w-full scroll-mt-24">
       <div className="flex flex-col md:flex-row justify-between items-end mb-12 md:mb-16 gap-6">
         <div className="max-w-2xl text-center md:text-left">
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[10px] font-black uppercase tracking-[0.3em] mb-4">
@@ -114,8 +129,15 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         {rooms.map((room) => {
+          const isHighlighted = highlightedId === room.id;
           return (
-            <div key={room.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 group transition-all duration-500 flex flex-col h-full relative shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
+            <div 
+              id={room.id}
+              key={room.id} 
+              className={`bg-white rounded-[2.5rem] overflow-hidden border transition-all duration-500 flex flex-col h-full relative shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)] ${
+                isHighlighted ? 'border-hotel-primary ring-4 ring-hotel-primary/10 scale-[1.02]' : 'border-gray-100'
+              }`}
+            >
               
               <div className="h-64 relative overflow-hidden shrink-0">
                 <img 
@@ -139,7 +161,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isEditMode, onUpdate, o
                 </div>
 
                 {isEditMode && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 gap-3">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 gap-3">
                     <label className="cursor-pointer bg-white p-3 rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all transform hover:scale-110">
                       <input type="file" className="hidden" onChange={(e) => handleImageChange(room.id, e)} />
                       {uploadingId === room.id ? <RefreshCw size={18} className="animate-spin" /> : <Camera size={18} />}
