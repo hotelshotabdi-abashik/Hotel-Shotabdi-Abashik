@@ -261,13 +261,13 @@ const AppContent = () => {
               >
                 <img 
                   src={LOGO_ICON_URL} 
-                  className={`w-9 h-9 md:w-11 md:h-11 object-contain ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
+                  className={`w-9 h-9 md:w-12 md:h-12 object-contain ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
                   alt="Hotel Shotabdi Logo" 
                 />
               </div>
-              <div className="flex flex-col select-none leading-none">
-                <h2 className="text-lg md:text-2xl font-serif font-black text-gray-900 tracking-tight uppercase">Hotel Shotabdi</h2>
-                <p className="text-[9px] md:text-[10px] text-hotel-primary font-bold uppercase tracking-[0.3em] mt-0.5">Residential</p>
+              <div className="flex flex-col select-none leading-none -space-y-0.5">
+                <h2 className="text-xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter uppercase">Hotel Shotabdi</h2>
+                <p className="text-[10px] md:text-[11px] text-hotel-primary font-bold uppercase tracking-[0.4em]">Residential</p>
               </div>
             </div>
           </div>
