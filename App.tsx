@@ -40,6 +40,7 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
 }) => {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isRotating, setIsRotating] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,26 +54,42 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  const handleLogoClick = () => {
+    if (isRotating) return;
+    setIsRotating(true);
+  };
+
   return (
     <header 
       className={`fixed top-0 right-0 left-0 lg:left-72 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 flex justify-between items-center transition-all duration-500 ease-in-out ${
         showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
     >
-      <Link to="/" className="flex items-center gap-3 md:gap-5">
-        <div className="w-10 h-10 md:w-14 md:h-14 overflow-hidden shrink-0 transition-transform duration-500 hover:scale-110">
-          <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain" />
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Header Logo - Non-clickable (no navigation) with 360-degree rotation */}
+        <div 
+          onClick={handleLogoClick}
+          onAnimationEnd={() => setIsRotating(false)}
+          className={`w-8 h-8 md:w-12 md:h-12 overflow-hidden shrink-0 cursor-pointer transition-transform duration-500 ${
+            isRotating ? 'animate-spin-once' : 'hover:scale-110'
+          }`}
+        >
+          <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain pointer-events-none" />
         </div>
-        <div className="flex flex-col">
-          <h1 className="font-serif font-black text-hotel-primary tracking-tight text-base md:text-3xl leading-tight">
-            Shotabdi <span className="text-hotel-text font-serif">Residential</span>
+        
+        {/* Brand Title - Separate from logo, still links to home */}
+        <Link to="/" className="flex flex-col">
+          <h1 className="font-serif font-black tracking-tight leading-tight flex items-baseline gap-1">
+            <span className="text-hotel-primary text-[14px] md:text-[22px]">Hotel</span>
+            <span className="text-hotel-primary text-[11px] md:text-[18px]">Shotabdi</span>
+            <span className="text-hotel-text text-[11px] md:text-[18px]">Residential</span>
           </h1>
           <div className="flex items-center gap-2">
-            <span className="w-8 h-[1px] bg-hotel-primary hidden md:block"></span>
-            <p className="text-[8px] md:text-[11px] text-gray-400 tracking-[0.4em] uppercase font-bold">Luxury Reimagined</p>
+            <span className="w-6 h-[1px] bg-hotel-primary hidden md:block"></span>
+            <p className="text-[7px] md:text-[9px] text-gray-400 tracking-[0.4em] uppercase font-bold">Luxury Reimagined</p>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
 
       <div className="flex items-center gap-2 md:gap-5">
         <div className="hidden lg:flex items-center gap-2 md:gap-5">
