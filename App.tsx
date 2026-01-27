@@ -19,11 +19,13 @@ import {
   syncUserProfile,
   OWNER_EMAIL
 } from './services/firebase';
-import { UserProfile } from './types';
-import { LogIn, User, Loader2, ShieldCheck, Bell } from 'lucide-react';
+import { UserProfile, SiteConfig } from './types';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, Save } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
+const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
+const ADMIN_SECRET = "kahar02";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -39,7 +41,85 @@ const AppContent = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  // CMS States
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>({
+    hero: {
+      title: "Luxury Reimagined in Sylhet",
+      subtitle: "Experience world-class hospitality at the heart of the city's heritage.",
+      backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
+      buttonText: "Check Availability"
+    },
+    rooms: ROOMS_DATA,
+    announcement: "25% OFF SEASONAL DISCOUNT",
+    lastUpdated: 0
+  });
+
+  // Load Config from R2
+  const fetchConfig = useCallback(async () => {
+    try {
+      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
+      if (res.ok) {
+        const data = await res.json();
+        // Only update if fetched data is newer or we haven't loaded yet
+        setSiteConfig(prev => data.lastUpdated > prev.lastUpdated ? data : prev);
+      }
+    } catch (e) {
+      console.warn("Using default local configuration.");
+    } finally {
+      setIsConfigLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+  const saveConfig = async () => {
+    setIsSaving(true);
+    try {
+      const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
+      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': ADMIN_SECRET 
+        },
+        body: JSON.stringify(updatedConfig)
+      });
+      if (res.ok) {
+        setSiteConfig(updatedConfig);
+        alert("Website published live!");
+        setIsEditMode(false);
+      } else {
+        throw new Error("Publish failed");
+      }
+    } catch (e) {
+      alert("Error publishing: Check ADMIN_SECRET and Worker status.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const uploadToR2 = async (file: File, folder: string): Promise<string> => {
+    const cleanFolderName = folder.replace(/^\/|\/$/g, '');
+    const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+    const res = await fetch(`${CMS_WORKER_URL}/${filename}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': file.type,
+        'Authorization': ADMIN_SECRET 
+      },
+      body: file
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    return `${CMS_WORKER_URL}/${filename}`;
+  };
 
   const loadProfile = useCallback(async (u: any) => {
     if (!u) return;
@@ -47,6 +127,7 @@ const AppContent = () => {
       const data = await syncUserProfile(u);
       setProfile(data);
       if (u.email === OWNER_EMAIL) {
+        setIsOwner(true);
         setIsAdmin(true);
       }
     } catch (error) {
@@ -63,18 +144,52 @@ const AppContent = () => {
       } else {
         setProfile(null);
         setIsAdmin(false);
+        setIsOwner(false);
         setIsAuthLoading(false);
       }
     });
     return () => unsubscribe();
   }, [loadProfile]);
 
+  if (isConfigLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Sanctuary...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
-      <Sidebar isAdmin={isAdmin} />
+      {/* CMS Toolbar for Owner */}
+      {isOwner && (
+        <div className="fixed bottom-24 right-6 z-[200] flex flex-col items-end gap-3 pointer-events-auto">
+          <button 
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={`px-6 py-4 rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest ${
+              isEditMode ? 'bg-hotel-primary text-white' : 'bg-white text-gray-900 border border-gray-100'
+            }`}
+          >
+            {isEditMode ? <><Eye size={18} /> View Site</> : <><Edit3 size={18} /> Edit Design</>}
+          </button>
+          
+          {isEditMode && (
+            <button 
+              onClick={saveConfig}
+              disabled={isSaving}
+              className="px-6 py-4 bg-green-600 text-white rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:scale-105"
+            >
+              {isSaving ? <RefreshCw size={18} className="animate-spin" /> : <Globe size={18} />}
+              Publish Changes
+            </button>
+          )}
+        </div>
+      )}
+
+      <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Restored Sticky Header */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <img src={LOGO_ICON_URL} className="w-8 h-8 lg:hidden" alt="Shotabdi Logo" />
@@ -108,7 +223,7 @@ const AppContent = () => {
                     <p className="text-[10px] font-black text-gray-900 leading-tight">
                       {profile?.username ? `@${profile.username}` : 'Resident'}
                     </p>
-                    {isAdmin && <span className="text-[8px] font-black text-hotel-primary uppercase tracking-widest">Admin Access</span>}
+                    {isOwner && <span className="text-[8px] font-black text-hotel-primary uppercase tracking-widest">Proprietor</span>}
                   </div>
                 </button>
               </div>
@@ -127,21 +242,30 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               <div className="animate-fade-in">
-                <Hero />
-                <RoomGrid rooms={ROOMS_DATA} />
+                <Hero 
+                  config={siteConfig.hero} 
+                  isEditMode={isEditMode}
+                  onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))}
+                  onImageUpload={(f) => uploadToR2(f, 'Hero Section')}
+                />
+                <RoomGrid 
+                  rooms={siteConfig.rooms} 
+                  isEditMode={isEditMode}
+                  onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))}
+                  onImageUpload={(f) => uploadToR2(f, 'Rooms Images')}
+                />
                 <NearbyRestaurants />
               </div>
             } />
-            <Route path="/rooms" element={<div className="py-10"><RoomGrid rooms={ROOMS_DATA} /></div>} />
+            <Route path="/rooms" element={<div className="py-10"><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms Images')} /></div>} />
             <Route path="/restaurants" element={<div className="py-10 min-h-screen"><NearbyRestaurants /></div>} />
             <Route path="/guide" element={<div className="py-10"><TouristGuide /></div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
-            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Unauthorized</div>} />
+            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Unauthorized</div>} />
           </Routes>
         </div>
 
-        {/* Restored Original Footer */}
         <footer className="bg-white border-t border-gray-50 py-12 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-4">
@@ -163,30 +287,10 @@ const AppContent = () => {
           </div>
         </footer>
 
-        {/* Support Components */}
-        <AuthModal 
-          isOpen={isAuthModalOpen} 
-          onClose={() => setIsAuthModalOpen(false)} 
-        />
-        
-        {user && profile && !profile.isComplete && (
-          <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
-        )}
-
-        {user && profile && isManageAccountOpen && (
-          <ManageAccount 
-            profile={profile} 
-            onClose={() => setIsManageAccountOpen(false)} 
-            onUpdate={() => loadProfile(user)} 
-          />
-        )}
-
-        <MobileBottomNav 
-          user={user} 
-          isAdmin={isAdmin} 
-          openAuth={() => setIsAuthModalOpen(true)} 
-          toggleProfile={() => setIsManageAccountOpen(!isManageAccountOpen)} 
-        />
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
+        {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
+        <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(!isManageAccountOpen)} />
       </main>
     </div>
   );

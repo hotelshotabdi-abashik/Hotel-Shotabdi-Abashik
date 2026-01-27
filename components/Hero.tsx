@@ -1,23 +1,55 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Building2, ChevronRight, Zap
+  Building2, ChevronRight, Zap, Camera, Loader2
 } from 'lucide-react';
+import { HeroConfig } from '../types';
 
-const Hero: React.FC = () => {
+interface HeroProps {
+  config: HeroConfig;
+  isEditMode?: boolean;
+  onUpdate?: (config: Partial<HeroConfig>) => void;
+  onImageUpload?: (file: File) => Promise<string>;
+}
+
+const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload }) => {
   const navigate = useNavigate();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsUploading(true);
+      try {
+        const url = await onImageUpload(file);
+        onUpdate?.({ backgroundImage: url });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
 
   return (
     <section className="relative pt-6 md:pt-10 pb-16 md:pb-20 px-3 md:px-10 bg-[#F2F6F9] w-full overflow-hidden">
-      {/* Background Subtle Pattern */}
+      {/* Background with Subtle Pattern & Edit Capability */}
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none">
         <img 
-          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80" 
+          src={config.backgroundImage} 
           className="w-full h-full object-cover grayscale" 
           alt="background"
         />
       </div>
+      
+      {isEditMode && (
+        <div className="absolute top-10 right-10 z-20">
+          <label className="flex items-center gap-3 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg border border-gray-100 cursor-pointer hover:bg-white transition-all">
+            <input type="file" className="hidden" onChange={handleImageChange} />
+            {isUploading ? <Loader2 className="animate-spin text-hotel-primary" size={16} /> : <Camera size={16} className="text-hotel-primary" />}
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Change Hero Image</span>
+          </label>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-10 text-center lg:text-left">
@@ -25,12 +57,32 @@ const Hero: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-hotel-primary animate-pulse"></span>
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Now Accepting Bookings</span>
           </div>
-          <h1 className="text-4xl md:text-7xl font-serif font-black text-gray-900 leading-[1.1] mb-6">
-            Luxury <span className="text-hotel-primary">Reimagined</span> <br className="hidden md:block" /> in Sylhet
-          </h1>
-          <p className="text-lg text-gray-500 max-w-2xl leading-relaxed font-light">
-            Experience world-class hospitality at the heart of the city's heritage. A sanctuary designed for the modern traveler.
-          </p>
+          
+          {isEditMode ? (
+            <textarea 
+              className="text-4xl md:text-7xl font-serif font-black text-gray-900 bg-white/50 border-b-2 border-hotel-primary outline-none w-full resize-none p-2 rounded-xl mb-4 leading-[1.1]"
+              value={config.title}
+              onChange={(e) => onUpdate?.({ title: e.target.value })}
+            />
+          ) : (
+            <h1 className="text-4xl md:text-7xl font-serif font-black text-gray-900 leading-[1.1] mb-6">
+              {config.title.split('Reimagined')[0]} 
+              <span className="text-hotel-primary">Reimagined</span> 
+              {config.title.split('Reimagined')[1]}
+            </h1>
+          )}
+          
+          {isEditMode ? (
+            <input 
+              className="text-lg text-gray-500 bg-white/50 border-b border-gray-300 outline-none w-full p-2 rounded-xl"
+              value={config.subtitle}
+              onChange={(e) => onUpdate?.({ subtitle: e.target.value })}
+            />
+          ) : (
+            <p className="text-lg text-gray-500 max-w-2xl leading-relaxed font-light">
+              {config.subtitle}
+            </p>
+          )}
         </div>
 
         {/* Search Logic */}
@@ -61,19 +113,16 @@ const Hero: React.FC = () => {
               onClick={() => navigate('/rooms')}
               className="lg:col-span-3 bg-hotel-primary text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-red-100 hover:bg-hotel-secondary hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 py-6 lg:py-0"
             >
-              Check Availability <ChevronRight size={18} />
+              {isEditMode ? (
+                <input 
+                  className="bg-transparent border-none text-center outline-none w-full text-white cursor-text"
+                  value={config.buttonText}
+                  onChange={(e) => onUpdate?.({ buttonText: e.target.value })}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : <>{config.buttonText} <ChevronRight size={18} /></>}
             </button>
           </div>
-        </div>
-
-        {/* Floating Perks */}
-        <div className="mt-12 flex flex-wrap justify-center lg:justify-start gap-8 opacity-40">
-          {['Free High-Speed Wi-Fi', '24/7 Power Backup', 'Secure Parking', 'Tourist Concierge'].map((perk, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-hotel-primary"></div>
-              <span className="text-[10px] font-black uppercase tracking-widest">{perk}</span>
-            </div>
-          ))}
         </div>
       </div>
     </section>

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Users, Star, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw } from 'lucide-react';
+import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw } from 'lucide-react';
 import { Room } from '../types';
 
 interface RoomGridProps {
@@ -46,7 +46,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
       tag: "NEW",
       desc: "Freshly added luxury accommodation.",
       features: ["Wi-Fi"],
-      image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb",
+      image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       capacity: 2
     };
     onUpdate?.([...rooms, newRoom]);
