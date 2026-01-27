@@ -4,29 +4,14 @@ import { Phone, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 
-const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
-
 const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
-      {/* Brand Section */}
-      <div className="p-8 pb-4">
-        <Link to="/" className="flex items-center gap-4 group">
-          <div className="w-12 h-12 bg-hotel-primary rounded-2xl flex items-center justify-center p-2.5 shadow-lg shadow-red-100 group-hover:scale-110 transition-transform">
-            <img src={LOGO_URL} className="w-full h-full object-contain brightness-0 invert" alt="Logo" />
-          </div>
-          <div>
-            <h1 className="text-xl font-serif font-black text-gray-900 leading-none">Shotabdi</h1>
-            <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.3em] mt-1.5">Residential</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* Map Section */}
-      <div className="relative group h-32 mx-6 mt-6 rounded-[2rem] overflow-hidden border border-gray-50">
+      {/* Map Section - Now the top element */}
+      <div className="relative group h-32 mx-6 mt-8 rounded-[2rem] overflow-hidden border border-gray-50">
         <a 
           href={mapUrl} 
           target="_blank" 

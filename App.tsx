@@ -20,7 +20,7 @@ import {
   OWNER_EMAIL
 } from './services/firebase';
 import { UserProfile, SiteConfig } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, Save } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -66,7 +66,6 @@ const AppContent = () => {
       const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
       if (res.ok) {
         const data = await res.json();
-        // Only update if fetched data is newer or we haven't loaded yet
         setSiteConfig(prev => data.lastUpdated > prev.lastUpdated ? data : prev);
       }
     } catch (e) {
@@ -190,13 +189,20 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
+        {/* Refined Sticky Header with Unboxed Logo */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <img src={LOGO_ICON_URL} className="w-8 h-8 lg:hidden" alt="Shotabdi Logo" />
-            <div className="hidden md:block">
-              <h2 className="text-sm font-black text-gray-900 tracking-tight">Shotabdi Residential</h2>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Sylhet Station Area</p>
-            </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img 
+                src={LOGO_ICON_URL} 
+                className="w-8 h-8 md:w-9 md:h-9 object-contain transition-transform group-hover:scale-110" 
+                alt="Shotabdi Logo" 
+              />
+              <div className="text-left">
+                <h2 className="text-sm font-black text-gray-900 tracking-tight leading-none">Shotabdi</h2>
+                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Residential</p>
+              </div>
+            </Link>
           </div>
 
           <div className="flex items-center gap-3">
