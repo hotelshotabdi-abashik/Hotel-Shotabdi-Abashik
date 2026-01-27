@@ -233,8 +233,10 @@ const AppContent = () => {
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (isLogoSpinning) return;
     setIsLogoSpinning(true);
-    setTimeout(() => setIsLogoSpinning(false), 600);
+    // Matches the 2s duration in index.html
+    setTimeout(() => setIsLogoSpinning(false), 2000);
   };
 
   if (isConfigLoading) {
