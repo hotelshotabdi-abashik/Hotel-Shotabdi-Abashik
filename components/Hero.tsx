@@ -63,17 +63,8 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
-        {/* Simple Header Text */}
+        {/* Simple Header Text (Title Removed per request) */}
         <div className="mb-10 text-center animate-fade-in max-w-3xl">
-          <h2 className="text-3xl md:text-5xl font-sans font-black text-white leading-tight mb-4 tracking-tighter drop-shadow-lg">
-            {isEditMode ? (
-              <input 
-                className="bg-transparent border-b-2 border-hotel-primary outline-none text-center"
-                value={config.title}
-                onChange={(e) => onUpdate?.({ title: e.target.value })}
-              />
-            ) : (config.title || "Luxury Awaits You")}
-          </h2>
           <p className="text-sm md:text-base text-white/90 font-medium leading-relaxed opacity-90 px-4">
             {isEditMode ? (
               <textarea 

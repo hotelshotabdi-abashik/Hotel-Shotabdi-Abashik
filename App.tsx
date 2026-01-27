@@ -74,7 +74,7 @@ const AppContent = () => {
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
-      title: "Luxury Awaits You",
+      title: "",
       subtitle: "Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       buttonText: "Book Now",
