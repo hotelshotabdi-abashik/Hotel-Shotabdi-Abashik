@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -19,7 +18,7 @@ import {
 } from './services/firebase';
 import { Phone, LogOut, Mail, MapPin, Facebook, Instagram, Twitter, ShieldCheck, FileText, LayoutDashboard, ChevronDown, Loader2, Map as MapIcon } from 'lucide-react';
 
-const LOGO_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/hs%20logo-01.svg";
+const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const GOOGLE_CLIENT_ID = "682102275681-3m5v9kq86cl595l6o3l2p29q0r1h78u1.apps.googleusercontent.com";
 
 const ScrollToTop = () => {
@@ -60,9 +59,9 @@ const Header = ({ user, isAdmin, openAuth, handleSignOut, isAuthLoading, isProfi
         showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
     >
-      <Link to="/" className="flex items-center gap-4 md:gap-6">
-        <div className="w-20 h-20 md:w-28 md:h-28 overflow-hidden shrink-0 py-1 transition-transform duration-500 hover:scale-105">
-          <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+      <Link to="/" className="flex items-center gap-3 md:gap-5">
+        <div className="w-10 h-10 md:w-14 md:h-14 overflow-hidden shrink-0 transition-transform duration-500 hover:scale-110">
+          <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
           <h1 className="font-serif font-black text-hotel-primary tracking-tight text-base md:text-3xl leading-tight">
@@ -316,8 +315,8 @@ const AppContent = () => {
           <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 relative z-10">
             <div className="space-y-6">
               <Link to="/" className="flex items-center gap-4">
-                <div className="w-28 h-28 md:w-40 md:h-40 shrink-0 brightness-0 invert transition-transform duration-500 hover:scale-105">
-                  <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+                <div className="w-20 h-20 md:w-32 md:h-32 shrink-0 brightness-0 invert transition-transform duration-500 hover:scale-105">
+                  <img src={LOGO_ICON_URL} alt="Logo Icon" className="w-full h-full object-contain" />
                 </div>
                 {/* Hotel name text removed from footer as requested */}
               </Link>
