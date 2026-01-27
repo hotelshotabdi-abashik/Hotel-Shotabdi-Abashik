@@ -186,7 +186,6 @@ const AppContent = () => {
     await update(ref(db), updates);
   };
 
-  // Helper to close other popups when one opens
   const openAuth = () => {
     setIsNotificationsOpen(false);
     setIsManageAccountOpen(false);
@@ -255,7 +254,7 @@ const AppContent = () => {
         {/* Refined Sticky Header */}
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4 group">
+            <div className="flex items-center gap-3 md:gap-4 group">
               <div 
                 onClick={handleLogoClick}
                 className="cursor-pointer select-none"
@@ -266,9 +265,9 @@ const AppContent = () => {
                   alt="Hotel Shotabdi Logo" 
                 />
               </div>
-              <div className="text-left select-none">
-                <h2 className="text-lg md:text-2xl font-serif font-black text-gray-900 tracking-tight leading-none uppercase">Hotel Shotabdi</h2>
-                <p className="text-[9px] md:text-[10px] text-hotel-primary font-bold uppercase tracking-[0.3em] mt-1">Residential Sanctuary</p>
+              <div className="flex flex-col select-none leading-none">
+                <h2 className="text-lg md:text-2xl font-serif font-black text-gray-900 tracking-tight uppercase">Hotel Shotabdi</h2>
+                <p className="text-[9px] md:text-[10px] text-hotel-primary font-bold uppercase tracking-[0.3em] mt-0.5">Residential</p>
               </div>
             </div>
           </div>
@@ -278,7 +277,6 @@ const AppContent = () => {
               <Loader2 className="animate-spin text-gray-300" size={18} />
             ) : user ? (
               <div className="flex items-center gap-2 md:gap-4 relative">
-                {/* Notification Dropdown Trigger */}
                 <button 
                   onClick={toggleNotifications}
                   className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
@@ -291,7 +289,6 @@ const AppContent = () => {
                   )}
                 </button>
 
-                {/* Profile Trigger */}
                 <button 
                   onClick={toggleManageAccount}
                   className={`flex items-center gap-3 bg-gray-50 hover:bg-white border p-1.5 pr-4 rounded-2xl transition-all group ${isManageAccountOpen ? 'border-hotel-primary/30 ring-4 ring-hotel-primary/5' : 'border-gray-100'}`}
@@ -311,13 +308,12 @@ const AppContent = () => {
                   </div>
                 </button>
 
-                {/* Notifications Dropdown Panel */}
                 {isNotificationsOpen && (
                   <div className="absolute top-16 right-0 w-[320px] bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-fade-in z-[100]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
                       <div>
                         <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
-                        <p className="text-[9px] opacity-70 font-bold uppercase tracking-widest mt-0.5">Sanctuary Notifications</p>
+                        <p className="text-[9px] opacity-70 font-bold uppercase tracking-widest mt-0.5">Hotel Alerts</p>
                       </div>
                       <button onClick={() => setIsNotificationsOpen(false)} className="opacity-60 hover:opacity-100 transition-opacity">
                         <X size={18} />
