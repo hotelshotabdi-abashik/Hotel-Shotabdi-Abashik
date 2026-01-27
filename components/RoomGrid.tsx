@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, Star, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Room } from '../types';
 
 interface RoomGridProps {
@@ -8,6 +8,29 @@ interface RoomGridProps {
   onUpdate?: (rooms: Room[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
+
+const RoomDescription: React.FC<{ text: string }> = ({ text }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const limit = 100;
+  const isLong = text.length > limit;
+
+  return (
+    <div className="mb-8">
+      <p className="text-[12px] text-gray-500 leading-relaxed font-light">
+        {isExpanded || !isLong ? text : `${text.substring(0, limit)}...`}
+        {isLong && (
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="ml-1 text-hotel-primary font-bold hover:underline inline-flex items-center gap-0.5"
+          >
+            {isExpanded ? 'less' : 'more'}
+            {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+          </button>
+        )}
+      </p>
+    </div>
+  );
+};
 
 const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImageUpload }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -51,9 +74,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
     const newRoom: Room = {
       id: `room-${Date.now()}`,
       title: "New Room Type",
-      price: "1,500",
+      price: "1500",
       tag: "NEW",
-      desc: "Clean and comfortable room for your stay.",
+      desc: "Clean and comfortable room for your stay. Features high-quality bedding and modern amenities for a relaxing experience.",
       features: ["Wi-Fi", "AC", "TV"],
       image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       capacity: 2
@@ -105,12 +128,20 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
 
                 {/* Status Tag */}
                 <div className="absolute top-5 left-6 z-10">
-                  <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[8px] font-black text-gray-900 uppercase tracking-widest shadow-sm">
-                    {room.tag}
-                  </span>
+                  {isEditMode ? (
+                    <input 
+                      className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[8px] font-black text-gray-900 uppercase tracking-widest shadow-sm outline-none border border-hotel-primary/20"
+                      value={room.tag}
+                      onChange={(e) => updateRoom(room.id, 'tag', e.target.value)}
+                    />
+                  ) : (
+                    <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[8px] font-black text-gray-900 uppercase tracking-widest shadow-sm">
+                      {room.tag}
+                    </span>
+                  )}
                 </div>
 
-                {/* Overlaid Price (Screenshot Style) */}
+                {/* Overlaid Price */}
                 <div className="absolute bottom-6 left-6 z-10 text-white">
                   <p className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">Starting From</p>
                   <div className="flex items-baseline gap-1">
@@ -142,6 +173,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                     <input 
                       className="text-xl font-sans text-hotel-primary font-black w-full bg-gray-50 border-b border-gray-200 outline-none py-1 mb-2"
                       value={room.title}
+                      placeholder="Room Title"
                       onChange={(e) => updateRoom(room.id, 'title', e.target.value)}
                     />
                   ) : (
@@ -152,7 +184,19 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
                   
                   {/* Pricing Line with 25% Badge */}
                   <div className="flex items-center gap-3">
-                    <span className="text-[12px] font-bold text-gray-300 line-through">৳{pricing.original}</span>
+                    {isEditMode ? (
+                      <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-2 rounded">
+                        <span className="text-[10px] font-bold text-gray-400">৳</span>
+                        <input 
+                          className="text-[12px] font-bold text-gray-500 bg-transparent outline-none py-1 w-16"
+                          value={room.price}
+                          placeholder="Price"
+                          onChange={(e) => updateRoom(room.id, 'price', e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-[12px] font-bold text-gray-300 line-through">৳{pricing.original}</span>
+                    )}
                     <span className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-100 flex items-center gap-1.5">
                       Save 25%
                     </span>
@@ -161,27 +205,35 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, isEditMode, onUpdate, onImag
 
                 {isEditMode ? (
                   <textarea 
-                    className="text-[12px] text-gray-500 mb-8 w-full bg-gray-50 outline-none p-4 rounded-2xl h-24 border border-gray-100 font-medium leading-relaxed"
+                    className="text-[12px] text-gray-500 mb-8 w-full bg-gray-50 outline-none p-4 rounded-2xl h-24 border border-gray-100 font-medium leading-relaxed resize-none"
                     value={room.desc}
+                    placeholder="Room description..."
                     onChange={(e) => updateRoom(room.id, 'desc', e.target.value)}
                   />
                 ) : (
-                  <p className="text-[12px] text-gray-500 mb-8 leading-relaxed font-light line-clamp-2">
-                    {room.desc}
-                  </p>
+                  <RoomDescription text={room.desc} />
                 )}
 
                 {/* Features Section */}
                 <div className="mb-10">
                   <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-4">Room Features</p>
-                  <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                    {room.features.map((feat, idx) => (
-                      <div key={idx} className="flex items-center gap-2.5">
-                        <CheckCircle2 size={14} className="text-hotel-primary shrink-0" />
-                        <span className="text-[11px] font-bold text-gray-600 whitespace-nowrap">{feat}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {isEditMode ? (
+                    <textarea 
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-[11px] font-bold text-gray-600 outline-none focus:border-hotel-primary min-h-[80px] resize-none"
+                      value={room.features.join(', ')}
+                      placeholder="Features (comma separated)"
+                      onChange={(e) => updateRoom(room.id, 'features', e.target.value.split(',').map((s: string) => s.trim()).filter((s: string) => s !== ""))}
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                      {room.features.map((feat, idx) => (
+                        <div key={idx} className="flex items-center gap-2.5">
+                          <CheckCircle2 size={14} className="text-hotel-primary shrink-0" />
+                          <span className="text-[11px] font-bold text-gray-600 whitespace-nowrap">{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Book Button */}
