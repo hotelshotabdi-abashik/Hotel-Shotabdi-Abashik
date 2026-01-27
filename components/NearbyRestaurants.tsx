@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Phone } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, Search, Wand2, CheckSquare, Phone, AlertCircle } from 'lucide-react';
 import { Restaurant } from '../types';
 
 interface Props {
@@ -45,7 +45,7 @@ const DEFAULT_RESTAURANTS: Restaurant[] = [
   { id: 33, name: "The Tea Garden Cafe", cuisine: "Bengali", rating: 4.6, time: "15m", distance: "2.5 km", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", tag: "🍃 Nature View", mapUrl: "https://www.google.com/maps/search/?api=1&query=Lakkatura+Tea+Garden+Cafe", phone: "01744-889900" },
   { id: 34, name: "Kacchi Bhai Sylhet", cuisine: "Mughlai", rating: 4.7, time: "10m", distance: "0.9 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🍚 Best Kacchi", mapUrl: "https://www.google.com/maps/search/?api=1&query=Kacchi+Bhai+Sylhet", phone: "01788-223344" },
   { id: 35, name: "Sultans Dine Sylhet", cuisine: "Mughlai", rating: 4.8, time: "10m", distance: "0.9 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "👑 Premium Biryani", mapUrl: "https://www.google.com/maps/search/?api=1&query=Sultans+Dine+Sylhet", phone: "01799-334455" },
-  { id: 36, name: "BFC Sylhet", cuisine: "Fast Food", rating: 4.1, time: "8m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?auto=format&fit=crop&q=80", tag: "🍗 Local Fried Chicken", mapUrl: "https://www.google.com/maps/search/?api=1&query=BFC+Sylhet", phone: "01711-445566" },
+  { id: 36, name: "BFC Sylhet", cuisine: "Fast Food", rating: 4.1, time: "8m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?auto=format&fit=crop&q=80", tag: "🍗 Fried Chicken", mapUrl: "https://www.google.com/maps/search/?api=1&query=BFC+Sylhet", phone: "01711-445566" },
   { id: 37, name: "Western Grill", cuisine: "Continental", rating: 4.3, time: "12m", distance: "1.2 km", image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80", tag: "🍔 Burgers • Grills", mapUrl: "https://www.google.com/maps/search/?api=1&query=Western+Grill+Sylhet", phone: "01722-114455" },
   { id: 38, name: "Chicken Hut", cuisine: "Fast Food", rating: 4.0, time: "5m", distance: "0.4 km", image: "https://images.unsplash.com/photo-1513639776629-7b61b0ac49cb?auto=format&fit=crop&q=80", tag: "🍗 Quick Bites", mapUrl: "https://www.google.com/maps/search/?api=1&query=Chicken+Hut+Sylhet", phone: "01712-665544" },
   { id: 39, name: "Food Forest", cuisine: "Multi", rating: 4.2, time: "15m", distance: "1.5 km", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80", tag: "🌳 Garden Setting", mapUrl: "https://www.google.com/maps/search/?api=1&query=Food+Forest+Sylhet", phone: "01733-887766" },
@@ -62,11 +62,59 @@ const DEFAULT_RESTAURANTS: Restaurant[] = [
   { id: 50, name: "Cafe 360", cuisine: "Cafe", rating: 4.4, time: "12m", distance: "1.2 km", image: "https://images.unsplash.com/photo-1521017432531-fbd92d744264?auto=format&fit=crop&q=80", tag: "🎸 Music • Coffee", mapUrl: "https://www.google.com/maps/search/?api=1&query=Cafe+360+Sylhet", phone: "01733-445566" }
 ];
 
+/**
+ * Utility to check string similarity for fuzzy matching recommendations.
+ * Simple overlap-based heuristic.
+ */
+const getStringSimilarity = (str1: string, str2: string) => {
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
+  if (s1 === s2) return 1;
+  if (s1.includes(s2) || s2.includes(s1)) return 0.8;
+  
+  let overlap = 0;
+  const words1 = s1.split(/\s+/);
+  const words2 = s2.split(/\s+/);
+  
+  words1.forEach(w1 => {
+    words2.forEach(w2 => {
+      if (w1.length > 2 && w2.length > 2 && (w1.startsWith(w2.substring(0, 3)) || w2.startsWith(w1.substring(0, 3)))) {
+        overlap++;
+      }
+    });
+  });
+  
+  return overlap / Math.max(words1.length, words2.length);
+};
+
 const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUpdate, onImageUpload }) => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const displayList = restaurants.length > 0 ? restaurants : DEFAULT_RESTAURANTS;
+
+  // Filtered list based on search
+  const filteredList = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return displayList;
+    return displayList.filter(res => 
+      res.name.toLowerCase().includes(q) || 
+      res.cuisine.toLowerCase().includes(q) || 
+      (res.tag && res.tag.toLowerCase().includes(q))
+    );
+  }, [displayList, searchQuery]);
+
+  // Fuzzy recommendations if no results found
+  const recommendations = useMemo(() => {
+    if (filteredList.length > 0 || !searchQuery.trim()) return [];
+    return displayList
+      .map(res => ({ res, score: getStringSimilarity(res.name, searchQuery) }))
+      .filter(item => item.score > 0.2)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map(item => item.res);
+  }, [filteredList, displayList, searchQuery]);
 
   const generateMapUrl = (name: string) => {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Sylhet, Bangladesh')}`;
@@ -121,13 +169,43 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   };
 
   return (
-    <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full">
+    <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in">
       <div className="mb-12 text-center flex flex-col items-center">
         <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy</span>
         <h2 className="text-3xl md:text-5xl font-sans text-gray-900 mb-6 font-black tracking-tighter">Nearby Dining</h2>
-        <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-8">
+        <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-10">
           A curated selection of the finest eateries in Sylhet, all located within a short distance of <span className="text-hotel-primary font-bold">Hotel Shotabdi</span>.
         </p>
+
+        <div className="w-full max-w-2xl mb-12 flex flex-col items-center gap-4">
+          <div className="relative w-full">
+            <input 
+              type="text" 
+              placeholder="Search by restaurant name or cuisine (e.g. Biryani, Italian)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-gray-100 shadow-xl rounded-[1.5rem] py-5 pl-14 pr-6 text-sm focus:border-blue-600 outline-none transition-all"
+            />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
+          </div>
+
+          {recommendations.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-3 animate-fade-in">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                <AlertCircle size={12} /> Did you mean?
+              </span>
+              {recommendations.map(rec => (
+                <button 
+                  key={rec.id}
+                  onClick={() => setSearchQuery(rec.name)}
+                  className="px-4 py-1.5 bg-gray-50 hover:bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full border border-blue-50 transition-all active:scale-95"
+                >
+                  {rec.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         
         {isEditMode && (
           <button 
@@ -140,7 +218,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        {displayList.slice(0, visibleItems).map((res) => (
+        {filteredList.slice(0, visibleItems).map((res) => (
           <div key={res.id} className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative">
             <div className="h-48 relative overflow-hidden shrink-0">
               <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
@@ -204,7 +282,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                 </div>
               </div>
 
-              {/* Added Phone Display */}
               <div className="mb-4">
                 {isEditMode ? (
                   <div className="relative">
@@ -300,9 +377,19 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
             </div>
           </div>
         ))}
+
+        {filteredList.length === 0 && searchQuery.trim() !== '' && (
+          <div className="col-span-full py-20 text-center flex flex-col items-center">
+            <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center text-gray-300 mb-6">
+              <Search size={40} />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">No matching eateries found</h3>
+            <p className="text-sm text-gray-400 font-medium">Try searching for a different name or cuisine type.</p>
+          </div>
+        )}
       </div>
 
-      {visibleItems < displayList.length && (
+      {visibleItems < filteredList.length && (
         <div className="mt-16 text-center">
           <button 
             onClick={() => setVisibleItems(prev => prev + 9)}
