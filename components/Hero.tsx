@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -18,6 +19,11 @@ const Hero: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Booking states
+  const [checkIn, setCheckIn] = useState('2024-05-24');
+  const [checkOut, setCheckOut] = useState('2024-05-26');
+  const [guests, setGuests] = useState('2 Adults, 1 Room');
+
   const shortcuts = [
     { id: 'overview', label: 'Hotel', icon: <Home size={20} />, path: '/' },
     { id: 'rooms', label: 'Rooms', icon: <Bed size={20} />, path: '/rooms' },
@@ -33,6 +39,11 @@ const Hero: React.FC = () => {
     } else {
       navigate(path);
     }
+  };
+
+  const handleSearch = () => {
+    // Navigate to the Rooms service/section as the primary action for hotel search
+    navigate('/rooms');
   };
 
   return (
@@ -91,39 +102,62 @@ const Hero: React.FC = () => {
 
             {/* Date Selector */}
             <div className="lg:col-span-5 grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-200 border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="bg-white p-4 md:p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer">
+              <div className="bg-white p-4 md:p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors relative">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gray-50 flex items-center justify-center text-hotel-primary shrink-0">
                   <Calendar size={18} />
                 </div>
-                <div>
+                <div className="flex-1">
                   <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block">Check-In</span>
-                  <p className="text-xs md:text-sm font-black text-hotel-text">Select Date</p>
+                  <input 
+                    type="date" 
+                    value={checkIn}
+                    onChange={(e) => setCheckIn(e.target.value)}
+                    className="w-full text-xs md:text-sm font-black text-hotel-text bg-transparent outline-none border-none p-0 cursor-pointer appearance-none"
+                  />
                 </div>
               </div>
-              <div className="bg-white p-4 md:p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer">
+              <div className="bg-white p-4 md:p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors relative">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gray-50 flex items-center justify-center text-hotel-primary shrink-0">
                   <Calendar size={18} />
                 </div>
-                <div>
+                <div className="flex-1">
                   <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block">Check-Out</span>
-                  <p className="text-xs md:text-sm font-black text-hotel-text">Select Date</p>
+                  <input 
+                    type="date" 
+                    value={checkOut}
+                    onChange={(e) => setCheckOut(e.target.value)}
+                    className="w-full text-xs md:text-sm font-black text-hotel-text bg-transparent outline-none border-none p-0 cursor-pointer appearance-none"
+                  />
                 </div>
               </div>
             </div>
 
             {/* Travelers & Search */}
             <div className="lg:col-span-3 flex flex-col md:flex-row gap-3 md:gap-4">
-              <div className="flex-1 bg-white border border-gray-200 rounded-2xl p-4 md:p-5 flex items-center gap-4 shadow-sm hover:border-hotel-primary/30 transition-colors">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gray-50 flex items-center justify-center text-hotel-primary shrink-0">
+              <div className="flex-1 bg-white border border-gray-200 rounded-2xl p-4 md:p-5 flex items-center gap-4 shadow-sm hover:border-hotel-primary/30 transition-colors cursor-pointer group/guests">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gray-50 flex items-center justify-center text-hotel-primary shrink-0 group-hover/guests:bg-hotel-primary/10 transition-colors">
                   <Users size={18} />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest block">Guests</span>
-                  <p className="text-xs md:text-sm font-black text-hotel-text whitespace-nowrap">2 Adults, 1 Room</p>
+                  <select 
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
+                    className="w-full text-xs md:text-sm font-black text-hotel-text bg-transparent outline-none border-none p-0 cursor-pointer appearance-none"
+                  >
+                    <option>1 Adult, 1 Room</option>
+                    <option>2 Adults, 1 Room</option>
+                    <option>3 Adults, 1 Room</option>
+                    <option>4 Adults, 2 Rooms</option>
+                    <option>Family (5+), 2 Rooms</option>
+                  </select>
                 </div>
               </div>
               
-              <button className="bg-hotel-primary hover:bg-hotel-secondary text-white w-full md:w-20 lg:w-24 rounded-2xl flex items-center justify-center shadow-lg shadow-red-100 transition-all active:scale-95 group min-h-[50px] md:min-h-0">
+              <button 
+                onClick={handleSearch}
+                className="bg-hotel-primary hover:bg-hotel-secondary text-white w-full md:w-20 lg:w-24 rounded-2xl flex items-center justify-center shadow-lg shadow-red-100 transition-all active:scale-95 group min-h-[50px] md:min-h-0"
+              >
                 <Search size={22} className="group-hover:scale-110 transition-transform" />
               </button>
             </div>
@@ -134,6 +168,9 @@ const Hero: React.FC = () => {
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
               <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Rooms Available Today</span>
+            </div>
+            <div className="flex items-center gap-2 opacity-50">
+              <span className="text-[9px] md:text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Best Rate Guaranteed</span>
             </div>
           </div>
 
