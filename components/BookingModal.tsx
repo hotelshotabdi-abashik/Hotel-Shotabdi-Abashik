@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   X, Calendar, Users, ShieldCheck, Loader2, CheckCircle2, 
@@ -115,37 +114,35 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
   const isStep1Valid = dates.checkIn && dates.checkOut;
   
   const isStep2Valid = guests.every((g, idx) => {
-    if (idx === 0) {
-      // Primary Guest: Name, NID, Image
-      return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
-    } else if (idx === 1) {
-      // Companion (Guest 2): Name, NID, Image
+    if (idx < 2) {
+      // Primary & Companion: Name, NID, Image
       return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
     } else {
-      // Others (Guest 3+): Name and Age only
+      // Others (3rd to 7th): Name and Age only
       return g.legalName.trim().length > 2 && g.age;
     }
   });
 
   return (
-    <div className="fixed inset-0 z-[3000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[95vh] border border-white/20">
+    <div className="fixed inset-0 z-[4000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] border border-white/20">
         
-        {/* Header */}
-        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+        {/* Sticky Header */}
+        <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-lg">
-                <Calendar size={24} />
+             <div className="w-10 h-10 md:w-12 md:h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-lg">
+                <Calendar size={22} />
              </div>
              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Stay Reservation</h3>
+                <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight">Stay Reservation</h3>
                 <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest">{room.title} • ৳{finalPrice}/night</p>
              </div>
           </div>
-          <button onClick={onClose} className="p-3 bg-white rounded-xl text-gray-400 hover:text-hotel-primary transition-all border border-gray-100 shadow-sm"><X size={20} /></button>
+          <button onClick={onClose} className="p-3 bg-white rounded-xl text-gray-400 hover:text-hotel-primary transition-all border border-gray-100 shadow-sm active:scale-95"><X size={20} /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar p-8">
+        {/* Scrollable Center Content */}
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10">
            {/* Step Indicator */}
            <div className="flex items-center justify-center gap-4 mb-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 1 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>1</div>
@@ -197,15 +194,15 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                 </div>
              </div>
            ) : (
-             <div className="space-y-10 animate-fade-in">
+             <div className="space-y-10 animate-fade-in pb-4">
                 {guests.map((guest, idx) => (
                   <div key={idx} className="space-y-6 border-b border-gray-100 pb-10 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between">
                         <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                           {idx === 0 ? <ShieldCheck size={16} className="text-green-500"/> : <UserPlus size={16} className="text-hotel-primary"/>}
+                           {idx < 2 ? <ShieldCheck size={16} className="text-hotel-primary"/> : <UserPlus size={16} className="text-gray-400"/>}
                            Guest {idx + 1} {idx === 0 ? '(Primary)' : idx === 1 ? '(Companion)' : '(Additional)'}
                         </h4>
-                        {idx === 0 && <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase">Verified Identity</span>}
+                        {idx === 0 && <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase">Verified Linked</span>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -221,7 +218,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                              />
                           </div>
 
-                          {(idx === 0 || idx === 1) ? (
+                          {idx < 2 ? (
                             <div className="space-y-1.5">
                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Digits</label>
                                <input 
@@ -246,7 +243,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                           )}
                        </div>
 
-                       {(idx === 0 || idx === 1) ? (
+                       {idx < 2 ? (
                           <div className="space-y-1.5">
                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Registry Scan</label>
                              <div className={`relative border-2 border-dashed rounded-[2rem] p-6 transition-all h-full min-h-[120px] flex items-center justify-center ${guest.nidImageUrl ? 'border-green-200 bg-green-50/10' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
@@ -258,7 +255,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                                       <div className="w-24 h-16 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-gray-200">
                                          <img src={guest.nidImageUrl} className="w-full h-full object-cover" />
                                       </div>
-                                      <p className="text-[9px] font-black text-green-600 uppercase">Document Linked</p>
+                                      <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Linked</p>
                                    </div>
                                 ) : (
                                    <div className="text-center">
@@ -271,7 +268,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                        ) : (
                           <div className="bg-gray-50/50 rounded-[2rem] border border-gray-100 p-8 flex flex-col items-center justify-center opacity-40">
                              <User size={32} className="text-gray-300 mb-2" />
-                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Identity Record<br/>Verification Waived</p>
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Full ID Not Required<br/>for addl. guests</p>
                           </div>
                        )}
                     </div>
@@ -281,15 +278,16 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
            )}
         </div>
 
-        <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-4 shrink-0">
+        {/* Sticky Footer */}
+        <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex gap-4 shrink-0">
            {step === 2 && (
-             <button onClick={() => setStep(1)} className="px-10 py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest text-gray-400 hover:bg-white transition-all">Back</button>
+             <button onClick={() => setStep(1)} className="px-8 md:px-10 py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest text-gray-400 hover:bg-white transition-all">Back</button>
            )}
            {step === 1 ? (
              <button 
                 onClick={() => setStep(2)} 
                 disabled={!isStep1Valid}
-                className="flex-1 bg-gray-900 text-white py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50"
+                className="flex-1 bg-gray-900 text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 transition-all active:scale-95"
              >
                 Verify Identities <ArrowRight size={18} />
              </button>
@@ -297,7 +295,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
              <button 
                 onClick={submitBooking}
                 disabled={loading || !isStep2Valid}
-                className="flex-1 bg-hotel-primary text-white py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
+                className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
              >
                 {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Book Now</>}
              </button>
