@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Home, Bed, Map, Utensils, Tag } from 'lucide-react';
 import { Room } from './types';
@@ -7,7 +6,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'deluxe-single',
     title: "Deluxe Single",
-    price: "1,300",
+    price: "1,333",
     discountPrice: "1,000",
     tag: "BEST VALUE",
     desc: "Cozy accommodation designed for 1 person. Perfect for solo travelers seeking peace.",
@@ -18,7 +17,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'deluxe-double',
     title: "Deluxe Double",
-    price: "3,500",
+    price: "3,467",
     discountPrice: "2,600",
     tag: "POPULAR",
     desc: "Spacious comfort for 2 persons. Ideal for couples or business partners visiting Sylhet.",
@@ -29,7 +28,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'family-suite',
     title: "Family Suite",
-    price: "4,500",
+    price: "4,533",
     discountPrice: "3,400",
     tag: "GRAND",
     desc: "Luxurious space for up to 5 persons. Great for small families on vacation.",
@@ -40,7 +39,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'super-deluxe',
     title: "Super Deluxe",
-    price: "5,500",
+    price: "5,600",
     discountPrice: "4,200",
     tag: "LUXURY",
     desc: "Premium massive suite for 6-7 persons. The ultimate group experience in Sylhet.",

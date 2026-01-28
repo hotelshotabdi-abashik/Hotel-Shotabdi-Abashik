@@ -28,7 +28,7 @@ import {
   set
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -82,7 +82,7 @@ const AppContent = () => {
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
-      title: "",
+      title: "Experience Luxury",
       subtitle: "Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       buttonText: "Book Now",
@@ -96,28 +96,28 @@ const AppContent = () => {
     lastUpdated: 0
   });
 
-  const fetchConfig = useCallback(async () => {
-    try {
-      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && typeof data === 'object') {
-          setSiteConfig(prev => {
-             const merged = { ...prev, ...data };
-             return (data.lastUpdated || 0) > prev.lastUpdated ? merged : prev;
-          });
-        }
-      }
-    } catch (e) {
-      console.warn("Using default settings.");
-    } finally {
-      setIsConfigLoading(false);
-    }
-  }, []);
-
+  // REAL-TIME SYNC FROM FIREBASE - Strictly restore from remote
   useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+    const configRef = ref(db, 'site-config');
+    const unsubscribe = onValue(configRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Force local state to match Firebase unless the user is actively saving their local changes
+        setSiteConfig(prev => {
+          if (!isSaving) {
+            return { ...prev, ...data };
+          }
+          return prev;
+        });
+      }
+      setIsConfigLoading(false);
+    }, (error) => {
+      console.error("Firebase sync error:", error);
+      setIsConfigLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [isSaving]);
 
   const validOffers = useMemo(() => {
     const now = Date.now();
@@ -165,23 +165,25 @@ const AppContent = () => {
     setIsSaving(true);
     try {
       const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
-      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`, {
+      
+      // Update Firebase (Primary Source of Truth)
+      await set(ref(db, 'site-config'), updatedConfig);
+
+      // Backup to Worker (Optional secondary store)
+      fetch(`${CMS_WORKER_URL}/site-config.json`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': ADMIN_SECRET 
         },
         body: JSON.stringify(updatedConfig)
-      });
-      if (res.ok) {
-        setSiteConfig(updatedConfig);
-        alert("Website published live!");
-        setIsEditMode(false);
-      } else {
-        throw new Error("Save failed");
-      }
+      }).catch(() => {});
+
+      alert("Website published live!");
+      setIsEditMode(false);
     } catch (e) {
-      alert("Error saving settings.");
+      alert("Error saving settings to Firebase.");
+      console.error(e);
     } finally {
       setIsSaving(false);
     }
@@ -316,7 +318,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Configuration...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Restoring Hub Configuration...</p>
       </div>
     );
   }
@@ -351,6 +353,28 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
+        {/* Announcement Bar */}
+        {(siteConfig.announcement || isEditMode) && (
+          <div className="bg-hotel-primary text-white py-2.5 px-6 text-center z-[65] relative flex items-center justify-center gap-3 overflow-hidden">
+            <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
+            {isEditMode ? (
+              <div className="flex-1 flex items-center gap-2">
+                <input
+                  className="bg-white/20 border-none outline-none text-center w-full font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] py-1 rounded-lg placeholder:text-white/40"
+                  value={siteConfig.announcement}
+                  onChange={(e) => setSiteConfig(prev => ({ ...prev, announcement: e.target.value }))}
+                  placeholder="ANNOUNCEMENT TEXT (e.g. 25% OFF DISCOUNT)"
+                />
+              </div>
+            ) : (
+              <p className="font-black text-[9px] md:text-[11px] uppercase tracking-[0.3em] truncate">
+                {siteConfig.announcement}
+              </p>
+            )}
+            <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
+          </div>
+        )}
+
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center h-[72px] md:h-[88px]">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
@@ -429,10 +453,41 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               <div className="animate-fade-in">
-                <Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'hero')} />
-                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
-                <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />
-                <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />
+                <Hero 
+                  config={siteConfig.hero} 
+                  isEditMode={isEditMode} 
+                  onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'hero')} 
+                />
+                <ExclusiveOffers 
+                  offers={validOffers} 
+                  isEditMode={isEditMode} 
+                  claimedOfferId={claimedOfferId} 
+                  onClaim={handleClaimOffer} 
+                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'offers')} 
+                />
+                <RoomGrid 
+                  rooms={siteConfig.rooms} 
+                  isEditMode={isEditMode} 
+                  activeDiscount={activeDiscount} 
+                  isBookingDisabled={hasPendingBooking} 
+                  onBook={handleRoomBookingInit} 
+                  onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'rooms')} 
+                />
+                <NearbyRestaurants 
+                  restaurants={siteConfig.restaurants} 
+                  isEditMode={isEditMode} 
+                  onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
+                />
+                <TouristGuide 
+                  touristGuides={siteConfig.touristGuides} 
+                  isEditMode={isEditMode} 
+                  onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'guide')} 
+                />
               </div>
             } />
             <Route path="/offers" element={
@@ -441,16 +496,47 @@ const AppContent = () => {
                    <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Promotions</h1>
                    <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals.</p>
                 </div>
-                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
+                <ExclusiveOffers 
+                  offers={validOffers} 
+                  isEditMode={isEditMode} 
+                  claimedOfferId={claimedOfferId} 
+                  onClaim={handleClaimOffer} 
+                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'offers')} 
+                />
               </div>
             } />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />} />
+            <Route path="/rooms" element={
+              <RoomGrid 
+                rooms={siteConfig.rooms} 
+                activeDiscount={activeDiscount} 
+                isBookingDisabled={hasPendingBooking} 
+                onBook={handleRoomBookingInit} 
+                isEditMode={isEditMode} 
+                onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
+                onImageUpload={(f) => uploadToR2(f, 'rooms')} 
+              />
+            } />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} onClaim={handleClaimOffer} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />} />
+            <Route path="/restaurants" element={
+              <NearbyRestaurants 
+                restaurants={siteConfig.restaurants} 
+                isEditMode={isEditMode} 
+                onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
+                onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
+              />
+            } />
+            <Route path="/guide" element={
+              <TouristGuide 
+                touristGuides={siteConfig.touristGuides} 
+                isEditMode={isEditMode} 
+                onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
+                onImageUpload={(f) => uploadToR2(f, 'guide')} 
+              />
+            } />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
-            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Denied</div>} />
+            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen font-black text-gray-400 uppercase text-[10px] tracking-widest">Access Denied</div>} />
           </Routes>
         </div>
 
@@ -476,10 +562,17 @@ const AppContent = () => {
                   <p className="text-[11px] text-gray-500">hotelshotabdiabashik@gmail.com</p>
               </div>
             </div>
+            <div className="pt-8 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+               <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">© 2024 Hotel Shotabdi Residential. All Rights Reserved.</p>
+               <div className="flex gap-6">
+                 <Link to="/privacypolicy" className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy</Link>
+                 <Link to="/termsofservice" className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms</Link>
+               </div>
+            </div>
           </div>
         </footer>
 
-        {/* AUTHORIZED POPUPS (Z-LEVELS handled within individual Portal components) */}
+        {/* AUTHORIZED POPUPS */}
         <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
         {selectedRoomToBook && profile && (
           <BookingModal 
