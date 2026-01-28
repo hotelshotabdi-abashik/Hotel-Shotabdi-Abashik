@@ -15,7 +15,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // No hardcoded hotel defaults anymore
   const displayList = restaurants;
 
   // Filtered and sorted list: recommended first
@@ -76,7 +75,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       tag: "🍴 New Experience",
       description: "Brief description of the place and what makes it special.",
       mapUrl: "",
-      phone: "",
+      phone: "+88017XXXXXXXX",
       isRecommended: false
     };
     onUpdate?.([newItem, ...displayList]);
@@ -85,7 +84,8 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   return (
     <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in">
       <div className="mb-12 text-center flex flex-col items-center">
-        <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy</span>
+        <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy</span>
+        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">Nearby Restaurants</h2>
         <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-10">
           A curated selection of the finest eateries in Sylhet, ranging from local favorites to international cuisines, all near <span className="text-hotel-primary font-bold">Hotel Shotabdi</span>.
         </p>
@@ -97,7 +97,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
               placeholder="Search by restaurant name or cuisine..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 shadow-xl rounded-[1.5rem] py-5 pl-14 pr-6 text-sm focus:border-blue-600 outline-none transition-all"
+              className="w-full bg-white border border-gray-100 shadow-xl rounded-[1.5rem] py-5 pl-14 pr-6 text-sm focus:border-hotel-primary outline-none transition-all"
             />
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
           </div>
@@ -108,7 +108,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
             onClick={addRes}
             className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 hover:scale-105 transition-all mb-10"
           >
-            <Plus size={18} /> Add New Restaurant
+            <Plus size={18} /> Add New Spot
           </button>
         )}
       </div>
@@ -127,7 +127,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                 )}
                 {isEditMode ? (
                   <input 
-                    className="bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-800 outline-none border border-blue-200"
+                    className="bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-800 outline-none border border-hotel-primary/20"
                     value={res.tag}
                     onChange={(e) => updateRes(res.id, 'tag', e.target.value)}
                   />
@@ -165,13 +165,13 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                 <div className="flex-1 min-w-0">
                   {isEditMode ? (
                     <input 
-                      className="text-sm md:text-xl font-black text-gray-900 border-b border-blue-600 outline-none w-full"
+                      className="text-sm md:text-xl font-black text-gray-900 border-b border-hotel-primary outline-none w-full"
                       value={res.name}
                       placeholder="Restaurant Name"
                       onChange={(e) => updateRes(res.id, 'name', e.target.value)}
                     />
                   ) : (
-                    <h3 className="text-sm md:text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors leading-tight line-clamp-1">{res.name}</h3>
+                    <h3 className="text-sm md:text-xl font-black text-gray-900 group-hover:text-hotel-primary transition-colors leading-tight line-clamp-1">{res.name}</h3>
                   )}
                   <p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1 truncate">{res.cuisine}</p>
                 </div>
@@ -200,23 +200,43 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-auto pt-4 border-t border-gray-50">
                 <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] font-black text-gray-700">
-                  <Clock size={10} className="text-blue-600" />
-                  <span>{res.time}</span>
+                  <Clock size={10} className="text-hotel-primary" />
+                  {isEditMode ? (
+                    <input className="w-full bg-transparent border-b border-gray-100 outline-none" value={res.time} onChange={(e) => updateRes(res.id, 'time', e.target.value)} />
+                  ) : <span>{res.time}</span>}
                 </div>
                 <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] font-black text-gray-700">
-                  <MapPin size={10} className="text-blue-600" />
-                  <span>{res.distance}</span>
+                  <MapPin size={10} className="text-hotel-primary" />
+                  {isEditMode ? (
+                    <input className="w-full bg-transparent border-b border-gray-100 outline-none" value={res.distance} onChange={(e) => updateRes(res.id, 'distance', e.target.value)} />
+                  ) : <span>{res.distance}</span>}
                 </div>
               </div>
+
+              {(res.phone || isEditMode) && (
+                <div className="mt-3 flex items-center gap-1.5">
+                   <Phone size={10} className="text-green-600" />
+                   {isEditMode ? (
+                    <input 
+                      className="text-[9px] md:text-[11px] font-bold text-gray-400 bg-transparent border-b border-gray-100 outline-none w-full"
+                      value={res.phone}
+                      placeholder="Phone (e.g. +88017...)"
+                      onChange={(e) => updateRes(res.id, 'phone', e.target.value)}
+                    />
+                   ) : (
+                    <a href={`tel:${res.phone}`} className="text-[9px] md:text-[11px] font-bold text-gray-400 hover:text-hotel-primary transition-colors">{res.phone}</a>
+                   )}
+                </div>
+              )}
 
               <div className="mt-4 md:mt-6">
                 <a 
                   href={res.mapUrl || generateMapUrl(res.name)} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest py-2 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-1.5 group/map"
+                  className="w-full bg-gray-50 hover:bg-hotel-primary hover:text-white text-gray-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest py-2 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-1.5 group/map"
                 >
-                  <MapIcon size={12} className="group-hover/map:text-white transition-colors" /> Location
+                  <MapIcon size={12} className="group-hover/map:text-white transition-colors" /> Get Directions
                 </a>
               </div>
             </div>
@@ -227,10 +247,10 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       {visibleItems < filteredList.length && (
         <div className="mt-12 md:mt-16 text-center">
           <button 
-            onClick={() => setVisibleItems(prev => prev + 9)}
-            className="group px-6 md:px-10 py-3 md:py-5 bg-white border-2 border-gray-100 text-gray-900 font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] rounded-xl md:rounded-[2rem] hover:border-blue-600 hover:text-blue-600 transition-all shadow-xl shadow-gray-100/50"
+            onClick={() => setVisibleItems(prev => prev + 12)}
+            className="group px-6 md:px-10 py-3 md:py-5 bg-white border-2 border-gray-100 text-gray-900 font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] rounded-xl md:rounded-[2rem] hover:border-hotel-primary hover:text-hotel-primary transition-all shadow-xl shadow-gray-100/50"
           >
-            Show More <ChevronRight size={14} className="inline ml-1 group-hover:translate-x-1 transition-transform" />
+            Show More Dining <ChevronRight size={14} className="inline ml-1 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}
