@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -350,7 +351,7 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center">
+        <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center h-[72px] md:h-[88px]">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
               <div onClick={handleLogoClick} className="cursor-pointer select-none">
@@ -478,21 +479,19 @@ const AppContent = () => {
           </div>
         </footer>
 
-        {/* AUTHORIZED POPUPS (Locked to highest Z-INDEX) */}
-        <div className="fixed z-[3000]">
-          <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
-          {selectedRoomToBook && profile && (
-            <BookingModal 
-              room={selectedRoomToBook} 
-              profile={profile} 
-              activeDiscount={activeDiscount} 
-              onClose={closeAllPopups} 
-              onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
-            />
-          )}
-          {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
-          {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
-        </div>
+        {/* AUTHORIZED POPUPS (Z-LEVELS handled within individual Portal components) */}
+        <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
+        {selectedRoomToBook && profile && (
+          <BookingModal 
+            room={selectedRoomToBook} 
+            profile={profile} 
+            activeDiscount={activeDiscount} 
+            onClose={closeAllPopups} 
+            onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
+          />
+        )}
+        {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
+        {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
 
         <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={toggleAuth} toggleProfile={toggleManageAccount} />
       </main>

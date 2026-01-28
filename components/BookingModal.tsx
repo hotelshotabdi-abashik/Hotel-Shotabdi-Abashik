@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Calendar, Users, ShieldCheck, Loader2, CheckCircle2, 
   Camera, IdCard, Info, AlertTriangle, ArrowRight, UserPlus,
@@ -27,7 +29,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
   });
 
   const [guests, setGuests] = useState<GuestInfo[]>(() => {
-    const initial = [
+    return [
       { 
         legalName: profile.legalName, 
         age: profile.age || '', 
@@ -37,20 +39,16 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
         nidImageUrl: profile.nidImageUrl 
       }
     ];
-    return initial;
   });
 
-  // Keep guests array in sync with totalGuests
   useEffect(() => {
     setGuests(prev => {
       const current = [...prev];
       if (current.length < totalGuests) {
-        // Add new guests
         for (let i = current.length; i < totalGuests; i++) {
           current.push({ legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' });
         }
       } else if (current.length > totalGuests) {
-        // Remove extra
         return current.slice(0, totalGuests);
       }
       return current;
@@ -112,37 +110,40 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
   };
 
   const isStep1Valid = dates.checkIn && dates.checkOut;
-  
   const isStep2Valid = guests.every((g, idx) => {
     if (idx < 2) {
-      // Primary & Companion: Name, NID, Image
       return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
-    } else {
-      // Others (3rd to 7th): Name and Age only
-      return g.legalName.trim().length > 2 && g.age;
     }
+    return g.legalName.trim().length > 2 && g.age;
   });
 
-  return (
-    <div className="fixed inset-0 z-[4000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] border border-white/20">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-md" 
+        onClick={onClose}
+      />
+      
+      {/* Modal Container */}
+      <div className="relative bg-white w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-fade-in">
         
         {/* Sticky Header */}
         <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 md:w-12 md:h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-lg">
+             <div className="w-10 h-10 md:w-12 md:h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-100">
                 <Calendar size={22} />
              </div>
              <div>
-                <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight">Stay Reservation</h3>
-                <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest">{room.title} • ৳{finalPrice}/night</p>
+                <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight leading-none">Stay Reservation</h3>
+                <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.2em] mt-1.5">{room.title} • ৳{finalPrice}/night</p>
              </div>
           </div>
           <button onClick={onClose} className="p-3 bg-white rounded-xl text-gray-400 hover:text-hotel-primary transition-all border border-gray-100 shadow-sm active:scale-95"><X size={20} /></button>
         </div>
 
         {/* Scrollable Center Content */}
-        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 bg-white">
            {/* Step Indicator */}
            <div className="flex items-center justify-center gap-4 mb-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 1 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>1</div>
@@ -153,7 +154,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
            {step === 1 ? (
              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-fade-in">
                 <div className="space-y-6">
-                   <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2"><Clock size={16} className="text-hotel-primary"/> Schedule</h4>
+                   <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3"><Clock size={16} className="text-hotel-primary"/> Schedule</h4>
                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Check In</label>
@@ -166,13 +167,13 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                    </div>
                    <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl flex gap-4">
                       <Info size={18} className="text-blue-600 shrink-0" />
-                      <p className="text-[10px] text-blue-700 font-medium leading-relaxed uppercase tracking-wider">
+                      <p className="text-[10px] text-blue-700 font-bold leading-relaxed uppercase tracking-wider">
                          Standard check-in is 12:00 PM. Early check-in subject to registry clearance.
                       </p>
                    </div>
                 </div>
                 <div className="space-y-6">
-                   <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2"><Users size={16} className="text-hotel-primary"/> Occupants</h4>
+                   <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3"><Users size={16} className="text-hotel-primary"/> Occupants</h4>
                    <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Total Guests</label>
                       <select 
@@ -187,8 +188,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                    </div>
                    <div className="p-6 bg-amber-50/50 border border-amber-100 rounded-3xl flex gap-4">
                       <AlertTriangle size={18} className="text-amber-600 shrink-0" />
-                      <p className="text-[10px] text-amber-700 font-medium leading-relaxed uppercase tracking-wider">
-                         Occupancy exceeds fire-safety limit of {room.capacity} is strictly prohibited.
+                      <p className="text-[10px] text-amber-700 font-bold leading-relaxed uppercase tracking-wider">
+                         Max occupancy limit of {room.capacity} is strictly enforced.
                       </p>
                    </div>
                 </div>
@@ -198,11 +199,11 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                 {guests.map((guest, idx) => (
                   <div key={idx} className="space-y-6 border-b border-gray-100 pb-10 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                        <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3">
                            {idx < 2 ? <ShieldCheck size={16} className="text-hotel-primary"/> : <UserPlus size={16} className="text-gray-400"/>}
                            Guest {idx + 1} {idx === 0 ? '(Primary)' : idx === 1 ? '(Companion)' : '(Additional)'}
                         </h4>
-                        {idx === 0 && <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase">Verified Linked</span>}
+                        {idx === 0 && <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase tracking-widest">Verified Linked</span>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -211,7 +212,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
                              <input 
                                 placeholder="Full Name as per ID" 
-                                className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70' : ''}`} 
+                                className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
                                 value={guest.legalName}
                                 disabled={idx === 0}
                                 onChange={e => handleGuestChange(idx, 'legalName', e.target.value)}
@@ -223,7 +224,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Digits</label>
                                <input 
                                   placeholder="NID Number" 
-                                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono ${idx === 0 ? 'opacity-70' : ''}`} 
+                                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
                                   value={guest.nidNumber}
                                   disabled={idx === 0}
                                   onChange={e => handleGuestChange(idx, 'nidNumber', e.target.value.replace(/\D/g, ''))}
@@ -268,7 +269,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                        ) : (
                           <div className="bg-gray-50/50 rounded-[2rem] border border-gray-100 p-8 flex flex-col items-center justify-center opacity-40">
                              <User size={32} className="text-gray-300 mb-2" />
-                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Full ID Not Required<br/>for addl. guests</p>
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Full Identity Verification<br/>Waived for Addl. Guests</p>
                           </div>
                        )}
                     </div>
@@ -304,6 +305,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default BookingModal;
