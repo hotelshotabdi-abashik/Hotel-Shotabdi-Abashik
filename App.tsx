@@ -122,8 +122,11 @@ const AppContent = () => {
   const validOffers = useMemo(() => {
     const now = Date.now();
     return (siteConfig.offers || []).filter(o => {
+      // Logic for "Forever" deals: if no endDate is present, it's valid regardless of current time
+      if (!o.endDate) return true;
+      
       const start = o.startDate || 0;
-      const end = o.endDate || Infinity;
+      const end = o.endDate;
       return now >= start && now <= end;
     });
   }, [siteConfig.offers]);
@@ -187,8 +190,7 @@ const AppContent = () => {
   };
 
   const uploadToR2 = async (file: File, folder: string): Promise<string> => {
-    const safeFolder = folder || "uploads";
-    const cleanFolderName = safeFolder.replace(/^\/|\/$/g, '').replace(/ /g, '_').toLowerCase();
+    const cleanFolderName = (folder || "uploads").replace(/^\/|\/$/g, '').replace(/ /g, '_').toLowerCase();
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
     const res = await fetch(`${CMS_WORKER_URL}/${filename}`, {
       method: 'PUT',
@@ -316,7 +318,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Configuration...</p>
       </div>
     );
   }
