@@ -38,7 +38,8 @@ export const db = getDatabase(app);
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
-export const VAPID_KEY = "BNz5lmvmBGEADJDbfjvzWcBZvAyFhQU8855NSjjkzNR0ehuQBrkaiUXl9hDWasDPA4gTNFsC8Ccd6Eq2dpVarBA";
+// Updated with your provided key pair
+export const VAPID_KEY = "uQlADdOxjQ7QLMhQew2uYE-9LYVr9R9m73dzKlRVwSs";
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });

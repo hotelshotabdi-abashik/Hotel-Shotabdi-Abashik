@@ -29,6 +29,21 @@
         ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
       }
     },
+    "help_dex": {
+      "messages": {
+        "$userId": {
+          ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+          ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        }
+      },
+      "active_chats": {
+        ".read": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+        "$userId": {
+          ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+          ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        }
+      }
+    },
     "site-config": {
       ".read": "true",
       ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
