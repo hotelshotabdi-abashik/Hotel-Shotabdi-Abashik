@@ -132,29 +132,28 @@ const AppContent = () => {
     lastUpdated: 0
   });
 
-  const fetchConfig = useCallback(async () => {
-    try {
-      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && typeof data === 'object') {
-          setSiteConfig(prev => {
-             // Use server data if it's fresher than hardcoded defaults
-             const merged = { ...prev, ...data };
-             return (data.lastUpdated || 0) >= prev.lastUpdated ? merged : prev;
-          });
-        }
-      }
-    } catch (e) {
-      console.warn("Using default settings.");
-    } finally {
-      setIsConfigLoading(false);
-    }
-  }, []);
-
+  // REAL-TIME SYNC FROM FIREBASE
   useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+    const configRef = ref(db, 'site-config');
+    const unsubscribe = onValue(configRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setSiteConfig(prev => {
+          // Use remote data if its timestamp is newer or equal to ensure sync
+          if ((data.lastUpdated || 0) >= prev.lastUpdated) {
+            return { ...prev, ...data };
+          }
+          return prev;
+        });
+      }
+      setIsConfigLoading(false);
+    }, (error) => {
+      console.error("Firebase sync error:", error);
+      setIsConfigLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const validOffers = useMemo(() => {
     const now = Date.now();
@@ -202,23 +201,26 @@ const AppContent = () => {
     setIsSaving(true);
     try {
       const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
-      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`, {
+      
+      // Update Firebase first (Source of Truth)
+      await set(ref(db, 'site-config'), updatedConfig);
+
+      // Attempt Worker backup
+      fetch(`${CMS_WORKER_URL}/site-config.json`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': ADMIN_SECRET 
         },
         body: JSON.stringify(updatedConfig)
-      });
-      if (res.ok) {
-        setSiteConfig(updatedConfig);
-        alert("Website published live!");
-        setIsEditMode(false);
-      } else {
-        throw new Error("Save failed");
-      }
+      }).catch(e => console.warn("Worker backup failed."));
+
+      setSiteConfig(updatedConfig);
+      alert("Website published live!");
+      setIsEditMode(false);
     } catch (e) {
-      alert("Error saving settings.");
+      alert("Error saving settings to Firebase.");
+      console.error(e);
     } finally {
       setIsSaving(false);
     }
@@ -353,7 +355,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Configuration...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Synchronizing Site Data...</p>
       </div>
     );
   }

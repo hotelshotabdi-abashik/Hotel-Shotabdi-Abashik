@@ -81,8 +81,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
     const newRoom: Room = {
       id: `room-${Date.now()}`,
       title: "New Room Type",
-      price: "2000",
-      discountPrice: "1500",
+      price: "1333",
+      discountPrice: "1000", // ~25% off default
       tag: "NEW",
       desc: "Clean and comfortable room for your stay.",
       features: ["Wi-Fi", "AC", "TV"],
@@ -109,7 +109,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
             onClick={addNewRoom}
             className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-hotel-primary transition-all active:scale-95 shadow-md mx-auto md:mx-0"
           >
-            <Plus size={16} /> Add Unit
+            <Plus size={16} /> Add New Category
           </button>
         )}
       </div>
@@ -164,9 +164,15 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                   
                   <div className="flex flex-wrap items-baseline gap-2">
                     {isEditMode ? (
-                      <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
-                         <span className="text-[9px] font-bold text-gray-400">৳</span>
-                         <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Price" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
+                      <div className="flex flex-col gap-2 w-full">
+                         <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
+                            <span className="text-[9px] font-bold text-gray-400">Base ৳</span>
+                            <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.price || ""} placeholder="Old Price" onChange={(e) => updateRoom(room.id, 'price', e.target.value)} />
+                         </div>
+                         <div className="flex items-center gap-1 border-b border-gray-100 bg-red-50 px-3 py-1.5 rounded-xl w-full">
+                            <span className="text-[9px] font-bold text-[#B22222]">New ৳</span>
+                            <input className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Discounted" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
+                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">

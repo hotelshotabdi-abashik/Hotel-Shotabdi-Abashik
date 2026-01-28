@@ -6,7 +6,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'deluxe-single',
     title: "Deluxe Single",
-    price: "1,335",
+    price: "1,333",
     discountPrice: "1,000",
     tag: "BEST VALUE",
     desc: "Cozy accommodation designed for 1 person. Perfect for solo travelers seeking peace.",
@@ -17,7 +17,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'deluxe-double',
     title: "Deluxe Double",
-    price: "3,470",
+    price: "3,467",
     discountPrice: "2,600",
     tag: "POPULAR",
     desc: "Spacious comfort for 2 persons. Ideal for couples or business partners visiting Sylhet.",
@@ -28,7 +28,7 @@ export const ROOMS_DATA: Room[] = [
   {
     id: 'family-suite',
     title: "Family Suite",
-    price: "4,535",
+    price: "4,533",
     discountPrice: "3,400",
     tag: "GRAND",
     desc: "Luxurious space for up to 5 persons. Great for small families on vacation.",
