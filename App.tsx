@@ -17,6 +17,7 @@ import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
 import AdminDashboard from './components/AdminDashboard';
 import NotificationPrompt from './components/NotificationPrompt';
+import HelpDex from './components/HelpDex';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -48,6 +49,7 @@ const RouteMetadata = () => {
       '/rooms': 'Our Luxury Rooms & Suites | Hotel Shotabdi',
       '/restaurants': 'Nearby Dining & Restaurants | Hotel Shotabdi',
       '/guide': 'Sylhet Tourist Guide & Landmarks | Hotel Shotabdi',
+      '/helpdex': 'Help Dex Assistant | Hotel Shotabdi',
       '/privacypolicy': 'Privacy Policy | Hotel Shotabdi',
       '/termsofservice': 'Terms of Service | Hotel Shotabdi',
       '/admin': 'Admin Dashboard | Hotel Shotabdi'
@@ -433,7 +435,7 @@ const AppContent = () => {
                         notifications.map((n) => (
                           <div key={n.id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-white border-gray-50 opacity-60' : 'bg-red-50/50 border-hotel-primary/10'}`}>
                             <div className="flex gap-3">
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'booking_update' ? 'bg-[#B22222] text-white' : 'bg-blue-500 text-white'}`}><Info size={14} /></div>
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'booking_update' ? 'bg-[#B22222] text-white' : n.type === 'chat_message' ? 'bg-hotel-primary text-white' : 'bg-blue-500 text-white'}`}><Info size={14} /></div>
                               <div className="flex-1">
                                 <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{n.title}</h4>
                                 <p className="text-[10px] text-gray-500 mt-1">{n.message}</p>
@@ -540,6 +542,7 @@ const AppContent = () => {
                 onImageUpload={(f) => uploadToR2(f, 'guide')} 
               />
             } />
+            <Route path="/helpdex" element={<HelpDex />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
             <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen font-black text-gray-400 uppercase text-[10px] tracking-widest">Access Denied</div>} />

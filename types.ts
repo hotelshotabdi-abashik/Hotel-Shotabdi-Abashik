@@ -119,21 +119,38 @@ export interface UserProfile {
   lastLogin: number;
   isComplete: boolean;
   claims?: string[];
+  fcmToken?: string;
 }
 
 export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'booking_update' | 'system';
+  type: 'booking_update' | 'system' | 'chat_message';
   read: boolean;
   createdAt: number;
 }
 
-/**
- * ChatMessage interface for AI Concierge conversation history
- */
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
+}
+
+export interface HelpDexMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderPhoto: string;
+  text: string;
+  timestamp: number;
+  role: 'guest' | 'admin' | 'owner';
+}
+
+export interface ChatSession {
+  userId: string;
+  userName: string;
+  userPhoto: string;
+  lastMessage: string;
+  lastTimestamp: number;
+  unreadCount: number;
 }

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone, Star } from 'lucide-react';
 import { Attraction } from '../types';
+import { SYLHET_ATTRACTIONS } from '../constants';
 
 interface Props {
   touristGuides: Attraction[];
@@ -10,21 +11,12 @@ interface Props {
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const DEFAULT_ATTRACTIONS: Attraction[] = [
-  { id: 1, name: "Keane Bridge", subtitle: "Historic Landmark", distance: "0.8 km", description: "The 'Gateway to Sylhet'. An iconic 1936 steel structure offering panoramic river views.", image: "https://images.unsplash.com/photo-1623057000739-30ac5bb06227?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Keane+Bridge+Sylhet", isRecommended: true },
-  { id: 2, name: "Shah Jalal Dargah", subtitle: "Spiritual Center", distance: "1.5 km", description: "The most sacred spiritual site in the region, housing the tomb of the famous saint.", image: "https://images.unsplash.com/photo-1596701062351-be5f6a210d7d?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Shah+Jalal+Dargah+Sylhet", isRecommended: true },
-  { id: 3, name: "Malnicherra Tea Estate", subtitle: "Nature & Heritage", distance: "3.5 km", description: "The oldest tea garden in South Asia. Rolling hills of green as far as the eye can see.", image: "https://images.unsplash.com/photo-1594631252845-29fc4586c55c?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Malnicherra+Tea+Estate" },
-  { id: 4, name: "Ratargul Swamp Forest", subtitle: "Natural Wonder", distance: "26 km", description: "Bangladesh's only freshwater swamp forest. A mystical boat journey through submerged trees.", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Ratargul+Swamp+Forest" },
-  { id: 5, name: "Bisnakandi", subtitle: "Stone & Stream", distance: "42 km", description: "Where the Meghalaya mountains meet the clear blue streams. A paradise for nature lovers.", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Bisnakandi+Sylhet" },
-  { id: 6, name: "Jaflong", subtitle: "Stone Collection", distance: "56 km", description: "Famous for its stone collection from the riverbed and the stunning Zero Point border.", image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Jaflong+Sylhet" }
-];
-
 const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdate, onImageUpload }) => {
   const [visibleCount, setVisibleCount] = useState(12);
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadingId, setUploadingId] = useState<number | null>(null);
 
-  const displayList = touristGuides.length > 0 ? touristGuides : DEFAULT_ATTRACTIONS;
+  const displayList = touristGuides.length > 0 ? touristGuides : SYLHET_ATTRACTIONS;
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -168,7 +160,6 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                       onChange={(e) => updateSpot(spot.id, 'name', e.target.value)}
                     />
                   ) : (
-                    // Fix: Corrected variable name from 'res' to 'spot' to resolve reference error
                     <h3 className="text-[12px] md:text-lg font-black text-gray-900 group-hover:text-blue-600 transition-colors leading-tight line-clamp-1">{spot.name}</h3>
                   )}
                   <span className="text-[7px] md:text-[9px] font-black text-blue-600 tracking-wider uppercase block mt-0.5">{spot.subtitle}</span>
