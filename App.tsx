@@ -30,7 +30,7 @@ import {
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
 import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, Download, Upload } from 'lucide-react';
-import { ROOMS_DATA } from './constants';
+import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -91,8 +91,8 @@ const AppContent = () => {
     },
     rooms: ROOMS_DATA,
     offers: [],
-    restaurants: [],
-    touristGuides: [],
+    restaurants: SYLHET_RESTAURANTS,
+    touristGuides: SYLHET_ATTRACTIONS,
     announcement: "25% OFF DISCOUNT",
     lastUpdated: 0
   });
