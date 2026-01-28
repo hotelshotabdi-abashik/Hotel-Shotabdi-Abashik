@@ -121,19 +121,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const exportFullConfig = async () => {
-    const configSnapshot = await get(ref(db, 'site-config'));
-    if (!configSnapshot.exists()) return alert("No config to export");
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configSnapshot.val(), null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `shotabdi_full_backup_${Date.now()}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
   const formatTime = (ts?: number) => {
     if (!ts) return "N/A";
     return new Date(ts).toLocaleString('en-US', { 
@@ -427,19 +414,6 @@ const AdminDashboard: React.FC = () => {
                  </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
-                       <h3 className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
-                          <Download size={14} className="text-blue-600" /> Site Configuration Export
-                       </h3>
-                       <p className="text-[10px] text-gray-500 leading-relaxed">Download a complete JSON snapshot of all rooms, offers, restaurants, and guides. Essential before code updates.</p>
-                       <button 
-                        onClick={exportFullConfig}
-                        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-100 hover:brightness-110 active:scale-95 transition-all"
-                       >
-                         Download JSON Backup
-                       </button>
-                    </div>
-
                     <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
                        <h3 className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
                           <RefreshCw size={14} className="text-green-600" /> Media Reconciliation

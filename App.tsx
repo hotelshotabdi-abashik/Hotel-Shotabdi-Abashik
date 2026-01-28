@@ -229,16 +229,6 @@ const AppContent = () => {
     return url;
   };
 
-  const exportConfig = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(siteConfig, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `shotabdi_backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
   const loadProfile = useCallback(async (u: any) => {
     if (!u) return;
     try {
@@ -364,15 +354,6 @@ const AppContent = () => {
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       {isOwner && (
         <div className="fixed bottom-24 right-6 z-[2000] flex flex-col items-end gap-3 pointer-events-auto">
-          <div className="flex items-center gap-2 mb-2">
-            <button 
-              onClick={exportConfig}
-              title="Download Backup"
-              className="p-4 bg-gray-900 text-white rounded-full shadow-2xl hover:scale-110 transition-all border border-white/20"
-            >
-              <Download size={20} />
-            </button>
-          </div>
           <button 
             onClick={() => setIsEditMode(!isEditMode)}
             className={`px-6 py-4 rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest ${
