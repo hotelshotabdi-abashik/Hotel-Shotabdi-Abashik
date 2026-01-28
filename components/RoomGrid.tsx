@@ -57,18 +57,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
     }
   }, [location.search]);
 
-  const formatPriceString = (price: string) => {
-    const safePrice = price || "";
-    const numeric = parseFloat(safePrice.replace(/[^0-9.]/g, ''));
-    return isNaN(numeric) ? safePrice : formatter.format(numeric);
-  };
-
-  const calculateDiscountedPrice = (originalPrice: string) => {
-    const numericPrice = parseFloat(originalPrice.replace(/[^0-9.]/g, ''));
-    if (isNaN(numericPrice)) return originalPrice;
-    const discount = activeDiscount > 25 ? activeDiscount : 25;
-    const finalPrice = numericPrice - (numericPrice * (discount / 100));
-    return formatter.format(Math.round(finalPrice));
+  const parseNumeric = (str: string) => {
+    const numeric = parseFloat((str || "").replace(/[^0-9.]/g, ''));
+    return isNaN(numeric) ? 0 : numeric;
   };
 
   const handleImageChange = async (roomId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +113,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
             Our Luxury Suites
           </h2>
           <p className="text-gray-400 text-sm md:text-xl leading-relaxed font-light">
-            Crafted for pure comfort. Reserve now to automatically receive our <span className="text-hotel-primary font-black underline decoration-2 underline-offset-4">exclusive 25% base discount</span>.
+            Crafted for pure comfort. Reserve now to enjoy our <span className="text-hotel-primary font-black underline decoration-2 underline-offset-4">handpicked residential rates</span>.
           </p>
         </div>
         
@@ -139,7 +130,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {rooms.map((room) => {
           const isHighlighted = highlightedId === room.id;
-          const currentPrice = calculateDiscountedPrice(room.price);
+          const numericBase = parseNumeric(room.price);
+          const numericDiscounted = parseNumeric(room.discountPrice);
+          const calculatedPercent = numericBase > 0 ? Math.round(((numericBase - numericDiscounted) / numericBase) * 100) : 0;
 
           return (
             <div 
@@ -182,27 +175,36 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                   ) : (
                     <div className="flex flex-col gap-1 mb-3">
                       <h3 className="text-2xl md:text-3xl font-sans text-gray-900 font-black leading-none">{room.title}</h3>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="bg-red-600 text-white text-[9px] font-black px-3 py-1.5 rounded-full shadow-lg shadow-red-100 uppercase tracking-[0.2em]">{activeDiscount > 25 ? activeDiscount : 25}% OFF</span>
-                      </div>
+                      {calculatedPercent > 0 && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="bg-red-600 text-white text-[9px] font-black px-3 py-1.5 rounded-full shadow-lg shadow-red-100 uppercase tracking-[0.2em]">{calculatedPercent}% OFF</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="flex flex-wrap items-baseline gap-3">
                     {isEditMode ? (
-                      <div className="space-y-3 w-full">
+                      <div className="space-y-4 w-full">
                         <div className="flex items-center gap-3">
-                           <span className="text-[9px] font-black text-gray-400 uppercase w-24">Base Unit Price</span>
+                           <span className="text-[9px] font-black text-gray-400 uppercase w-24">Base Price</span>
                            <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1 rounded-xl flex-1">
                               <span className="text-[11px] font-bold text-gray-400">৳</span>
-                              <input className="text-[13px] font-bold text-gray-600 bg-transparent outline-none py-1 w-full" value={room.price || ""} placeholder="Raw Price" onChange={(e) => updateRoom(room.id, 'price', e.target.value)} />
+                              <input className="text-[13px] font-bold text-gray-600 bg-transparent outline-none py-1 w-full" value={room.price || ""} placeholder="e.g. 1300" onChange={(e) => updateRoom(room.id, 'price', e.target.value)} />
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           <span className="text-[9px] font-black text-hotel-primary uppercase w-24">Final Total</span>
+                           <div className="flex items-center gap-1 border-b border-hotel-primary/20 bg-hotel-primary/5 px-3 py-1 rounded-xl flex-1">
+                              <span className="text-[11px] font-bold text-hotel-primary">৳</span>
+                              <input className="text-[13px] font-bold text-hotel-primary bg-transparent outline-none py-1 w-full" value={room.discountPrice || ""} placeholder="e.g. 1000" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
                            </div>
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-300 line-through">৳{formatPriceString(room.price)}</span>
+                        <span className="text-sm font-bold text-gray-300 line-through">৳{room.price}</span>
                         <div className="flex items-baseline gap-1">
-                           <span className="text-3xl font-serif font-black text-gray-900">৳{currentPrice}</span>
+                           <span className="text-3xl font-sans font-normal text-gray-900">৳{room.discountPrice}</span>
                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ Night</span>
                         </div>
                       </div>

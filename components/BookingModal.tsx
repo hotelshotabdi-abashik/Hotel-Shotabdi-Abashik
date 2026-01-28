@@ -39,9 +39,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
     { legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' }
   ]);
 
-  const numericPrice = parseFloat(room.price.replace(/[^0-9.]/g, ''));
-  const discount = activeDiscount > 25 ? activeDiscount : 25;
-  const finalPrice = Math.round(numericPrice - (numericPrice * (discount / 100)));
+  // Use the manual discountPrice from the room object directly
+  const finalPrice = room.discountPrice;
 
   const handleGuestChange = (idx: number, field: keyof GuestInfo, val: string) => {
     const updated = [...guests];
@@ -79,7 +78,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
         checkOut: dates.checkOut,
         totalGuests: totalGuests,
         guests: guests.slice(0, room.id.includes('single') ? 1 : 2),
-        price: finalPrice.toString(),
+        price: finalPrice,
         status: 'pending',
         hasEdited: false,
         createdAt: Date.now()
