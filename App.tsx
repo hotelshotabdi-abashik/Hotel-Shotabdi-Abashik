@@ -16,6 +16,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
 import AdminDashboard from './components/AdminDashboard';
+import NotificationPrompt from './components/NotificationPrompt';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -26,13 +27,14 @@ import {
   onValue,
   update,
   get,
-  set
+  set,
+  requestNotificationToken,
+  onMessage
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
 import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, Download, Upload } from 'lucide-react';
-import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS } from './constants';
+import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
-const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
 const ADMIN_SECRET = "kahar02";
 
@@ -63,6 +65,7 @@ const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [showFCMRequest, setShowFCMRequest] = useState(false);
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
   
@@ -97,14 +100,12 @@ const AppContent = () => {
     lastUpdated: 0
   });
 
-  // REAL-TIME SYNC FROM FIREBASE - Strictly restore from remote
   useEffect(() => {
     const configRef = ref(db, 'site-config');
     const unsubscribe = onValue(configRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         setSiteConfig(prev => {
-          // Only update local state from DB if we aren't actively saving
           if (!isSaving) {
             return { ...prev, ...data };
           }
@@ -159,42 +160,41 @@ const AppContent = () => {
       }
     });
 
+    // Check for FCM permission on login
+    if (Notification.permission === 'default') {
+      setShowFCMRequest(true);
+    } else if (Notification.permission === 'granted') {
+      handleNotificationAccept();
+    }
+
     return () => { nUnsub(); bUnsub(); };
   }, [user]);
+
+  const handleNotificationAccept = async () => {
+    setShowFCMRequest(false);
+    const token = await requestNotificationToken();
+    if (token && user) {
+      await update(ref(db, `profiles/${user.uid}`), { fcmToken: token });
+    }
+  };
 
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      // 1. Fetch current remote config to ensure we don't overwrite with old/incomplete local state
       const configRef = ref(db, 'site-config');
       const remoteSnapshot = await get(configRef);
       const remoteData = remoteSnapshot.exists() ? remoteSnapshot.val() : {};
-
-      // 2. Perform a deep merge: Prioritize local changes but keep remote fields if local is somehow empty
-      const updatedConfig = { 
-        ...remoteData, 
-        ...siteConfig, 
-        lastUpdated: Date.now() 
-      };
-      
-      // 3. Use update() instead of set() to perform a non-destructive merge at the top level
+      const updatedConfig = { ...remoteData, ...siteConfig, lastUpdated: Date.now() };
       await update(ref(db), { 'site-config': updatedConfig });
-
-      // 4. Backup to Worker (Optional secondary store)
       fetch(`${CMS_WORKER_URL}/site-config.json`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': ADMIN_SECRET 
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': ADMIN_SECRET },
         body: JSON.stringify(updatedConfig)
       }).catch(() => {});
-
-      alert("Website published live and merged with existing database records!");
+      alert("Website published live!");
       setIsEditMode(false);
     } catch (e) {
-      alert("Error saving settings. Data protection logic prevented the write.");
-      console.error(e);
+      alert("Error saving settings.");
     } finally {
       setIsSaving(false);
     }
@@ -204,28 +204,16 @@ const AppContent = () => {
     const cleanFolderName = (folder || "uploads").replace(/^\/|\/$/g, '').replace(/ /g, '_').toLowerCase();
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
     const url = `${CMS_WORKER_URL}/${filename}`;
-
     const res = await fetch(url, {
       method: 'PUT',
-      headers: { 
-        'Content-Type': file.type,
-        'Authorization': ADMIN_SECRET 
-      },
+      headers: { 'Content-Type': file.type, 'Authorization': ADMIN_SECRET },
       body: file
     });
-
     if (!res.ok) throw new Error("Upload failed");
-
-    // Track in Media Library collection as a safeguard against data loss
     const mediaId = Date.now().toString();
     update(ref(db, `media-library/${mediaId}`), {
-      url: url,
-      path: filename,
-      folder: cleanFolderName,
-      mimeType: file.type,
-      uploadedAt: Date.now()
-    }).catch(e => console.warn("Media library sync failed", e));
-
+      url, path: filename, folder: cleanFolderName, mimeType: file.type, uploadedAt: Date.now()
+    }).catch(() => {});
     return url;
   };
 
@@ -276,9 +264,8 @@ const AppContent = () => {
   };
 
   const toggleAuth = () => {
-    const nextState = !isAuthModalOpen;
     closeAllPopups();
-    setIsAuthModalOpen(nextState);
+    setIsAuthModalOpen(!isAuthModalOpen);
   };
 
   const toggleNotifications = () => {
@@ -310,21 +297,19 @@ const AppContent = () => {
       alert("You have a booking request already under review.");
       return;
     }
-
     if (offer.isOneTime) {
       const claimed = profile?.claims || [];
       if (claimed.includes(offer.id)) {
-        alert("This exclusive offer has already been redeemed.");
+        alert("Already redeemed.");
         return;
       }
       const newClaims = [...claimed, offer.id];
       await update(ref(db, `profiles/${user.uid}`), { claims: newClaims });
       setProfile(prev => prev ? { ...prev, claims: newClaims } : null);
     }
-
     setActiveDiscount(offer.discountPercent || 0);
     setClaimedOfferId(offer.id);
-    alert(`Offer Claimed! ${offer.discountPercent}% discount active.`);
+    alert(`Offer Claimed! ${offer.discountPercent}% active.`);
   };
 
   const handleRoomBookingInit = (room: Room) => {
@@ -369,7 +354,7 @@ const AppContent = () => {
               className="px-6 py-4 bg-green-600 text-white rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:scale-105 disabled:opacity-50"
             >
               {isSaving ? <RefreshCw size={18} className="animate-spin" /> : <Globe size={18} />}
-              Publish (Safe Merge)
+              Publish
             </button>
           )}
         </div>
@@ -378,7 +363,6 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Announcement Bar */}
         {(siteConfig.announcement || isEditMode) && (
           <div className="bg-hotel-primary text-white py-2.5 px-6 text-center z-[65] relative flex items-center justify-center gap-3 overflow-hidden">
             <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
@@ -388,13 +372,11 @@ const AppContent = () => {
                   className="bg-white/20 border-none outline-none text-center w-full font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] py-1 rounded-lg placeholder:text-white/40"
                   value={siteConfig.announcement}
                   onChange={(e) => setSiteConfig(prev => ({ ...prev, announcement: e.target.value }))}
-                  placeholder="ANNOUNCEMENT TEXT (e.g. 25% OFF DISCOUNT)"
+                  placeholder="ANNOUNCEMENT TEXT"
                 />
               </div>
             ) : (
-              <p className="font-black text-[9px] md:text-[11px] uppercase tracking-[0.3em] truncate">
-                {siteConfig.announcement}
-              </p>
+              <p className="font-black text-[9px] md:text-[11px] uppercase tracking-[0.3em] truncate">{siteConfig.announcement}</p>
             )}
             <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
           </div>
@@ -519,7 +501,6 @@ const AppContent = () => {
               <div className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
                 <div className="max-w-7xl mx-auto px-6 mb-12">
                    <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Promotions</h1>
-                   <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals.</p>
                 </div>
                 <ExclusiveOffers 
                   offers={validOffers} 
@@ -576,28 +557,11 @@ const AppContent = () => {
                     <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
                   </div>
                 </div>
-                <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-sm">Experience world-class hospitality at the heart of Sylhet.</p>
               </div>
-              <div className="space-y-4">
-                  <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] mb-4">Address</p>
-                  <p className="text-[11px] text-gray-500">Kumar Gaon Bus Stand, Sunamganj Road, Sylhet</p>
-              </div>
-              <div className="space-y-4">
-                  <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] mb-4">Contact</p>
-                  <p className="text-[11px] text-gray-500">hotelshotabdiabashik@gmail.com</p>
-              </div>
-            </div>
-            <div className="pt-8 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-               <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">© 2024 Hotel Shotabdi Residential. All Rights Reserved.</p>
-               <div className="flex gap-6">
-                 <Link to="/privacypolicy" className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy</Link>
-                 <Link to="/termsofservice" className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms</Link>
-               </div>
             </div>
           </div>
         </footer>
 
-        {/* AUTHORIZED POPUPS */}
         <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
         {selectedRoomToBook && profile && (
           <BookingModal 
@@ -608,6 +572,7 @@ const AppContent = () => {
             onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
           />
         )}
+        {showFCMRequest && <NotificationPrompt onAccept={handleNotificationAccept} onDecline={() => setShowFCMRequest(false)} />}
         {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
         {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
 

@@ -19,6 +19,7 @@ import {
   remove,
   serverTimestamp 
 } from "firebase/database";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAk6x2Mt9IqmQftA5YI-wBbPEP9KBH2wFQ",
@@ -34,11 +35,27 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getDatabase(app);
+export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
+export const VAPID_KEY = "BNz5lmvmBGEADJDbfjvzWcBZvAyFhQU8855NSjjkzNR0ehuQBrkaiUXl9hDWasDPA4gTNFsC8Ccd6Eq2dpVarBA";
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+export const requestNotificationToken = async () => {
+  if (!messaging) return null;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      return await getToken(messaging, { vapidKey: VAPID_KEY });
+    }
+    return null;
+  } catch (error) {
+    console.error("FCM Token Error:", error);
+    return null;
+  }
+};
 
 export const checkUsernameUnique = async (username: string, currentUid: string) => {
   try {
@@ -72,7 +89,8 @@ export const syncUserProfile = async (user: any) => {
     phone: '',
     guardianPhone: '',
     nidNumber: '',
-    nidImageUrl: ''
+    nidImageUrl: '',
+    fcmToken: ''
   };
 
   try {
@@ -125,5 +143,6 @@ export {
   push,
   remove,
   onValue,
-  serverTimestamp 
+  serverTimestamp,
+  onMessage
 };

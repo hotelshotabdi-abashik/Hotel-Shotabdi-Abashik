@@ -4,7 +4,10 @@
     "profiles": {
       "$uid": {
         ".read": "auth != null",
-        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        "fcmToken": {
+          ".validate": "newData.isString()"
+        }
       }
     },
     "usernames": {
@@ -25,6 +28,14 @@
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
       }
+    },
+    "site-config": {
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+    },
+    "media-library": {
+      ".read": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
     }
   }
 }
