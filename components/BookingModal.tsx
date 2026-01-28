@@ -17,16 +17,6 @@ interface Props {
   onImageUpload: (file: File) => Promise<string>;
 }
 
-/**
- * Utility to ensure we are working with real numbers
- */
-const parseCurrency = (val: string | undefined): number | null => {
-  if (!val) return null;
-  const clean = val.toString().replace(/,/g, '').trim();
-  const num = parseFloat(clean);
-  return isNaN(num) ? null : num;
-};
-
 const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }) => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -65,11 +55,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
     });
   }, [totalGuests]);
 
-  // Numerical Price Calculation (Enforce 25% discount)
-  const originalPriceNum = parseCurrency(room.price);
-  const finalPrice = originalPriceNum !== null 
-    ? Math.round(originalPriceNum * 0.75).toString() 
-    : "Price on Request";
+  // Use the manually entered discountPrice directly
+  const finalPrice = room.discountPrice || room.price || "Price on Request";
 
   const handleGuestChange = (idx: number, field: keyof GuestInfo, val: string) => {
     const updated = [...guests];

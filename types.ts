@@ -4,6 +4,7 @@ export interface Room {
   title: string;
   price: string;
   discountPrice: string;
+  discountLabel?: string;
   tag: string;
   desc: string;
   features: string[];
@@ -97,7 +98,6 @@ export interface Booking {
   rejectionReason?: string;
   hasEdited: boolean;
   createdAt: number;
-  // Fix: Added missing optional timestamps for tracking guest arrival and departure
   arrivedAt?: number;
   leftAt?: number;
 }

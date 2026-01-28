@@ -14,17 +14,6 @@ interface RoomGridProps {
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-/**
- * Utility to ensure we are working with real numbers
- * Strips commas and handles invalid strings
- */
-const parseCurrency = (val: string | undefined): number | null => {
-  if (!val) return null;
-  const clean = val.toString().replace(/,/g, '').trim();
-  const num = parseFloat(clean);
-  return isNaN(num) ? null : num;
-};
-
 const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -117,6 +106,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
       title: "New Room Type",
       price: "2000",
       discountPrice: "1500", 
+      discountLabel: "25% OFF",
       tag: "NEW",
       desc: "Clean and comfortable room for your stay.",
       features: ["Wi-Fi", "AC", "TV"],
@@ -152,11 +142,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {sortedRooms.map((room) => {
           const isHighlighted = highlightedId === room.id;
-          
-          // Numerical Pricing Logic
-          const originalNum = parseCurrency(room.price);
-          const hasPrice = originalNum !== null;
-          const discountedPriceNum = hasPrice ? Math.round(originalNum * 0.75) : null;
+          const hasPrice = !!room.price;
 
           return (
             <div 
@@ -176,9 +162,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                       <Star size={10} fill="currentColor" /> Recommended
                     </span>
                   )}
-                  {hasPrice && (
+                  {room.discountLabel && (
                     <span className="bg-[#B22222] text-white px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/20 animate-pulse">
-                      <Percent size={10} /> 25% OFF
+                      <Percent size={10} /> {room.discountLabel}
                     </span>
                   )}
                   <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm">{room.tag}</span>
@@ -220,9 +206,25 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                               onChange={(e) => updateRoom(room.id, 'price', e.target.value)} 
                             />
                          </div>
-                         <div className="flex items-center gap-2 px-3 py-1.5">
-                            <span className="text-[8px] font-black text-gray-300 uppercase">Calculated Discount:</span>
-                            <span className="text-[10px] font-black text-[#B22222]">৳{discountedPriceNum || '0'}</span>
+                         <div className="flex items-center gap-1 border-b border-gray-100 bg-red-50 px-3 py-1.5 rounded-xl w-full">
+                            <span className="text-[9px] font-bold text-[#B22222]">Total ৳</span>
+                            <input 
+                              type="text"
+                              className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" 
+                              value={room.discountPrice || ""} 
+                              placeholder="Final Booking Price" 
+                              onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} 
+                            />
+                         </div>
+                         <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
+                            <span className="text-[9px] font-bold text-gray-400">Label</span>
+                            <input 
+                              type="text"
+                              className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" 
+                              value={room.discountLabel || ""} 
+                              placeholder="e.g. 25% OFF" 
+                              onChange={(e) => updateRoom(room.id, 'discountLabel', e.target.value)} 
+                            />
                          </div>
                       </div>
                     ) : (
@@ -233,7 +235,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through">৳{room.price}</span>
                             <div className="flex items-baseline gap-0.5">
-                               <span className="text-xl md:text-4xl font-serif font-black text-[#B22222] tracking-tight">৳{discountedPriceNum}</span>
+                               <span className="text-xl md:text-4xl font-serif font-black text-[#B22222] tracking-tight">৳{room.discountPrice}</span>
                                <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
                             </div>
                           </div>
