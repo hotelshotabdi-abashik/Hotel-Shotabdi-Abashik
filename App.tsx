@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -365,9 +364,6 @@ const AppContent = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Google Translate Element */}
-            <div id="google_translate_element" className="hidden md:block"></div>
-
             {hasPendingBooking && (
               <div className="hidden lg:flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full border border-amber-100">
                  <ShieldAlert size={14} />
