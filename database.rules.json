@@ -1,56 +1,83 @@
 
 {
   "rules": {
+    ".read": true,
+
+    "site-config": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+    },
+
+    "offers": {
+      ".read": true,
+      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+    },
+
+    "usernames": {
+      ".read": true,
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".validate": "newData.val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+      }
+    },
+
     "profiles": {
+      ".read": "auth != null",
       "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".validate": "newData.hasChildren(['username', 'email'])",
         "fcmToken": {
           ".validate": "newData.isString()"
         }
       }
     },
-    "usernames": {
-      ".read": "true",
-      "$username": {
-        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+
+    "roles": {
+      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'admin' || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
       }
     },
+
     "bookings": {
-      ".read": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+      ".indexOn": ["userId", "status"],
+      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'admin' || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
       "$bookingId": {
-        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'admin' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".write": "auth != null && ( (!data.exists() && (newData.child('userId').val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')) || (data.exists() && ( (data.child('userId').val() === auth.uid && data.child('hasEdited').val() === false) || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com' )) )"
       }
     },
+
     "notifications": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
       }
     },
+
     "help_dex": {
       "messages": {
         "$userId": {
-          ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-          ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+          // User can read/write their own chat; Owner/SuperAdmin can read/write all chats
+          ".read": "auth != null && (auth.uid === $userId || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+          ".write": "auth != null && (auth.uid === $userId || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
         }
       },
       "active_chats": {
-        ".read": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+        // Only Owner/SuperAdmin can see the list of all active conversations
+        ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
         "$userId": {
-          ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-          ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+          // User can update their own session status; Owner/SuperAdmin can update all
+          ".read": "auth != null && (auth.uid === $userId || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+          ".write": "auth != null && (auth.uid === $userId || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
         }
       }
     },
-    "site-config": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
-    },
+
     "media-library": {
-      ".read": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'",
-      ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'admin' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
     }
   }
 }
