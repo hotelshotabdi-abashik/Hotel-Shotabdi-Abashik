@@ -16,13 +16,13 @@ interface RoomGridProps {
 
 const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const limit = 35; // Very tight limit to keep cards short
+  const limit = 60; // Increased limit to make cards look "longer"
   const safeText = text || "";
   const isLong = safeText.length > limit;
 
   return (
-    <div className="mb-2 md:mb-4">
-      <p className="text-[9px] md:text-[11px] text-gray-500 leading-tight font-light">
+    <div className="mb-3 md:mb-4">
+      <p className="text-[10px] md:text-[11px] text-gray-500 leading-relaxed font-light">
         {isExpanded || !isLong ? safeText : `${safeText.substring(0, limit)}...`}
         {isLong && (
           <button 
@@ -98,16 +98,16 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
   };
 
   return (
-    <section id="rooms" className="max-w-7xl mx-auto pt-8 md:pt-20 pb-16 md:pb-28 px-3 md:px-6 bg-white w-full scroll-mt-24">
-      <div className="flex flex-col md:flex-row justify-between items-end mb-6 md:mb-12 gap-4">
+    <section id="rooms" className="max-w-7xl mx-auto pt-10 md:pt-20 pb-20 md:pb-28 px-4 md:px-6 bg-white w-full scroll-mt-24">
+      <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4">
         <div className="max-w-3xl text-center md:text-left mx-auto md:mx-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-hotel-primary/5 text-hotel-primary text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-2">
-            <Zap size={8} fill="currentColor" /> Premier Units
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-3">
+            <Zap size={10} fill="currentColor" /> Premier Units
           </div>
-          <h2 className="text-2xl md:text-6xl font-sans text-gray-900 mb-2 md:mb-5 font-black tracking-tighter leading-tight">
+          <h2 className="text-3xl md:text-6xl font-sans text-gray-900 mb-3 md:mb-5 font-black tracking-tighter leading-tight">
             Our Luxury Suites
           </h2>
-          <p className="text-gray-400 text-[10px] md:text-lg leading-relaxed font-light px-2 md:px-0">
+          <p className="text-gray-400 text-xs md:text-lg leading-relaxed font-light px-2 md:px-0">
             Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">exclusive rates</span>.
           </p>
         </div>
@@ -115,14 +115,14 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
         {isEditMode && (
           <button 
             onClick={addNewRoom}
-            className="bg-gray-900 text-white px-4 md:px-8 py-2 md:py-4 rounded-xl font-black text-[7px] md:text-[9px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-hotel-primary transition-all active:scale-95 shadow-md mx-auto md:mx-0"
+            className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-hotel-primary transition-all active:scale-95 shadow-md mx-auto md:mx-0"
           >
-            <Plus size={14} /> Add Unit
+            <Plus size={16} /> Add Unit
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {rooms.map((room) => {
           const isHighlighted = highlightedId === room.id;
           const numericBase = parseNumeric(room.price);
@@ -133,55 +133,55 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
             <div 
               id={room.id}
               key={room.id} 
-              className={`bg-white rounded-[1rem] md:rounded-[2rem] overflow-hidden border transition-all duration-700 flex flex-col h-full relative shadow-[0_4px_12px_rgba(0,0,0,0.01)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1)] ${
-                isHighlighted ? 'border-hotel-primary ring-2 md:ring-8 ring-hotel-primary/5 scale-[1.01] md:scale-[1.03]' : 'border-gray-100'
+              className={`bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border transition-all duration-700 flex flex-col h-full relative shadow-[0_5px_15px_rgba(0,0,0,0.02)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.12)] ${
+                isHighlighted ? 'border-hotel-primary ring-4 md:ring-8 ring-hotel-primary/5 scale-[1.02] md:scale-[1.03]' : 'border-gray-100'
               }`}
             >
-              <div className="h-24 md:h-52 relative overflow-hidden shrink-0">
+              <div className="h-44 md:h-56 relative overflow-hidden shrink-0">
                 <img src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-110" alt={room.title} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                <div className="absolute top-1.5 md:top-4 left-1.5 md:left-4 z-10 flex flex-col gap-0.5 md:gap-1">
-                  <span className="bg-white/95 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[6px] md:text-[8px] font-black text-gray-900 uppercase tracking-widest shadow-sm">{room.tag}</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                  <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm">{room.tag}</span>
                   {activeDiscount > 25 && (
-                    <span className="bg-[#B22222] text-white px-1.5 py-0.5 rounded-md text-[5px] md:text-[8px] font-black uppercase tracking-widest flex items-center gap-0.5 animate-bounce">
-                      <Sparkles size={6} /> Claimed
+                    <span className="bg-[#B22222] text-white px-2 py-0.5 rounded-lg text-[6px] md:text-[8px] font-black uppercase tracking-widest flex items-center gap-1 animate-bounce">
+                      <Sparkles size={8} /> VIP
                     </span>
                   )}
                 </div>
                 {isEditMode && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 gap-1.5 md:gap-2">
-                    <label className="cursor-pointer bg-white p-1.5 rounded-lg text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all transform hover:scale-110">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 gap-3">
+                    <label className="cursor-pointer bg-white p-2.5 rounded-xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all transform hover:scale-110">
                       <input type="file" className="hidden" onChange={(e) => handleImageChange(room.id, e)} />
-                      {uploadingId === room.id ? <RefreshCw size={10} className="animate-spin" /> : <Camera size={10} />}
+                      {uploadingId === room.id ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
                     </label>
-                    <button onClick={() => deleteRoom(room.id)} className="bg-white p-1.5 rounded-lg text-red-600 hover:bg-red-600 hover:text-white transition-all transform hover:scale-110"><Trash2 size={10} /></button>
+                    <button onClick={() => deleteRoom(room.id)} className="bg-white p-2.5 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all transform hover:scale-110"><Trash2 size={14} /></button>
                   </div>
                 )}
               </div>
               
-              <div className="p-2.5 md:p-6 flex flex-col flex-1">
-                <div className="mb-2 md:mb-4">
-                   <div className="flex flex-col gap-0.5 mb-1">
-                      <h3 className="text-[11px] md:text-xl font-black text-gray-900 leading-tight truncate tracking-tight">{room.title}</h3>
+              <div className="p-4 md:p-8 flex flex-col flex-1">
+                <div className="mb-4">
+                   <div className="flex flex-col gap-1 mb-2">
+                      <h3 className="text-[13px] md:text-2xl font-black text-gray-900 leading-tight truncate tracking-tight">{room.title}</h3>
                       {calculatedPercent > 0 && (
-                        <div className="flex items-center gap-1">
-                          <span className="bg-red-600 text-white text-[5px] md:text-[8px] font-black px-1 py-0.5 rounded-full uppercase tracking-[0.05em]">{calculatedPercent}% OFF</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-red-600 text-white text-[6px] md:text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-[0.1em]">{calculatedPercent}% OFF</span>
                         </div>
                       )}
                     </div>
                   
-                  <div className="flex flex-wrap items-baseline gap-1 md:gap-2">
+                  <div className="flex flex-wrap items-baseline gap-2">
                     {isEditMode ? (
-                      <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-1.5 py-0.5 rounded-md w-full">
-                         <span className="text-[7px] font-bold text-gray-400">৳</span>
-                         <input className="text-[8px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Price" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
+                      <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
+                         <span className="text-[9px] font-bold text-gray-400">৳</span>
+                         <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Price" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 md:gap-2">
-                        <span className="text-[8px] md:text-[11px] font-bold text-gray-300 line-through">৳{room.price}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through">৳{room.price}</span>
                         <div className="flex items-baseline gap-0.5">
-                           <span className="text-sm md:text-3xl font-serif font-black text-gray-900 tracking-tight">৳{room.discountPrice}</span>
-                           <span className="text-[6px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
+                           <span className="text-xl md:text-4xl font-serif font-black text-gray-900 tracking-tight">৳{room.discountPrice}</span>
+                           <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
                         </div>
                       </div>
                     )}
@@ -190,13 +190,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
 
                 <RoomDescription text={room.desc} />
 
-                {/* Always show features but extremely compact on mobile */}
-                <div className="mb-3 md:mb-6">
-                  <div className="flex flex-wrap gap-x-2 gap-y-0.5 md:grid md:grid-cols-2 md:gap-y-2 md:gap-x-2">
+                {/* Show features with a bit more space */}
+                <div className="mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1.5 md:gap-y-3">
                     {(room.features || []).slice(0, 4).map((feat, idx) => (
-                      <div key={idx} className="flex items-center gap-1">
-                        <CheckCircle2 size={8} className="text-hotel-primary shrink-0 opacity-60" />
-                        <span className="text-[7px] md:text-[9px] font-bold text-gray-400 truncate tracking-tight">{feat}</span>
+                      <div key={idx} className="flex items-center gap-2">
+                        <CheckCircle2 size={10} className="text-hotel-primary shrink-0 opacity-70" />
+                        <span className="text-[8px] md:text-[11px] font-bold text-gray-400 truncate tracking-tight">{feat}</span>
                       </div>
                     ))}
                   </div>
@@ -206,14 +206,14 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                   <button 
                     disabled={isBookingDisabled && !isEditMode}
                     onClick={() => onBook?.(room)}
-                    className={`w-full py-1.5 md:py-4 rounded-lg md:rounded-2xl font-black text-[7px] md:text-[11px] uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-sm flex items-center justify-center gap-1 transition-all active:scale-[0.98] ${
+                    className={`w-full py-3.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-[9px] md:text-[13px] uppercase tracking-[0.2em] shadow-md hover:shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
                       isBookingDisabled && !isEditMode 
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' 
-                      : 'bg-[#9B1C1C] hover:bg-[#B22222] text-white shadow-red-100/10'
+                      : 'bg-[#9B1C1C] hover:bg-[#B22222] text-white'
                     }`}
                   >
-                    {isBookingDisabled && !isEditMode ? 'Pending' : 'Reserve'}
-                    {!isBookingDisabled && <ChevronRight size={8} className="hidden md:block" />}
+                    {isBookingDisabled && !isEditMode ? 'Pending' : 'Reserve Room'}
+                    {!isBookingDisabled && <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
                   </button>
                 </div>
               </div>
