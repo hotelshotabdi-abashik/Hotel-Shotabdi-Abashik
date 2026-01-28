@@ -92,6 +92,9 @@ export interface Booking {
   rejectionReason?: string;
   hasEdited: boolean;
   createdAt: number;
+  // Fix: Added missing optional timestamps for tracking guest arrival and departure
+  arrivedAt?: number;
+  leftAt?: number;
 }
 
 export interface UserProfile {

@@ -28,7 +28,7 @@ import {
   set
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -122,9 +122,7 @@ const AppContent = () => {
   const validOffers = useMemo(() => {
     const now = Date.now();
     return (siteConfig.offers || []).filter(o => {
-      // Logic for "Forever" deals: if no endDate is present, it's valid regardless of current time
       if (!o.endDate) return true;
-      
       const start = o.startDate || 0;
       const end = o.endDate;
       return now >= start && now <= end;
@@ -282,14 +280,14 @@ const AppContent = () => {
       return;
     }
     if (hasPendingBooking) {
-      alert("You have a booking request already under review. Please wait for the registry update.");
+      alert("You have a booking request already under review.");
       return;
     }
 
     if (offer.isOneTime) {
       const claimed = profile?.claims || [];
       if (claimed.includes(offer.id)) {
-        alert("This exclusive offer has already been redeemed by you.");
+        alert("This exclusive offer has already been redeemed.");
         return;
       }
       const newClaims = [...claimed, offer.id];
@@ -299,7 +297,7 @@ const AppContent = () => {
 
     setActiveDiscount(offer.discountPercent || 0);
     setClaimedOfferId(offer.id);
-    alert(`Offer Claimed! ${offer.discountPercent}% discount will be applied at checkout.`);
+    alert(`Offer Claimed! ${offer.discountPercent}% discount active.`);
   };
 
   const handleRoomBookingInit = (room: Room) => {
@@ -308,7 +306,7 @@ const AppContent = () => {
       return;
     }
     if (hasPendingBooking) {
-      alert("System Lock: You have a pending booking. We process one request at a time for security.");
+      alert("System Lock: You have a pending booking.");
       return;
     }
     setSelectedRoomToBook(room);
@@ -328,7 +326,7 @@ const AppContent = () => {
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       {isOwner && (
-        <div className="fixed bottom-24 right-6 z-[200] flex flex-col items-end gap-3 pointer-events-auto">
+        <div className="fixed bottom-24 right-6 z-[2000] flex flex-col items-end gap-3 pointer-events-auto">
           <button 
             onClick={() => setIsEditMode(!isEditMode)}
             className={`px-6 py-4 rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest ${
@@ -367,21 +365,17 @@ const AppContent = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Google Translate Element */}
+            <div id="google_translate_element" className="hidden md:block"></div>
+
             {hasPendingBooking && (
-              <div className="hidden lg:flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full border border-amber-100 animate-pulse-slow">
+              <div className="hidden lg:flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full border border-amber-100">
                  <ShieldAlert size={14} />
                  <span className="text-[9px] font-black uppercase tracking-widest">Pending Review</span>
               </div>
             )}
-            {activeDiscount > 0 && (
-              <div className="hidden md:flex items-center gap-2 bg-hotel-primary/10 text-hotel-primary px-4 py-1.5 rounded-full border border-hotel-primary/20">
-                <Tag size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest">{activeDiscount}% Discount Active</span>
-              </div>
-            )}
-            {isAuthLoading ? (
-              <Loader2 className="animate-spin text-gray-300" size={18} />
-            ) : user ? (
+            
+            {user ? (
               <div className="flex items-center gap-2 md:gap-4 relative">
                 <button onClick={toggleNotifications} className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}>
                   <Bell size={24} />
@@ -401,13 +395,13 @@ const AppContent = () => {
                   </div>
                 </button>
                 {isNotificationsOpen && (
-                  <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[100]">
+                  <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[2000]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
-                      <div><h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3></div>
+                      <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
                       <button onClick={closeAllPopups}><X size={18} /></button>
                     </div>
                     <div className="max-h-[350px] overflow-y-auto no-scrollbar p-4 space-y-3">
-                      {(notifications || []).length > 0 ? (
+                      {notifications.length > 0 ? (
                         notifications.map((n) => (
                           <div key={n.id} className={`p-4 rounded-2xl border transition-all ${n.read ? 'bg-white border-gray-50 opacity-60' : 'bg-red-50/50 border-hotel-primary/10'}`}>
                             <div className="flex gap-3">
@@ -420,7 +414,7 @@ const AppContent = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="py-12 text-center text-gray-400"><p className="text-[10px] font-black uppercase tracking-widest">No alerts</p></div>
+                        <div className="py-12 text-center text-gray-400 font-black uppercase tracking-widest text-[10px]">No alerts</div>
                       )}
                     </div>
                   </div>
@@ -447,8 +441,8 @@ const AppContent = () => {
             <Route path="/offers" element={
               <div className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
                 <div className="max-w-7xl mx-auto px-6 mb-12">
-                   <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Current Promotions</h1>
-                   <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals and residential packages designed for your comfort and savings.</p>
+                   <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Promotions</h1>
+                   <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals.</p>
                 </div>
                 <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
               </div>
@@ -465,7 +459,7 @@ const AppContent = () => {
 
         <footer className="bg-white border-t border-gray-50 py-16 px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-20 mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Logo" />
@@ -475,54 +469,35 @@ const AppContent = () => {
                   </div>
                 </div>
                 <p className="text-[12px] text-gray-400 font-medium leading-relaxed max-sm">Experience world-class hospitality at the heart of Sylhet.</p>
-                <div className="flex gap-4">
-                  <Link to="/privacypolicy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary">Privacy Policy</Link>
-                  <span className="text-gray-200">|</span>
-                  <Link to="/termsofservice" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-hotel-primary">Terms</Link>
-                </div>
               </div>
-              <div className="space-y-8">
-                <div>
-                  <div className="flex items-center gap-3 mb-4"><MapPin size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Address</p></div>
+              <div className="space-y-4">
+                  <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] mb-4">Address</p>
                   <p className="text-[11px] text-gray-500">Kumar Gaon Bus Stand, Sunamganj Road, Sylhet</p>
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-4"><Phone size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Phone</p></div>
-                  <div className="flex flex-col gap-2">
-                    <a href="tel:+8801717425702" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">01717-425702</a>
-                    <a href="tel:+8801334935566" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">0133-4935566</a>
-                  </div>
-                </div>
               </div>
-              <div className="space-y-8">
-                <div>
-                  <div className="flex items-center gap-3 mb-4"><Mail size={16} className="text-gray-400" /><p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em]">Email</p></div>
-                  <div className="flex flex-col gap-2">
-                    <a href="mailto:hotelshotabdiabashik@gmail.com" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors break-all">hotelshotabdiabashik@gmail.com</a>
-                    <a href="mailto:kahar.info@gmail.com" className="text-[11px] text-gray-500 hover:text-hotel-primary transition-colors">kahar.info@gmail.com</a>
-                  </div>
-                </div>
-                <div className="pt-4"><p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em]">Service Standard</p><p className="text-[10px] text-gray-400 italic">"Your comfort and trust are our highest priorities."</p></div>
+              <div className="space-y-4">
+                  <p className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] mb-4">Contact</p>
+                  <p className="text-[11px] text-gray-500">hotelshotabdiabashik@gmail.com</p>
               </div>
-            </div>
-            <div className="pt-10 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
-              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">© 2024 Hotel Shotabdi Residential • All Rights Reserved</p>
             </div>
           </div>
         </footer>
 
-        <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
-        {selectedRoomToBook && profile && (
-          <BookingModal 
-            room={selectedRoomToBook} 
-            profile={profile} 
-            activeDiscount={activeDiscount} 
-            onClose={closeAllPopups} 
-            onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
-          />
-        )}
-        {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
-        {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
+        {/* AUTHORIZED POPUPS (Locked to highest Z-INDEX) */}
+        <div className="fixed z-[3000]">
+          <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
+          {selectedRoomToBook && profile && (
+            <BookingModal 
+              room={selectedRoomToBook} 
+              profile={profile} 
+              activeDiscount={activeDiscount} 
+              onClose={closeAllPopups} 
+              onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
+            />
+          )}
+          {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
+          {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
+        </div>
+
         <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={toggleAuth} toggleProfile={toggleManageAccount} />
       </main>
     </div>
