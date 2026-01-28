@@ -104,9 +104,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-3">
             <Zap size={10} fill="currentColor" /> Premier Units
           </div>
-          <h2 className="text-3xl md:text-6xl font-sans text-gray-900 mb-3 md:mb-5 font-black tracking-tighter leading-tight">
-            Our Luxury Suites
-          </h2>
           <p className="text-gray-400 text-xs md:text-lg leading-relaxed font-light px-2 md:px-0">
             Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">exclusive rates</span>.
           </p>

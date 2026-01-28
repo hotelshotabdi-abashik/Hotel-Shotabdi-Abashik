@@ -132,7 +132,6 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
             <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm">
               <Compass size={24} />
             </div>
-            <h2 className="text-3xl md:text-6xl font-sans text-gray-900 mb-4 md:mb-6 font-black tracking-tighter">Sylhet Navigator</h2>
             <p className="text-gray-500 text-xs md:text-lg max-w-2xl mx-auto leading-relaxed font-light mb-8 md:mb-10 px-4">
                Explore shrines, nature, and culture. Distances from <span className="text-hotel-primary font-black">Hotel Shotabdi</span>.
             </p>
