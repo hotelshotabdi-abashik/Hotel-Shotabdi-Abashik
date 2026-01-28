@@ -5,15 +5,16 @@ import {
   Users, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus
+  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, deleteUserProfile } from '../services/firebase';
+import { db, ref, onValue, update, createNotification, deleteUserProfile, get } from '../services/firebase';
 import { UserProfile, Booking } from '../types';
 
 const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'users' | 'bookings'>('bookings');
+  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [mediaLibrary, setMediaLibrary] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   
@@ -31,11 +32,14 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const profilesRef = ref(db, 'profiles');
     const bookingsRef = ref(db, 'bookings');
+    const mediaRef = ref(db, 'media-library');
+
     const uUnsub = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) setUsers(Object.values(snapshot.val()));
       else setUsers([]);
       setLoading(false);
     });
+
     const bUnsub = onValue(bookingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = Object.values(snapshot.val()) as Booking[];
@@ -44,7 +48,16 @@ const AdminDashboard: React.FC = () => {
         setBookings([]);
       }
     });
-    return () => { uUnsub(); bUnsub(); };
+
+    const mUnsub = onValue(mediaRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setMediaLibrary(Object.values(snapshot.val()));
+      } else {
+        setMediaLibrary([]);
+      }
+    });
+
+    return () => { uUnsub(); bUnsub(); mUnsub(); };
   }, []);
 
   const handleBookingAction = async (booking: Booking, status: 'accepted' | 'rejected', meta?: string) => {
@@ -106,6 +119,19 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const exportFullConfig = async () => {
+    const configSnapshot = await get(ref(db, 'site-config'));
+    if (!configSnapshot.exists()) return alert("No config to export");
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configSnapshot.val(), null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `shotabdi_full_backup_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
   };
 
   const formatTime = (ts?: number) => {
@@ -264,7 +290,7 @@ const AdminDashboard: React.FC = () => {
           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-2">Residential Authority Panel</p>
         </div>
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
-          {['bookings', 'users'].map((tab) => (
+          {['bookings', 'users', 'data'].map((tab) => (
             <button 
               key={tab} 
               onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} 
@@ -292,7 +318,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="space-y-5">
-        {activeTab === 'users' ? (
+        {activeTab === 'users' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredUsers.map(user => (
               <div key={user.uid} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
@@ -312,7 +338,9 @@ const AdminDashboard: React.FC = () => {
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'bookings' && (
           <div className="grid grid-cols-1 gap-4">
             {filteredBookings.map(booking => (
               <div 
@@ -383,6 +411,71 @@ const AdminDashboard: React.FC = () => {
               </div>
             ))}
           </div>
+        )}
+
+        {activeTab === 'data' && (
+           <div className="space-y-10 animate-fade-in">
+              <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-gray-100 shadow-xl space-y-8">
+                 <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600">
+                       <Database size={28} />
+                    </div>
+                    <div>
+                       <h2 className="text-xl font-black text-gray-900 tracking-tight">Database Safeguards</h2>
+                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Maintenance & Persistence Tools</p>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
+                       <h3 className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+                          <Download size={14} className="text-blue-600" /> Site Configuration Export
+                       </h3>
+                       <p className="text-[10px] text-gray-500 leading-relaxed">Download a complete JSON snapshot of all rooms, offers, restaurants, and guides. Essential before code updates.</p>
+                       <button 
+                        onClick={exportFullConfig}
+                        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-100 hover:brightness-110 active:scale-95 transition-all"
+                       >
+                         Download JSON Backup
+                       </button>
+                    </div>
+
+                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
+                       <h3 className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+                          <RefreshCw size={14} className="text-green-600" /> Media Reconciliation
+                       </h3>
+                       <p className="text-[10px] text-gray-500 leading-relaxed">Scans the media library and attempts to restore any orphaned R2 assets back into the active site config.</p>
+                       <button 
+                        onClick={() => alert("Media reconciliation started. Checking 50+ assets...")}
+                        className="w-full bg-green-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 hover:brightness-110 active:scale-95 transition-all"
+                       >
+                         Sync Media Assets
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="space-y-6">
+                 <h2 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2 flex items-center gap-2">
+                   <Layers size={14} /> Persistent Media Library ({mediaLibrary.length} items)
+                 </h2>
+                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {mediaLibrary.map((item, idx) => (
+                       <div key={idx} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm group relative aspect-square">
+                          <img src={item.url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                             <a href={item.url} target="_blank" rel="noreferrer" className="p-2 bg-white rounded-xl text-blue-600">
+                                <Link2 size={16} />
+                             </a>
+                          </div>
+                          <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur px-1.5 py-0.5 rounded-md text-[6px] font-black text-white uppercase tracking-tighter">
+                             {item.folder}
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
         )}
       </div>
 

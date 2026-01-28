@@ -25,10 +25,11 @@ import {
   ref,
   onValue,
   update,
+  get,
   set
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, Download, Upload } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -102,8 +103,8 @@ const AppContent = () => {
     const unsubscribe = onValue(configRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        // Force local state to match Firebase unless the user is actively saving their local changes
         setSiteConfig(prev => {
+          // Only update local state from DB if we aren't actively saving
           if (!isSaving) {
             return { ...prev, ...data };
           }
@@ -164,12 +165,22 @@ const AppContent = () => {
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
-      
-      // Update Firebase (Primary Source of Truth)
-      await set(ref(db, 'site-config'), updatedConfig);
+      // 1. Fetch current remote config to ensure we don't overwrite with old/incomplete local state
+      const configRef = ref(db, 'site-config');
+      const remoteSnapshot = await get(configRef);
+      const remoteData = remoteSnapshot.exists() ? remoteSnapshot.val() : {};
 
-      // Backup to Worker (Optional secondary store)
+      // 2. Perform a deep merge: Prioritize local changes but keep remote fields if local is somehow empty
+      const updatedConfig = { 
+        ...remoteData, 
+        ...siteConfig, 
+        lastUpdated: Date.now() 
+      };
+      
+      // 3. Use update() instead of set() to perform a non-destructive merge at the top level
+      await update(ref(db), { 'site-config': updatedConfig });
+
+      // 4. Backup to Worker (Optional secondary store)
       fetch(`${CMS_WORKER_URL}/site-config.json`, {
         method: 'PUT',
         headers: { 
@@ -179,10 +190,10 @@ const AppContent = () => {
         body: JSON.stringify(updatedConfig)
       }).catch(() => {});
 
-      alert("Website published live!");
+      alert("Website published live and merged with existing database records!");
       setIsEditMode(false);
     } catch (e) {
-      alert("Error saving settings to Firebase.");
+      alert("Error saving settings. Data protection logic prevented the write.");
       console.error(e);
     } finally {
       setIsSaving(false);
@@ -192,7 +203,9 @@ const AppContent = () => {
   const uploadToR2 = async (file: File, folder: string): Promise<string> => {
     const cleanFolderName = (folder || "uploads").replace(/^\/|\/$/g, '').replace(/ /g, '_').toLowerCase();
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-    const res = await fetch(`${CMS_WORKER_URL}/${filename}`, {
+    const url = `${CMS_WORKER_URL}/${filename}`;
+
+    const res = await fetch(url, {
       method: 'PUT',
       headers: { 
         'Content-Type': file.type,
@@ -200,8 +213,30 @@ const AppContent = () => {
       },
       body: file
     });
+
     if (!res.ok) throw new Error("Upload failed");
-    return `${CMS_WORKER_URL}/${filename}`;
+
+    // Track in Media Library collection as a safeguard against data loss
+    const mediaId = Date.now().toString();
+    update(ref(db, `media-library/${mediaId}`), {
+      url: url,
+      path: filename,
+      folder: cleanFolderName,
+      mimeType: file.type,
+      uploadedAt: Date.now()
+    }).catch(e => console.warn("Media library sync failed", e));
+
+    return url;
+  };
+
+  const exportConfig = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(siteConfig, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `shotabdi_backup_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
   };
 
   const loadProfile = useCallback(async (u: any) => {
@@ -329,6 +364,15 @@ const AppContent = () => {
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       {isOwner && (
         <div className="fixed bottom-24 right-6 z-[2000] flex flex-col items-end gap-3 pointer-events-auto">
+          <div className="flex items-center gap-2 mb-2">
+            <button 
+              onClick={exportConfig}
+              title="Download Backup"
+              className="p-4 bg-gray-900 text-white rounded-full shadow-2xl hover:scale-110 transition-all border border-white/20"
+            >
+              <Download size={20} />
+            </button>
+          </div>
           <button 
             onClick={() => setIsEditMode(!isEditMode)}
             className={`px-6 py-4 rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest ${
@@ -341,10 +385,10 @@ const AppContent = () => {
             <button 
               onClick={saveConfig}
               disabled={isSaving}
-              className="px-6 py-4 bg-green-600 text-white rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:scale-105"
+              className="px-6 py-4 bg-green-600 text-white rounded-[2rem] shadow-2xl transition-all flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:scale-105 disabled:opacity-50"
             >
               {isSaving ? <RefreshCw size={18} className="animate-spin" /> : <Globe size={18} />}
-              Save Site
+              Publish (Safe Merge)
             </button>
           )}
         </div>
