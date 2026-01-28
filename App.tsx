@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -90,7 +89,44 @@ const AppContent = () => {
     },
     rooms: ROOMS_DATA,
     offers: [],
-    restaurants: [],
+    restaurants: [
+      { 
+        id: 101, 
+        name: "Rutbah Hotel International", 
+        cuisine: "Mid-range Hotel", 
+        rating: 4.3, 
+        time: "12m", 
+        distance: "1.5 km", 
+        image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80", 
+        tag: "🏢 AC Rooms • Restaurant", 
+        description: "An affordable, mid-range hotel with clean AC rooms, a restaurant, and helpful staff.",
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=Rutbah+Hotel+International+Sylhet" 
+      },
+      { 
+        id: 102, 
+        name: "SAUDIA RESIDENTIAL HOTEL", 
+        cuisine: "Residential Hotel", 
+        rating: 4.2, 
+        time: "8m", 
+        distance: "0.8 km", 
+        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80", 
+        tag: "🧹 Clean • Friendly Staff", 
+        description: "Praised for its clean environment, good location, and friendly staff. Some guests noted the absence of on-site food facilities.",
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=SAUDIA+RESIDENTIAL+HOTEL+Sylhet" 
+      },
+      { 
+        id: 103, 
+        name: "Hotel Grand Brother's", 
+        cuisine: "Budget Hotel", 
+        rating: 3.5, 
+        time: "10m", 
+        distance: "1.2 km", 
+        image: "https://images.unsplash.com/photo-1551882547-ff43c59fe4c2?auto=format&fit=crop&q=80", 
+        tag: "💰 Budget Friendly", 
+        description: "A budget-friendly option located close to the city center, noted for clean rooms and well-behaved staff.",
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Grand+Brother's+Sylhet" 
+      }
+    ],
     touristGuides: [],
     announcement: "25% OFF DISCOUNT",
     lastUpdated: 0
@@ -103,8 +139,9 @@ const AppContent = () => {
         const data = await res.json();
         if (data && typeof data === 'object') {
           setSiteConfig(prev => {
+             // Use server data if it's fresher than hardcoded defaults
              const merged = { ...prev, ...data };
-             return (data.lastUpdated || 0) > prev.lastUpdated ? merged : prev;
+             return (data.lastUpdated || 0) >= prev.lastUpdated ? merged : prev;
           });
         }
       }
@@ -351,7 +388,7 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Announcement Bar */}
+        {/* Announcement Bar - Editable by Owner */}
         {(siteConfig.announcement || isEditMode) && (
           <div className="bg-hotel-primary text-white py-2.5 px-6 text-center z-[65] relative flex items-center justify-center gap-3 overflow-hidden">
             <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />

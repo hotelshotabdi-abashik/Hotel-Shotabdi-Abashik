@@ -28,6 +28,7 @@ export interface Restaurant {
   distance: string;
   image: string;
   tag: string;
+  description?: string;
   mapUrl?: string;
   phone?: string;
 }
