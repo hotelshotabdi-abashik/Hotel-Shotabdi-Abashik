@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone, Star } from 'lucide-react';
 import { Attraction } from '../types';
@@ -77,45 +76,50 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
 
   return (
     <section id="guide" className="bg-gray-50/50 min-h-screen w-full">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-8 md:pb-12">
-        <div className="text-center flex flex-col items-center">
-            <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm">
-              <Compass size={24} />
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-8 md:pb-12 text-center">
+        <header>
+          <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm mx-auto">
+            <Compass size={24} />
+          </div>
+          <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">Sylhet Tourist Guide</h2>
+          <p className="text-gray-500 text-xs md:text-lg max-w-2xl mx-auto leading-relaxed font-light mb-8 md:mb-10 px-4">
+             Explore shrines, nature, and culture. Distances from <span className="text-hotel-primary font-black">Hotel Shotabdi Residential</span>.
+          </p>
+          
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl px-4 md:px-0 mx-auto">
+            <div className="relative flex-1 w-full">
+                <input 
+                    type="text" 
+                    placeholder="Search landmarks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white border border-gray-100 shadow-xl rounded-xl md:rounded-[1.5rem] py-3 md:py-5 pl-10 md:pl-14 pr-4 text-xs md:text-sm focus:border-blue-600 outline-none transition-all"
+                />
+                <Search className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
             </div>
-            <p className="text-gray-500 text-xs md:text-lg max-w-2xl mx-auto leading-relaxed font-light mb-8 md:mb-10 px-4">
-               Explore shrines, nature, and culture. Distances from <span className="text-hotel-primary font-black">Hotel Shotabdi</span>.
-            </p>
             
-            <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl px-4 md:px-0">
-              <div className="relative flex-1 w-full">
-                  <input 
-                      type="text" 
-                      placeholder="Search landmarks..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white border border-gray-100 shadow-xl rounded-xl md:rounded-[1.5rem] py-3 md:py-5 pl-10 md:pl-14 pr-4 text-xs md:text-sm focus:border-blue-600 outline-none transition-all"
-                  />
-                  <Search className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
-              </div>
-              
-              {isEditMode && (
-                <button 
-                  onClick={addSpot}
-                  className="bg-green-600 text-white px-6 md:px-8 py-3 md:py-5 rounded-xl md:rounded-[1.5rem] font-black text-[8px] md:text-[10px] uppercase tracking-widest flex items-center gap-2 md:gap-3 shadow-xl shadow-green-100 hover:scale-105 active:scale-95 transition-all w-full md:w-auto shrink-0"
-                >
-                  <Plus size={16} /> Add Place
-                </button>
-              )}
-            </div>
-        </div>
+            {isEditMode && (
+              <button 
+                onClick={addSpot}
+                className="bg-green-600 text-white px-6 md:px-8 py-3 md:py-5 rounded-xl md:rounded-[1.5rem] font-black text-[8px] md:text-[10px] uppercase tracking-widest flex items-center gap-2 md:gap-3 shadow-xl shadow-green-100 hover:scale-105 active:scale-95 transition-all w-full md:w-auto shrink-0"
+              >
+                <Plus size={16} /> Add Place
+              </button>
+            )}
+          </div>
+        </header>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 pb-24 md:pb-32">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
           {filtered.slice(0, visibleCount).map((spot) => (
-            <div key={spot.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 group flex flex-col h-full relative hover:shadow-2xl transition-all duration-700">
+            <article key={spot.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 group flex flex-col h-full relative hover:shadow-2xl transition-all duration-700">
               <div className="relative h-32 md:h-52 overflow-hidden shrink-0">
-                <img src={spot.image} alt={spot.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                <img 
+                  src={spot.image} 
+                  alt={`${spot.name} - Tourist Attraction in Sylhet near Hotel Shotabdi Residential`} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                />
                 
                 <div className="absolute top-2 right-2 md:top-4 md:right-4 flex flex-col items-end gap-1.5">
                    {spot.isRecommended && (
@@ -196,7 +200,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                   </a>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
 

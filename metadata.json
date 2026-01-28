@@ -1,7 +1,19 @@
 {
-  "name": "Shotabdi Residential - Luxury Stay",
-  "description": "A premium hotel experience in the heart of Sylhet, featuring tourist guides and luxurious room bookings.",
+  "name": "Hotel Shotabdi Residential",
+  "short_name": "Hotel Shotabdi",
+  "description": "Premium luxury stay in the heart of Sylhet. 24/7 service and luxurious rooms for your perfect vacation.",
   "requestFramePermissions": [
     "geolocation"
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E53935",
+  "icons": [
+    {
+      "src": "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
   ]
 }

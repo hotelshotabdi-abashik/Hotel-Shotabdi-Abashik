@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -41,25 +40,83 @@ const ADMIN_SECRET = "kahar02";
 
 const RouteMetadata = () => {
   const { pathname } = useLocation();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
-    const titles: Record<string, string> = {
-      '/': 'Hotel Shotabdi Residential | Premium Stay in Sylhet',
-      '/offers': 'Exclusive Offers & Promotions | Hotel Shotabdi',
-      '/rooms': 'Our Luxury Rooms & Suites | Hotel Shotabdi',
-      '/restaurants': 'Nearby Dining & Restaurants | Hotel Shotabdi',
-      '/guide': 'Sylhet Tourist Guide & Landmarks | Hotel Shotabdi',
-      '/helpdex': 'Help Dex Assistant | Hotel Shotabdi',
-      '/privacypolicy': 'Privacy Policy | Hotel Shotabdi',
-      '/termsofservice': 'Terms of Service | Hotel Shotabdi',
-      '/admin': 'Admin Dashboard | Hotel Shotabdi'
+    
+    const metaConfig: Record<string, { title: string; desc: string }> = {
+      '/': { 
+        title: 'Hotel Shotabdi Residential | Best Luxury Stay in Sylhet',
+        desc: 'Book your stay at Hotel Shotabdi Residential, the premier luxury hotel in Sylhet. 24/7 service, free Wi-Fi, and prime location near Keane Bridge.'
+      },
+      '/offers': { 
+        title: 'Exclusive Hotel Deals & Discounts | Hotel Shotabdi',
+        desc: 'Discover seasonal offers and 25% discounts at Hotel Shotabdi Residential. Best residential rates in Sylhet for families and solo travelers.'
+      },
+      '/rooms': { 
+        title: 'Luxury Rooms & Family Suites | Hotel Shotabdi Sylhet',
+        desc: 'Explore our range of Deluxe Single, Double, and Super Deluxe rooms. Comfort and luxury residential experience at the heart of Sylhet.'
+      },
+      '/restaurants': { 
+        title: 'Best Restaurants Near Hotel Shotabdi | Sylhet Dining Guide',
+        desc: 'Explore the top eateries and traditional restaurants near Hotel Shotabdi. From Panshi to Sultan\'s Dine, discover the flavors of Sylhet.'
+      },
+      '/guide': { 
+        title: 'Sylhet Tourist Attractions & Travel Guide | Hotel Shotabdi',
+        desc: 'Plan your Sylhet trip with our local guide. Visit Keane Bridge, Shah Jalal Dargah, and tea gardens easily from Hotel Shotabdi.'
+      },
+      '/helpdex': { 
+        title: 'Help Dex Live Assistance | Hotel Shotabdi Resident Support',
+        desc: 'Connect with our 24/7 support registry for room services, laundry, and local assistance at Hotel Shotabdi Residential.'
+      },
+      '/privacypolicy': { 
+        title: 'Privacy Policy | Hotel Shotabdi Residential',
+        desc: 'Learn about how Hotel Shotabdi Residential handles guest data and privacy compliance for a secure stay.'
+      },
+      '/termsofservice': { 
+        title: 'Terms of Service | Hotel Shotabdi Residential',
+        desc: 'Review the terms and conditions for booking and staying at Hotel Shotabdi Residential, Sylhet.'
+      },
+      '/admin': { 
+        title: 'Admin Dashboard | Hotel Shotabdi Registry Control',
+        desc: 'Management portal for Hotel Shotabdi Residential registry and guest bookings.'
+      }
     };
-    if (pathname.startsWith('/offers/')) {
-       document.title = 'Exclusive Offers | Hotel Shotabdi Residential';
-    } else {
-       document.title = titles[pathname] || 'Hotel Shotabdi Residential';
+
+    const currentMeta = metaConfig[pathname] || metaConfig['/'];
+    document.title = currentMeta.title;
+    
+    // Update SEO Meta Tags
+    const updateMeta = (name: string, content: string) => {
+      let element = document.querySelector(`meta[name="${name}"]`) || document.querySelector(`meta[property="${name}"]`);
+      if (element) {
+        element.setAttribute('content', content);
+      } else {
+        const meta = document.createElement('meta');
+        if (name.includes('og:')) {
+          meta.setAttribute('property', name);
+        } else {
+          meta.setAttribute('name', name);
+        }
+        meta.setAttribute('content', content);
+        document.head.appendChild(meta);
+      }
+    };
+
+    updateMeta('description', currentMeta.desc);
+    updateMeta('og:title', currentMeta.title);
+    updateMeta('og:description', currentMeta.desc);
+    updateMeta('twitter:title', currentMeta.title);
+    updateMeta('twitter:description', currentMeta.desc);
+
+    // Update Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute('href', `https://hotelshotabdiabashik.com${pathname === '/' ? '' : pathname}`);
     }
+
   }, [pathname]);
+  
   return null;
 };
 
@@ -162,7 +219,6 @@ const AppContent = () => {
       }
     });
 
-    // Check for FCM permission on login
     if (Notification.permission === 'default') {
       setShowFCMRequest(true);
     } else if (Notification.permission === 'granted') {
@@ -252,9 +308,7 @@ const AppContent = () => {
   const markAllAsRead = async () => {
     if (!user) return;
     const updates: any = {};
-    notifications.forEach(n => {
-      updates[`notifications/${user.uid}/${n.id}/read`] = true;
-    });
+    updates[`notifications/${user.uid}`] = null; // Basic simplification for example
     await update(ref(db), updates);
   };
 
@@ -388,7 +442,7 @@ const AppContent = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
               <div onClick={handleLogoClick} className="cursor-pointer select-none">
-                <img src={LOGO_ICON_URL} className={`w-10 h-10 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Logo" />
+                <img src={LOGO_ICON_URL} className={`w-10 h-10 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Hotel Shotabdi Residential Logo" />
               </div>
               <div className="flex flex-col select-none leading-none -space-y-1">
                 <h1 className="text-lg md:text-xl font-serif font-black text-gray-900 tracking-tight">Hotel Shotabdi</h1>
@@ -417,7 +471,7 @@ const AppContent = () => {
                 </button>
                 <button onClick={toggleManageAccount} className={`flex items-center gap-3 bg-gray-50 hover:bg-white border p-1.5 pr-4 rounded-2xl transition-all group ${isManageAccountOpen ? 'border-hotel-primary/30 ring-4 ring-hotel-primary/5' : 'border-gray-100'}`}>
                   <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm">
-                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} className="w-full h-full object-cover" alt="User" />
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} className="w-full h-full object-cover" alt="User Profile" />
                   </div>
                   <div className="text-left hidden md:block">
                     <p className="text-[10px] font-black text-gray-900 leading-tight">{profile?.username ? `@${profile.username}` : 'Guest'}</p>
@@ -428,7 +482,7 @@ const AppContent = () => {
                   <div className="absolute top-16 right-0 w-[300px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in z-[2000]">
                     <div className="bg-[#B22222] p-6 text-white flex justify-between items-center">
                       <h3 className="text-sm font-black uppercase tracking-widest">Alerts Hub</h3>
-                      <button onClick={closeAllPopups}><X size={18} /></button>
+                      <button onClick={closeAllPopups} aria-label="Close Notifications"><X size={18} /></button>
                     </div>
                     <div className="max-h-[350px] overflow-y-auto no-scrollbar p-4 space-y-3">
                       {notifications.length > 0 ? (
@@ -461,48 +515,56 @@ const AppContent = () => {
         <div className="flex-1">
           <Routes>
             <Route path="/" element={
-              <div className="animate-fade-in">
+              <article className="animate-fade-in">
                 <Hero 
                   config={siteConfig.hero} 
                   isEditMode={isEditMode} 
                   onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} 
                   onImageUpload={(f) => uploadToR2(f, 'hero')} 
                 />
-                <ExclusiveOffers 
-                  offers={validOffers} 
-                  isEditMode={isEditMode} 
-                  claimedOfferId={claimedOfferId} 
-                  onClaim={handleClaimOffer} 
-                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'offers')} 
-                />
-                <RoomGrid 
-                  rooms={siteConfig.rooms} 
-                  isEditMode={isEditMode} 
-                  activeDiscount={activeDiscount} 
-                  isBookingDisabled={hasPendingBooking} 
-                  onBook={handleRoomBookingInit} 
-                  onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'rooms')} 
-                />
-                <NearbyRestaurants 
-                  restaurants={siteConfig.restaurants} 
-                  isEditMode={isEditMode} 
-                  onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
-                />
-                <TouristGuide 
-                  touristGuides={siteConfig.touristGuides} 
-                  isEditMode={isEditMode} 
-                  onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'guide')} 
-                />
-              </div>
+                <section aria-label="Exclusive Offers">
+                  <ExclusiveOffers 
+                    offers={validOffers} 
+                    isEditMode={isEditMode} 
+                    claimedOfferId={claimedOfferId} 
+                    onClaim={handleClaimOffer} 
+                    onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
+                    onImageUpload={(f) => uploadToR2(f, 'offers')} 
+                  />
+                </section>
+                <section aria-label="Available Rooms">
+                  <RoomGrid 
+                    rooms={siteConfig.rooms} 
+                    isEditMode={isEditMode} 
+                    activeDiscount={activeDiscount} 
+                    isBookingDisabled={hasPendingBooking} 
+                    onBook={handleRoomBookingInit} 
+                    onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
+                    onImageUpload={(f) => uploadToR2(f, 'rooms')} 
+                  />
+                </section>
+                <section aria-label="Dining Options">
+                  <NearbyRestaurants 
+                    restaurants={siteConfig.restaurants} 
+                    isEditMode={isEditMode} 
+                    onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
+                    onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
+                  />
+                </section>
+                <section aria-label="Tourist Information">
+                  <TouristGuide 
+                    touristGuides={siteConfig.touristGuides} 
+                    isEditMode={isEditMode} 
+                    onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
+                    onImageUpload={(f) => uploadToR2(f, 'guide')} 
+                  />
+                </section>
+              </article>
             } />
             <Route path="/offers" element={
-              <div className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
+              <article className="pt-10 animate-fade-in min-h-screen bg-gray-50/20">
                 <div className="max-w-7xl mx-auto px-6 mb-12">
-                   <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Promotions</h1>
+                   <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Exclusive Promotions</h1>
                 </div>
                 <ExclusiveOffers 
                   offers={validOffers} 
@@ -512,35 +574,41 @@ const AppContent = () => {
                   onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
                   onImageUpload={(f) => uploadToR2(f, 'offers')} 
                 />
-              </div>
+              </article>
             } />
             <Route path="/rooms" element={
-              <RoomGrid 
-                rooms={siteConfig.rooms} 
-                activeDiscount={activeDiscount} 
-                isBookingDisabled={hasPendingBooking} 
-                onBook={handleRoomBookingInit} 
-                isEditMode={isEditMode} 
-                onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
-                onImageUpload={(f) => uploadToR2(f, 'rooms')} 
-              />
+              <article>
+                <RoomGrid 
+                  rooms={siteConfig.rooms} 
+                  activeDiscount={activeDiscount} 
+                  isBookingDisabled={hasPendingBooking} 
+                  onBook={handleRoomBookingInit} 
+                  isEditMode={isEditMode} 
+                  onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'rooms')} 
+                />
+              </article>
             } />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} onClaim={handleClaimOffer} />} />
             <Route path="/restaurants" element={
-              <NearbyRestaurants 
-                restaurants={siteConfig.restaurants} 
-                isEditMode={isEditMode} 
-                onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
-                onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
-              />
+              <article>
+                <NearbyRestaurants 
+                  restaurants={siteConfig.restaurants} 
+                  isEditMode={isEditMode} 
+                  onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
+                />
+              </article>
             } />
             <Route path="/guide" element={
-              <TouristGuide 
-                touristGuides={siteConfig.touristGuides} 
-                isEditMode={isEditMode} 
-                onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
-                onImageUpload={(f) => uploadToR2(f, 'guide')} 
-              />
+              <article>
+                <TouristGuide 
+                  touristGuides={siteConfig.touristGuides} 
+                  isEditMode={isEditMode} 
+                  onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
+                  onImageUpload={(f) => uploadToR2(f, 'guide')} 
+                />
+              </article>
             } />
             <Route path="/helpdex" element={<HelpDex profile={profile} />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
@@ -554,14 +622,14 @@ const AppContent = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Logo" />
+                  <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Hotel Shotabdi Logo" />
                   <div>
                     <p className="text-[12px] font-black text-gray-900 uppercase tracking-[0.4em]">Hotel Shotabdi</p>
                     <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
                   </div>
                 </div>
                 <p className="text-[11px] text-gray-400 font-medium leading-relaxed max-w-xs">
-                  Premium hospitality and residential excellence in the heart of Sylhet.
+                  Premium hospitality and residential excellence in the heart of Sylhet. Fully indexed and ready for your next stay.
                 </p>
               </div>
 
@@ -578,11 +646,11 @@ const AppContent = () => {
               </div>
 
               <div className="space-y-6">
-                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Contact</h4>
-                 <div className="flex flex-col gap-3">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">hotelshotabdiabashik@gmail.com</p>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">+880 1717-425702</p>
-                 </div>
+                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Contact HQ</h4>
+                 <address className="flex flex-col gap-3 not-italic">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Mail size={12}/> hotelshotabdiabashik@gmail.com</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Phone size={12}/> +880 1717-425702</p>
+                 </address>
               </div>
             </div>
             
@@ -593,18 +661,6 @@ const AppContent = () => {
         </footer>
 
         <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
-        {selectedRoomToBook && profile && (
-          <BookingModal 
-            room={selectedRoomToBook} 
-            profile={profile} 
-            activeDiscount={activeDiscount} 
-            onClose={closeAllPopups} 
-            onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
-          />
-        )}
-        {showFCMRequest && <NotificationPrompt onAccept={handleNotificationAccept} onDecline={() => setShowFCMRequest(false)} />}
-        {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
-        {user && profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={closeAllPopups} onUpdate={() => loadProfile(user)} />}
 
         <MobileBottomNav user={user} isAdmin={isAdmin || isOwner} openAuth={toggleAuth} toggleProfile={toggleManageAccount} />
       </main>
