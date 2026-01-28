@@ -28,7 +28,7 @@ import {
   set
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages } from 'lucide-react';
 import { ROOMS_DATA } from './constants';
 
 const LOGO_ICON_URL = "https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png";
@@ -90,44 +90,7 @@ const AppContent = () => {
     },
     rooms: ROOMS_DATA,
     offers: [],
-    restaurants: [
-      { 
-        id: 101, 
-        name: "Rutbah Hotel International", 
-        cuisine: "Mid-range Hotel", 
-        rating: 4.3, 
-        time: "12m", 
-        distance: "1.5 km", 
-        image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80", 
-        tag: "🏢 AC Rooms • Restaurant", 
-        description: "An affordable, mid-range hotel with clean AC rooms, a restaurant, and helpful staff.",
-        mapUrl: "https://www.google.com/maps/search/?api=1&query=Rutbah+Hotel+International+Sylhet" 
-      },
-      { 
-        id: 102, 
-        name: "SAUDIA RESIDENTIAL HOTEL", 
-        cuisine: "Residential Hotel", 
-        rating: 4.2, 
-        time: "8m", 
-        distance: "0.8 km", 
-        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80", 
-        tag: "🧹 Clean • Friendly Staff", 
-        description: "Praised for its clean environment, good location, and friendly staff. Some guests noted the absence of on-site food facilities.",
-        mapUrl: "https://www.google.com/maps/search/?api=1&query=SAUDIA+RESIDENTIAL+HOTEL+Sylhet" 
-      },
-      { 
-        id: 103, 
-        name: "Hotel Grand Brother's", 
-        cuisine: "Budget Hotel", 
-        rating: 3.5, 
-        time: "10m", 
-        distance: "1.2 km", 
-        image: "https://images.unsplash.com/photo-1551882547-ff43c59fe4c2?auto=format&fit=crop&q=80", 
-        tag: "💰 Budget Friendly", 
-        description: "A budget-friendly option located close to the city center, noted for clean rooms and well-behaved staff.",
-        mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Grand+Brother's+Sylhet" 
-      }
-    ],
+    restaurants: [],
     touristGuides: [],
     announcement: "25% OFF DISCOUNT",
     lastUpdated: 0
@@ -388,28 +351,6 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Announcement Bar */}
-        {(siteConfig.announcement || isEditMode) && (
-          <div className="bg-hotel-primary text-white py-2.5 px-6 text-center z-[65] relative flex items-center justify-center gap-3 overflow-hidden">
-            <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
-            {isEditMode ? (
-              <div className="flex-1 flex items-center gap-2">
-                <input
-                  className="bg-white/20 border-none outline-none text-center w-full font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] py-1 rounded-lg placeholder:text-white/40"
-                  value={siteConfig.announcement}
-                  onChange={(e) => setSiteConfig(prev => ({ ...prev, announcement: e.target.value, lastUpdated: Date.now() }))}
-                  placeholder="ENTER ANNOUNCEMENT TEXT (E.G. 25% OFF DISCOUNT)"
-                />
-              </div>
-            ) : (
-              <p className="font-black text-[9px] md:text-[11px] uppercase tracking-[0.3em] truncate">
-                {siteConfig.announcement}
-              </p>
-            )}
-            <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
-          </div>
-        )}
-
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center h-[72px] md:h-[88px]">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 md:gap-4 group">
