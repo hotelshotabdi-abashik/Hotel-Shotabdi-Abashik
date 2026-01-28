@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, Bed, Utensils, Map as MapIcon, 
@@ -18,7 +18,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('hotel');
-  const [stayCategory, setStayCategory] = useState('vacation');
   const [selectedRoomId, setSelectedRoomId] = useState(ROOMS_DATA[0].id);
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
   
@@ -145,38 +144,16 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
           </div>
 
           <div className="p-4 md:p-10">
-            {/* Stay Purpose & Guests - Simplified for small devices */}
-            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-6 md:mb-10">
-              <div className="flex items-center justify-center md:justify-start gap-2 overflow-x-auto no-scrollbar py-1 shrink-0">
-                {[
-                  { id: 'vacation', label: 'Vacation' },
-                  { id: 'business', label: 'Business' },
-                  { id: 'group', label: 'Group' }
-                ].map((type) => (
-                  <button 
-                    key={type.id} 
-                    onClick={() => setStayCategory(type.id)}
-                    className={`px-3 md:px-5 py-2 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${
-                      stayCategory === type.id 
-                        ? 'bg-hotel-primary/5 border-hotel-primary/20 text-hotel-primary shadow-sm' 
-                        : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'
-                    }`}
-                  >
-                    {type.label}
-                  </button>
-                ))}
+            {/* Rates & Guests Info Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-10">
+              <div className="flex items-center gap-2 bg-green-50/50 px-4 py-2.5 rounded-xl border border-green-100/50 text-[9px] md:text-xs font-black group shrink-0">
+                <ShieldCheck size={12} className="text-green-500" />
+                <span className="text-green-600 uppercase tracking-widest">Official Direct Rates</span>
               </div>
-
-              <div className="flex items-center justify-between md:ml-auto gap-3">
-                <div className="flex items-center gap-2 bg-gray-50/80 px-4 py-2.5 rounded-xl border border-gray-100 text-gray-900 text-[9px] md:text-xs font-black cursor-pointer hover:bg-white transition-all group shrink-0">
-                  <Users size={12} className="text-gray-400 group-hover:text-hotel-primary" />
-                  <span>2 ADULTS</span>
-                  <ChevronDown size={10} className="text-gray-400 ml-1" />
-                </div>
-                <div className="flex items-center gap-2 bg-green-50/50 px-4 py-2.5 rounded-xl border border-green-100/50 text-[9px] md:text-xs font-black group shrink-0">
-                  <ShieldCheck size={12} className="text-green-500" />
-                  <span className="text-green-600 uppercase tracking-widest">Guaranteed Rate</span>
-                </div>
+              
+              <div className="flex items-center gap-2 bg-gray-50/80 px-4 py-2.5 rounded-xl border border-gray-100 text-gray-900 text-[9px] md:text-xs font-black cursor-default group shrink-0">
+                <Users size={12} className="text-gray-400" />
+                <span>MULTIPLE GUEST CAPACITY</span>
               </div>
             </div>
 
@@ -187,7 +164,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
               <div className="relative flex-[1.2]">
                 <div 
                   onClick={() => setShowRoomDropdown(!showRoomDropdown)}
-                  className="bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all rounded-t-lg md:rounded-l-[1.2rem] md:rounded-tr-none border-b lg:border-b-0 lg:border-r border-gray-100"
+                  className="bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all rounded-t-lg md:rounded-l-[1.2rem] md:rounded-tr-none border-b lg:border-b-0 lg:border-r border-gray-100"
                 >
                   <div className="w-9 h-9 md:w-11 md:h-11 bg-hotel-primary/5 rounded-xl flex items-center justify-center mr-4 shrink-0">
                     <Key size={18} className="text-hotel-primary" />
@@ -229,7 +206,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
               {/* Check-in Date Picker */}
               <div 
                 onClick={() => checkInRef.current?.showPicker()}
-                className="relative flex-1 bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
+                className="relative flex-1 bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
               >
                 <input 
                   type="date" 
@@ -253,7 +230,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
               {/* Check-out Date Picker */}
               <div 
                 onClick={() => checkOutRef.current?.showPicker()}
-                className="relative flex-1 bg-white p-4 md:p-6 flex items-center group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0"
+                className="relative flex-1 bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
               >
                 <input 
                   type="date" 
@@ -274,13 +251,13 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                 </div>
               </div>
 
-              {/* High Contrast Action Button */}
+              {/* High Contrast Action Button - Optimized for Desktop & Mobile */}
               <button 
                 onClick={handleSearch}
-                className="bg-hotel-primary hover:bg-[#B22222] text-white px-8 md:px-12 py-5 md:py-6 lg:py-0 rounded-b-lg lg:rounded-r-[1.5rem] lg:rounded-b-none flex items-center justify-center transition-all active:scale-[0.98] shadow-inner gap-3 shrink-0"
+                className="bg-hotel-primary hover:bg-[#B22222] text-white px-8 md:px-12 py-5 md:py-8 lg:py-0 rounded-b-lg lg:rounded-r-[1.5rem] lg:rounded-b-none flex items-center justify-center transition-all active:scale-[0.98] shadow-inner gap-3 shrink-0"
               >
-                <Search size={22} strokeWidth={3} />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] lg:hidden">Check Vacancy</span>
+                <Search size={22} strokeWidth={3} className="shrink-0" />
+                <span className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Check Vacancy</span>
               </button>
             </div>
           </div>
