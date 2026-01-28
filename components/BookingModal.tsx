@@ -38,10 +38,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
         nidImageUrl: profile.nidImageUrl 
       }
     ];
-    // Fill remaining to match totalGuests
-    for (let i = 1; i < (room.id.includes('single') ? 1 : 2); i++) {
-      initial.push({ legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' });
-    }
     return initial;
   });
 
@@ -121,19 +117,19 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
   const isStep2Valid = guests.every((g, idx) => {
     if (idx === 0) {
       // Primary Guest: Name, NID, Image
-      return g.legalName && g.nidNumber && g.nidImageUrl;
+      return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
     } else if (idx === 1) {
       // Companion (Guest 2): Name, NID, Image
-      return g.legalName && g.nidNumber && g.nidImageUrl;
+      return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
     } else {
-      // Others (Guest 3+): Name and Age
-      return g.legalName && g.age;
+      // Others (Guest 3+): Name and Age only
+      return g.legalName.trim().length > 2 && g.age;
     }
   });
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[3000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[95vh] border border-white/20">
         
         {/* Header */}
         <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
@@ -213,7 +209,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       {/* Left side: Basic Info */}
                        <div className="space-y-4">
                           <div className="space-y-1.5">
                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
@@ -251,7 +246,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                           )}
                        </div>
 
-                       {/* Right side: Identity Image (Only for first 2 guests) */}
                        {(idx === 0 || idx === 1) ? (
                           <div className="space-y-1.5">
                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Registry Scan</label>

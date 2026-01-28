@@ -16,23 +16,19 @@ interface RoomGridProps {
 
 const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const limit = 60; // Increased limit to make cards look "longer"
   const safeText = text || "";
-  const isLong = safeText.length > limit;
 
   return (
     <div className="mb-3 md:mb-4">
-      <p className="text-[10px] md:text-[11px] text-gray-500 leading-relaxed font-light">
-        {isExpanded || !isLong ? safeText : `${safeText.substring(0, limit)}...`}
-        {isLong && (
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-1 text-hotel-primary font-bold hover:underline inline-flex items-center gap-0.5"
-          >
-            {isExpanded ? 'less' : 'more'}
-          </button>
-        )}
-      </p>
+      <div className={`text-[10px] md:text-[11px] text-gray-500 leading-relaxed font-light transition-all duration-300 ${!isExpanded ? 'line-clamp-3' : ''}`}>
+        {safeText}
+      </div>
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="mt-1 text-hotel-primary font-black text-[9px] uppercase tracking-widest hover:underline inline-flex items-center gap-0.5"
+      >
+        {isExpanded ? '...less' : '...more'}
+      </button>
     </div>
   );
 };
