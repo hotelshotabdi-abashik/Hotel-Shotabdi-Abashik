@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star } from 'lucide-react';
 import { Room } from '../types';
@@ -16,19 +16,39 @@ interface RoomGridProps {
 
 const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
   const safeText = text || "";
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (textRef.current) {
+        const isCurrentlyOverflowing = textRef.current.scrollHeight > textRef.current.clientHeight;
+        setIsOverflowing(isCurrentlyOverflowing);
+      }
+    };
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [safeText]);
 
   return (
     <div className="mb-3 md:mb-4">
-      <div className={`text-[10px] md:text-[11px] text-gray-500 leading-relaxed font-light transition-all duration-300 ${!isExpanded ? 'line-clamp-3' : ''}`}>
+      <div 
+        ref={textRef}
+        className={`text-[10px] md:text-[11px] text-gray-500 leading-relaxed font-light transition-all duration-300 ${!isExpanded ? 'line-clamp-3' : ''}`}
+      >
         {safeText}
       </div>
-      <button 
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-1 text-hotel-primary font-black text-[9px] uppercase tracking-widest hover:underline inline-flex items-center gap-0.5"
-      >
-        {isExpanded ? '...less' : '...more'}
-      </button>
+      
+      {(isOverflowing || isExpanded) && (
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="mt-1 text-hotel-primary font-black text-[9px] uppercase tracking-widest hover:underline inline-flex items-center gap-0.5"
+        >
+          {isExpanded ? '...less' : '...more'}
+        </button>
+      )}
     </div>
   );
 };
@@ -48,18 +68,12 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
     }
   }, [location.search]);
 
-  // Sort rooms: recommended first
   const sortedRooms = useMemo(() => {
     return [...rooms].sort((a, b) => {
       if (a.isRecommended === b.isRecommended) return 0;
       return a.isRecommended ? -1 : 1;
     });
   }, [rooms]);
-
-  const parseNumeric = (str: string) => {
-    const numeric = parseFloat((str || "").replace(/[^0-9.]/g, ''));
-    return isNaN(numeric) ? 0 : numeric;
-  };
 
   const handleImageChange = async (roomId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,7 +124,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
             <Zap size={10} fill="currentColor" /> Premier Units
           </div>
           <p className="text-gray-400 text-xs md:text-lg leading-relaxed font-light px-2 md:px-0">
-            Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">exclusive rates</span>.
+            Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">exclusive manual rates</span>.
           </p>
         </div>
         
@@ -127,9 +141,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {sortedRooms.map((room) => {
           const isHighlighted = highlightedId === room.id;
-          const numericBase = parseNumeric(room.price);
-          const numericDiscounted = parseNumeric(room.discountPrice);
-          const calculatedPercent = numericBase > 0 ? Math.round(((numericBase - numericDiscounted) / numericBase) * 100) : 0;
 
           return (
             <div 
@@ -176,23 +187,18 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                 <div className="mb-4">
                    <div className="flex flex-col gap-1 mb-2">
                       <h3 className="text-[13px] md:text-2xl font-black text-gray-900 leading-tight truncate tracking-tight">{room.title}</h3>
-                      {calculatedPercent > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="bg-red-600 text-white text-[6px] md:text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-[0.1em]">{calculatedPercent}% OFF</span>
-                        </div>
-                      )}
                     </div>
                   
                   <div className="flex flex-wrap items-baseline gap-2">
                     {isEditMode ? (
                       <div className="flex flex-col gap-2 w-full">
                          <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
-                            <span className="text-[9px] font-bold text-gray-400">Base ৳</span>
+                            <span className="text-[9px] font-bold text-gray-400">Regular ৳</span>
                             <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.price || ""} placeholder="Old Price" onChange={(e) => updateRoom(room.id, 'price', e.target.value)} />
                          </div>
                          <div className="flex items-center gap-1 border-b border-gray-100 bg-red-50 px-3 py-1.5 rounded-xl w-full">
-                            <span className="text-[9px] font-bold text-[#B22222]">New ৳</span>
-                            <input className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Discounted" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
+                            <span className="text-[9px] font-bold text-[#B22222]">Special ৳</span>
+                            <input className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Manual Discount Price" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
                          </div>
                       </div>
                     ) : (
@@ -209,7 +215,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
 
                 <RoomDescription text={room.desc} />
 
-                {/* Show features with a bit more space */}
                 <div className="mb-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1.5 md:gap-y-3">
                     {(room.features || []).slice(0, 4).map((feat, idx) => (
