@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Play, Image as ImageIcon, Plus, Trash2, Camera, 
-  Tag, Clock, Settings2, ShieldCheck, X 
+  Tag, Clock, Settings2, ShieldCheck, X, CheckCircle2, Loader2
 } from 'lucide-react';
 import { Offer } from '../types';
 
@@ -17,11 +17,10 @@ interface Props {
 }
 
 const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOfferId, onClaim, onUpdate, onImageUpload }) => {
-  const navigate = useNavigate();
   const [activeSettingsId, setActiveSettingsId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const swiperRef = useRef<any>(null);
 
-  // Initialize Swiper.js
   useEffect(() => {
     if (!(window as any).Swiper) return;
     
@@ -72,6 +71,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
       endDate: Date.now() + (7 * 24 * 60 * 60 * 1000)
     };
     onUpdate?.([...offers, newOffer]);
+    setActiveSettingsId(newOffer.id);
   };
 
   const updateOffer = (id: string, field: keyof Offer, value: any) => {
@@ -82,13 +82,19 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
   const handleMediaUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onImageUpload) {
+      setIsUploading(true);
       try {
-        // Path logic is handled in the callback passed from App.tsx
         const url = await onImageUpload(file);
-        updateOffer(id, 'mediaUrl', url);
-        updateOffer(id, 'mediaType', file.type.startsWith('video') ? 'video' : 'image');
+        const updated = offers.map(o => o.id === id ? { 
+          ...o, 
+          mediaUrl: url, 
+          mediaType: file.type.startsWith('video') ? 'video' as const : 'image' as const 
+        } : o);
+        onUpdate?.(updated);
       } catch (err) {
         alert("Upload failed. Ensure file is under 10MB.");
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -134,12 +140,12 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                     </span>
                     {offer.isOneTime && (
                       <span className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl text-[8px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                        <ShieldCheck size={10} /> One-Time Claim
+                        <ShieldCheck size={10} /> One-Time
                       </span>
                     )}
                   </div>
 
-                  <div className="absolute bottom-8 left-0 right-0 px-8 flex flex-col items-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                  <div className="absolute bottom-8 left-0 right-0 px-8 flex flex-col items-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-10">
                      <div className="flex gap-3 w-full">
                         <button 
                           onClick={() => onClaim?.(offer)}
@@ -190,55 +196,57 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
         </div>
       </div>
 
-      {/* Refined Admin Modal: Fixed size, centered, no internal scroll */}
       {activeSettingsId && isEditMode && activeOffer && (
-        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in overflow-hidden">
-          <div className="bg-white w-full max-w-5xl rounded-[2.5rem] shadow-2xl flex flex-col transform transition-all">
-            <div className="px-10 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/40">
+        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-3xl w-full max-w-5xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col max-h-[90vh] border border-white/20 overflow-hidden ring-1 ring-white/10">
+            {/* Modal Header */}
+            <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div className="flex items-center gap-5">
-                 <div className="w-12 h-12 bg-[#B22222]/10 rounded-2xl flex items-center justify-center text-[#B22222]">
+                 <div className="w-12 h-12 bg-[#B22222]/10 rounded-2xl flex items-center justify-center text-[#B22222] shadow-inner">
                     <Settings2 size={24} />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Offer Configuration</h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Manage Residential Incentives</p>
+                    <h3 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Deal Configuration</h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">Configure Exclusive Residential Benefits</p>
                  </div>
               </div>
-              <button onClick={() => setActiveSettingsId(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100"><X size={24}/></button>
+              <button onClick={() => setActiveSettingsId(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95"><X size={24}/></button>
             </div>
             
-            <div className="p-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16">
-                {/* Left Column: Input Fields */}
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Marketing Header</label>
+            {/* Modal Body: Two Column Grid */}
+            <div className="flex-1 overflow-hidden p-8 md:p-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-full">
+                
+                {/* Left Column: Form Controls */}
+                <div className="space-y-5 flex flex-col justify-start">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Marketing Headline</label>
                     <input 
-                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-[#B22222] transition-all focus:bg-white"
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl py-3.5 px-6 text-sm font-bold outline-none focus:border-[#B22222] transition-all focus:bg-white"
                       value={activeOffer.title}
                       onChange={(e) => updateOffer(activeSettingsId, 'title', e.target.value)}
-                      placeholder="e.g. Summer Residential Deal"
+                      placeholder="e.g. Monsoon Luxury Retreat"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Rebate (%)</label>
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Rebate Percentage</label>
                       <div className="relative">
-                        <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-[#B22222]">%</span>
+                        <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-[#B22222] text-sm">%</span>
                         <input 
                           type="number"
-                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-[#B22222] transition-all focus:bg-white"
+                          className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl py-3.5 px-6 text-sm font-bold outline-none focus:border-[#B22222] transition-all focus:bg-white"
                           value={activeOffer.discountPercent}
-                          onChange={(e) => updateOffer(activeSettingsId, 'discountPercent', parseInt(e.target.value))}
+                          onChange={(e) => updateOffer(activeSettingsId, 'discountPercent', parseInt(e.target.value) || 0)}
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Redemption</label>
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Redemption Rule</label>
                        <button 
                         onClick={() => updateOffer(activeSettingsId, 'isOneTime', !activeOffer.isOneTime)}
-                        className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeOffer.isOneTime ? 'bg-green-50 border-green-200 text-green-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}
+                        className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeOffer.isOneTime ? 'bg-green-50 border-green-200 text-green-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}
                        >
                          {activeOffer.isOneTime ? 'Single Use' : 'Unlimited'}
                          <ShieldCheck size={16} />
@@ -246,74 +254,87 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Release Date</label>
                       <input 
                         type="date"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-[12px] font-bold outline-none focus:bg-white"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl py-3.5 px-6 text-[11px] font-bold outline-none focus:bg-white"
                         value={new Date(activeOffer.startDate || Date.now()).toISOString().split('T')[0]}
                         onChange={(e) => updateOffer(activeSettingsId, 'startDate', new Date(e.target.value).getTime())}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">End Date</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Expiration Date</label>
                       <input 
                         type="date"
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 text-[12px] font-bold outline-none focus:bg-white"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl py-3.5 px-6 text-[11px] font-bold outline-none focus:bg-white"
                         value={new Date(activeOffer.endDate || Date.now()).toISOString().split('T')[0]}
                         onChange={(e) => updateOffer(activeSettingsId, 'endDate', new Date(e.target.value).getTime())}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 flex-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Offer Narrative</label>
                     <textarea 
-                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-6 text-sm font-medium outline-none h-36 resize-none focus:border-[#B22222] transition-all no-scrollbar focus:bg-white"
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl p-5 text-sm font-medium outline-none h-28 md:h-full max-h-32 resize-none focus:border-[#B22222] transition-all no-scrollbar focus:bg-white leading-relaxed"
                       value={activeOffer.description}
                       onChange={(e) => updateOffer(activeSettingsId, 'description', e.target.value)}
-                      placeholder="Detail the exclusive benefits of this stay..."
+                      placeholder="Detail the unique residential experience..."
                     />
                   </div>
                 </div>
 
-                {/* Right Column: Visual Controls & Preview */}
-                <div className="space-y-8 flex flex-col justify-center">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-center block">Media Asset Preview (16:9)</label>
-                    <div className="relative group aspect-video rounded-[2.5rem] overflow-hidden border-8 border-white shadow-2xl bg-gray-200 ring-1 ring-black/5">
+                {/* Right Column: Visual Preview & Upload */}
+                <div className="flex flex-col gap-6">
+                  <div className="space-y-3 flex-1 flex flex-col justify-center">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-center block">16:9 Media Asset Preview</label>
+                    <div className="relative group aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-gray-200 ring-1 ring-black/5 mx-auto w-full">
                        {activeOffer.mediaType === 'video' ? (
-                         <video src={activeOffer.mediaUrl} className="w-full h-full object-cover" muted loop />
+                         <video src={activeOffer.mediaUrl} className="w-full h-full object-cover" muted loop autoPlay />
                        ) : (
-                         <img src={activeOffer.mediaUrl} className="w-full h-full object-cover" alt="R2 Stored Asset" />
+                         <img src={activeOffer.mediaUrl} className="w-full h-full object-cover" alt="Asset Preview" />
                        )}
-                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                          <ImageIcon className="text-white" size={48} />
-                       </div>
+                       {isUploading && (
+                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white gap-3">
+                            <Loader2 className="animate-spin" size={32} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Optimizing Asset...</span>
+                         </div>
+                       )}
                     </div>
                   </div>
 
-                  <div className="relative border-2 border-dashed border-gray-200 rounded-[2.5rem] p-10 bg-gray-50/50 flex flex-col items-center gap-4 text-center transition-all hover:bg-white hover:border-[#B22222]/30 cursor-pointer group">
-                     <input type="file" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={(e) => handleMediaUpload(activeSettingsId, e)} />
-                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[#B22222] group-hover:scale-110 transition-transform">
-                        <Camera size={32} />
-                     </div>
-                     <div>
-                       <p className="text-[11px] font-black uppercase tracking-widest text-gray-600">Update R2 Cloud Asset</p>
-                       <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Directory: /hotel-shotabdi-assets/Exclusive Offers/</p>
-                     </div>
+                  <div className="relative group">
+                    <input 
+                      type="file" 
+                      accept="image/*,video/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                      onChange={(e) => handleMediaUpload(activeSettingsId, e)} 
+                      disabled={isUploading}
+                    />
+                    <div className={`w-full py-5 rounded-[2rem] border-2 border-dashed flex items-center justify-center gap-4 transition-all ${isUploading ? 'border-gray-100 bg-gray-50 opacity-50' : 'border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-[#B22222]/30'}`}>
+                      <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#B22222]">
+                        <Camera size={20} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-gray-700">Upload Media</p>
+                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">High Resolution 16:9 Preferred</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-10 bg-gray-50/80 border-t border-gray-100 flex gap-6">
+            {/* Modal Footer */}
+            <div className="p-8 md:p-10 bg-gray-50/80 border-t border-gray-100 flex gap-6">
               <button 
                 onClick={() => setActiveSettingsId(null)} 
-                className="flex-1 bg-gray-900 text-white py-6 rounded-[2rem] font-black text-[12px] uppercase tracking-[0.3em] shadow-2xl transition-all hover:bg-black active:scale-[0.98]"
+                className="flex-1 bg-gray-900 text-white py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl transition-all hover:bg-black active:scale-[0.98] flex items-center justify-center gap-3"
               >
-                Commit Changes
+                <CheckCircle2 size={18} />
+                Publish Changes
               </button>
             </div>
           </div>

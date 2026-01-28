@@ -135,7 +135,6 @@ const AppContent = () => {
       return;
     }
 
-    // Real-time notification tracking
     const notificationsRef = ref(db, `notifications/${user.uid}`);
     const nUnsub = onValue(notificationsRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -147,7 +146,6 @@ const AppContent = () => {
       }
     });
 
-    // Track pending booking status to lock UI
     const bookingsRef = ref(db, `bookings`);
     const bUnsub = onValue(bookingsRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -190,7 +188,7 @@ const AppContent = () => {
 
   const uploadToR2 = async (file: File, folder: string): Promise<string> => {
     const safeFolder = folder || "uploads";
-    const cleanFolderName = safeFolder.replace(/^\/|\/$/g, '');
+    const cleanFolderName = safeFolder.replace(/^\/|\/$/g, '').replace(/ /g, '_').toLowerCase();
     const filename = `${cleanFolderName}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
     const res = await fetch(`${CMS_WORKER_URL}/${filename}`, {
       method: 'PUT',
@@ -438,10 +436,10 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               <div className="animate-fade-in">
-                <Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Hero Section')} />
-                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'hotel-shotabdi-assets/Exclusive Offers')} />
-                <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />
-                <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} />
+                <Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'hero')} />
+                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
+                <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />
+                <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />
               </div>
             } />
             <Route path="/offers" element={
@@ -450,13 +448,13 @@ const AppContent = () => {
                    <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Current Promotions</h1>
                    <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals and residential packages designed for your comfort and savings.</p>
                 </div>
-                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'hotel-shotabdi-assets/Exclusive Offers')} />
+                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
               </div>
             } />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Rooms')} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />} />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} onClaim={handleClaimOffer} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Restaurants')} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'Tourist Guides')} />} />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
             <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Denied</div>} />
@@ -518,7 +516,7 @@ const AppContent = () => {
             profile={profile} 
             activeDiscount={activeDiscount} 
             onClose={closeAllPopups} 
-            onImageUpload={(f) => uploadToR2(f, `Bookings/${profile.uid}`)}
+            onImageUpload={(f) => uploadToR2(f, `bookings/${profile.uid}`)}
           />
         )}
         {user && profile && !profile.isComplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}

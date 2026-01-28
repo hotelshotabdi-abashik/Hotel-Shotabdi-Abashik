@@ -1,0 +1,30 @@
+
+{
+  "rules": {
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+      }
+    },
+    "usernames": {
+      ".read": "true",
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+      }
+    },
+    "bookings": {
+      ".read": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+      "$bookingId": {
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+      }
+    },
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+      }
+    }
+  }
+}
