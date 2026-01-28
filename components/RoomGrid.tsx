@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star } from 'lucide-react';
+import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star, Percent } from 'lucide-react';
 import { Room } from '../types';
 
 interface RoomGridProps {
@@ -13,6 +13,17 @@ interface RoomGridProps {
   onUpdate?: (rooms: Room[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
+
+/**
+ * Utility to ensure we are working with real numbers
+ * Strips commas and handles invalid strings
+ */
+const parseCurrency = (val: string | undefined): number | null => {
+  if (!val) return null;
+  const clean = val.toString().replace(/,/g, '').trim();
+  const num = parseFloat(clean);
+  return isNaN(num) ? null : num;
+};
 
 const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -53,7 +64,7 @@ const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
   );
 };
 
-const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isBookingDisabled = false, isEditMode, onBook, onUpdate, onImageUpload }) => {
+const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = false, isEditMode, onBook, onUpdate, onImageUpload }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const location = useLocation();
@@ -104,8 +115,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
     const newRoom: Room = {
       id: `room-${Date.now()}`,
       title: "New Room Type",
-      price: "1333",
-      discountPrice: "1000", 
+      price: "2000",
+      discountPrice: "1500", 
       tag: "NEW",
       desc: "Clean and comfortable room for your stay.",
       features: ["Wi-Fi", "AC", "TV"],
@@ -141,6 +152,11 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {sortedRooms.map((room) => {
           const isHighlighted = highlightedId === room.id;
+          
+          // Numerical Pricing Logic
+          const originalNum = parseCurrency(room.price);
+          const hasPrice = originalNum !== null;
+          const discountedPriceNum = hasPrice ? Math.round(originalNum * 0.75) : null;
 
           return (
             <div 
@@ -151,21 +167,23 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
               }`}
             >
               <div className="h-44 md:h-56 relative overflow-hidden shrink-0">
-                <img src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-110" alt={room.title} />
+                <img src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={room.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                
                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                   {room.isRecommended && (
                     <span className="bg-amber-400 text-gray-900 px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/50">
                       <Star size={10} fill="currentColor" /> Recommended
                     </span>
                   )}
-                  <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm">{room.tag}</span>
-                  {activeDiscount > 25 && (
-                    <span className="bg-[#B22222] text-white px-2 py-0.5 rounded-lg text-[6px] md:text-[8px] font-black uppercase tracking-widest flex items-center gap-1 animate-bounce">
-                      <Sparkles size={8} /> VIP
+                  {hasPrice && (
+                    <span className="bg-[#B22222] text-white px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/20 animate-pulse">
+                      <Percent size={10} /> 25% OFF
                     </span>
                   )}
+                  <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm">{room.tag}</span>
                 </div>
+
                 {isEditMode && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 gap-3">
                     <label className="cursor-pointer bg-white p-2.5 rounded-xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all transform hover:scale-110">
@@ -194,20 +212,32 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                       <div className="flex flex-col gap-2 w-full">
                          <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
                             <span className="text-[9px] font-bold text-gray-400">Regular ৳</span>
-                            <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.price || ""} placeholder="Old Price" onChange={(e) => updateRoom(room.id, 'price', e.target.value)} />
+                            <input 
+                              type="text"
+                              className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" 
+                              value={room.price || ""} 
+                              placeholder="Original Price" 
+                              onChange={(e) => updateRoom(room.id, 'price', e.target.value)} 
+                            />
                          </div>
-                         <div className="flex items-center gap-1 border-b border-gray-100 bg-red-50 px-3 py-1.5 rounded-xl w-full">
-                            <span className="text-[9px] font-bold text-[#B22222]">Special ৳</span>
-                            <input className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Manual Discount Price" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
+                         <div className="flex items-center gap-2 px-3 py-1.5">
+                            <span className="text-[8px] font-black text-gray-300 uppercase">Calculated Discount:</span>
+                            <span className="text-[10px] font-black text-[#B22222]">৳{discountedPriceNum || '0'}</span>
                          </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through">৳{room.price}</span>
-                        <div className="flex items-baseline gap-0.5">
-                           <span className="text-xl md:text-4xl font-serif font-black text-gray-900 tracking-tight">৳{room.discountPrice}</span>
-                           <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
-                        </div>
+                      <div className="flex flex-col">
+                        {!hasPrice ? (
+                          <span className="text-sm md:text-lg font-black text-gray-400 italic">Price on Request</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through">৳{room.price}</span>
+                            <div className="flex items-baseline gap-0.5">
+                               <span className="text-xl md:text-4xl font-serif font-black text-[#B22222] tracking-tight">৳{discountedPriceNum}</span>
+                               <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -228,16 +258,16 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
 
                 <div className="mt-auto">
                   <button 
-                    disabled={isBookingDisabled && !isEditMode}
+                    disabled={(isBookingDisabled || !hasPrice) && !isEditMode}
                     onClick={() => onBook?.(room)}
                     className={`w-full py-3.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-[9px] md:text-[13px] uppercase tracking-[0.2em] shadow-md hover:shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                      isBookingDisabled && !isEditMode 
+                      (isBookingDisabled || !hasPrice) && !isEditMode 
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' 
                       : 'bg-[#9B1C1C] hover:bg-[#B22222] text-white'
                     }`}
                   >
-                    {isBookingDisabled && !isEditMode ? 'Pending' : 'Book Now'}
-                    {!isBookingDisabled && <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
+                    {!hasPrice && !isEditMode ? 'Enquire' : isBookingDisabled && !isEditMode ? 'Pending' : 'Book Now'}
+                    {(!isBookingDisabled && hasPrice) && <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
                   </button>
                 </div>
               </div>

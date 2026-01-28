@@ -17,7 +17,17 @@ interface Props {
   onImageUpload: (file: File) => Promise<string>;
 }
 
-const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose, onImageUpload }) => {
+/**
+ * Utility to ensure we are working with real numbers
+ */
+const parseCurrency = (val: string | undefined): number | null => {
+  if (!val) return null;
+  const clean = val.toString().replace(/,/g, '').trim();
+  const num = parseFloat(clean);
+  return isNaN(num) ? null : num;
+};
+
+const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }) => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [totalGuests, setTotalGuests] = useState(room.id.includes('single') ? 1 : 2);
@@ -55,7 +65,11 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
     });
   }, [totalGuests]);
 
-  const finalPrice = room.discountPrice;
+  // Numerical Price Calculation (Enforce 25% discount)
+  const originalPriceNum = parseCurrency(room.price);
+  const finalPrice = originalPriceNum !== null 
+    ? Math.round(originalPriceNum * 0.75).toString() 
+    : "Price on Request";
 
   const handleGuestChange = (idx: number, field: keyof GuestInfo, val: string) => {
     const updated = [...guests];
@@ -119,16 +133,10 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
 
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/70 backdrop-blur-md" 
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
       
-      {/* Modal Container */}
       <div className="relative bg-white w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-fade-in">
         
-        {/* Sticky Header */}
         <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 md:w-12 md:h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-100">
@@ -142,9 +150,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
           <button onClick={onClose} className="p-3 bg-white rounded-xl text-gray-400 hover:text-hotel-primary transition-all border border-gray-100 shadow-sm active:scale-95"><X size={20} /></button>
         </div>
 
-        {/* Scrollable Center Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 bg-white">
-           {/* Step Indicator */}
            <div className="flex items-center justify-center gap-4 mb-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 1 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>1</div>
               <div className="w-12 h-[2px] bg-gray-100"></div>
@@ -279,7 +285,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
            )}
         </div>
 
-        {/* Sticky Footer */}
         <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex gap-4 shrink-0">
            {step === 2 && (
              <button onClick={() => setStep(1)} className="px-8 md:px-10 py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest text-gray-400 hover:bg-white transition-all">Back</button>
