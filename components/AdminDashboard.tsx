@@ -287,148 +287,156 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Booking Detail Modal */}
+      {/* FIXED Booking Detail Modal (No Clipping, Internal Scroll) */}
       {selectedBooking && (
-        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
-           <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col border border-white/20 my-10 overflow-hidden">
-              <div className="p-8 md:p-10 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
+           <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col border border-white/20 max-h-[92vh] overflow-hidden">
+              
+              {/* Header (Locked) */}
+              <div className="px-8 md:px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-[#B22222]/10 rounded-3xl flex items-center justify-center text-[#B22222]">
-                       <Building2 size={32} />
+                    <div className="w-14 h-14 bg-[#B22222]/10 rounded-2xl flex items-center justify-center text-[#B22222]">
+                       <Building2 size={28} />
                     </div>
                     <div>
-                       <h2 className="text-3xl font-serif font-black text-gray-900 tracking-tighter">Stay Record Overview</h2>
-                       <div className="flex items-center gap-3 mt-1.5">
-                          <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${selectedBooking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                       <h2 className="text-2xl font-serif font-black text-gray-900 tracking-tighter">Stay Record Overview</h2>
+                       <div className="flex items-center gap-3 mt-1">
+                          <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${selectedBooking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
                             {selectedBooking.status}
                           </span>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID: {selectedBooking.id}</span>
+                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Entry ID: {selectedBooking.id}</span>
                        </div>
                     </div>
                  </div>
-                 <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100"><XCircle size={24}/></button>
+                 <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-[#B22222] transition-all shadow-sm border border-gray-100 active:scale-95">
+                   <XCircle size={24}/>
+                 </button>
               </div>
 
-              <div className="p-8 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
-                 {/* Column 1: Core Details */}
-                 <div className="space-y-8">
-                    <div className="space-y-4">
-                       <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2">Booking Info</h4>
-                       <div className="grid grid-cols-1 gap-4">
-                          <div className="bg-gray-50 p-4 rounded-2xl">
-                             <p className="text-[8px] font-black text-gray-400 uppercase">Category</p>
-                             <p className="text-sm font-black text-gray-900">{selectedBooking.roomTitle}</p>
-                          </div>
-                          <div className="bg-gray-50 p-4 rounded-2xl">
-                             <p className="text-[8px] font-black text-gray-400 uppercase">Room Number</p>
-                             <p className="text-sm font-black text-[#B22222]">{selectedBooking.roomNumber || 'Not Assigned'}</p>
-                          </div>
-                          <div className="bg-gray-50 p-4 rounded-2xl">
-                             <p className="text-[8px] font-black text-gray-400 uppercase">Total Bill</p>
-                             <p className="text-sm font-black text-gray-900">৳{selectedBooking.price}</p>
-                          </div>
-                       </div>
-                    </div>
+              {/* Scrollable Body Zone */}
+              <div className="flex-1 overflow-y-auto p-8 md:p-10 no-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                   {/* Column 1: Core Logistics */}
+                   <div className="space-y-8">
+                      <div className="space-y-4">
+                         <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] border-b border-gray-50 pb-2">Booking Logistics</h4>
+                         <div className="grid grid-cols-1 gap-3">
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                               <p className="text-[8px] font-black text-gray-400 uppercase">Unit Category</p>
+                               <p className="text-sm font-black text-gray-900">{selectedBooking.roomTitle}</p>
+                            </div>
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                               <p className="text-[8px] font-black text-gray-400 uppercase">Assigned Room</p>
+                               <p className="text-sm font-black text-[#B22222]">{selectedBooking.roomNumber || 'PENDING'}</p>
+                            </div>
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                               <p className="text-[8px] font-black text-gray-400 uppercase">Settlement Amount</p>
+                               <p className="text-sm font-black text-gray-900">৳{selectedBooking.price}</p>
+                            </div>
+                         </div>
+                      </div>
 
-                    <div className="space-y-4">
-                       <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] border-b pb-2">Temporal Logs</h4>
-                       <div className="space-y-3">
-                          <div className="flex items-center gap-3 bg-blue-50/50 p-3 rounded-xl">
-                             <Clock size={14} className="text-blue-600" />
-                             <div>
-                                <p className="text-[8px] font-black text-blue-400 uppercase">Requested On</p>
-                                <p className="text-[10px] font-bold text-blue-900">{formatTime(selectedBooking.createdAt)}</p>
-                             </div>
-                          </div>
-                          {selectedBooking.arrivedAt && (
-                            <div className="flex items-center gap-3 bg-green-50/50 p-3 rounded-xl">
-                               <UserCheck size={14} className="text-green-600" />
+                      <div className="space-y-4">
+                         <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] border-b border-gray-50 pb-2">Temporal Audit</h4>
+                         <div className="space-y-3">
+                            <div className="flex items-center gap-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100/30">
+                               <Clock size={14} className="text-blue-600" />
                                <div>
-                                  <p className="text-[8px] font-black text-green-400 uppercase">Arrival Log</p>
-                                  <p className="text-[10px] font-bold text-green-900">{formatTime(selectedBooking.arrivedAt)}</p>
+                                  <p className="text-[8px] font-black text-blue-400 uppercase">Entry Logged</p>
+                                  <p className="text-[10px] font-bold text-blue-900">{formatTime(selectedBooking.createdAt)}</p>
                                </div>
                             </div>
-                          )}
-                          {selectedBooking.leftAt && (
-                            <div className="flex items-center gap-3 bg-gray-100 p-3 rounded-xl">
-                               <LogOut size={14} className="text-gray-600" />
-                               <div>
-                                  <p className="text-[8px] font-black text-gray-400 uppercase">Departure Log</p>
-                                  <p className="text-[10px] font-bold text-gray-900">{formatTime(selectedBooking.leftAt)}</p>
+                            {selectedBooking.arrivedAt && (
+                              <div className="flex items-center gap-3 bg-green-50/50 p-3 rounded-xl border border-green-100/30">
+                                 <UserCheck size={14} className="text-green-600" />
+                                 <div>
+                                    <p className="text-[8px] font-black text-green-400 uppercase">Confirmed Arrival</p>
+                                    <p className="text-[10px] font-bold text-green-900">{formatTime(selectedBooking.arrivedAt)}</p>
+                                 </div>
+                              </div>
+                            )}
+                            {selectedBooking.leftAt && (
+                              <div className="flex items-center gap-3 bg-gray-100 p-3 rounded-xl border border-gray-200">
+                                 <LogOut size={14} className="text-gray-600" />
+                                 <div>
+                                    <p className="text-[8px] font-black text-gray-400 uppercase">System Departure</p>
+                                    <p className="text-[10px] font-bold text-gray-900">{formatTime(selectedBooking.leftAt)}</p>
+                                 </div>
+                              </div>
+                            )}
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Column 2 & 3: Guest Identity Registry */}
+                   <div className="lg:col-span-2 space-y-12">
+                      {selectedBooking.guests.map((guest, idx) => guest.legalName && (
+                         <div key={idx} className="space-y-6">
+                            <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 rounded-xl bg-[#B22222] text-white flex items-center justify-center font-black text-xs shadow-lg shadow-red-100">{idx + 1}</div>
+                               <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.2em]">Guest Registry: {idx === 0 ? 'Primary' : 'Companion'}</h4>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100">
+                               <div className="space-y-6">
+                                  <div>
+                                     <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Legal Identity Name</p>
+                                     <p className="text-sm font-black text-gray-900">{guest.legalName}</p>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                     <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Age</p>
+                                        <p className="text-xs font-bold text-gray-600">{guest.age || 'N/A'}</p>
+                                     </div>
+                                     <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Identity NID No.</p>
+                                        <p className="text-xs font-mono font-black text-[#B22222]">{guest.nidNumber}</p>
+                                     </div>
+                                  </div>
+                                  <div className="space-y-3 pt-2">
+                                     <a href={`tel:${guest.phone}`} className="flex items-center gap-3 text-[10px] font-black text-[#B22222] hover:underline bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                        <Phone size={14}/> {guest.phone}
+                                     </a>
+                                     <a href={`tel:${guest.guardianPhone}`} className="flex items-center gap-3 text-[10px] font-black text-gray-500 hover:underline bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                        <ShieldCheck size={14}/> Guardian: {guest.guardianPhone}
+                                     </a>
+                                  </div>
+                               </div>
+                               <div className="space-y-4">
+                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">NID Registry Scan</p>
+                                  <div className="relative rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl bg-gray-200 aspect-video group">
+                                     <img src={guest.nidImageUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" alt="NID Scan" />
+                                     <a href={guest.nidImageUrl} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Eye className="text-white" size={32} />
+                                     </a>
+                                  </div>
                                </div>
                             </div>
-                          )}
-                       </div>
-                    </div>
-                 </div>
-
-                 {/* Column 2 & 3: Guest Identity Registry */}
-                 <div className="lg:col-span-2 space-y-10">
-                    {selectedBooking.guests.map((guest, idx) => guest.legalName && (
-                       <div key={idx} className="space-y-6">
-                          <div className="flex items-center gap-3">
-                             <div className="w-8 h-8 rounded-full bg-[#B22222] text-white flex items-center justify-center font-black text-xs">{idx + 1}</div>
-                             <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.2em]">Guest Identity: {idx === 0 ? 'Primary' : 'Companion'}</h4>
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100">
-                             <div className="space-y-5">
-                                <div>
-                                   <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Legal Name</p>
-                                   <p className="text-sm font-black text-gray-900">{guest.legalName}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                   <div>
-                                      <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Age</p>
-                                      <p className="text-xs font-bold">{guest.age || 'N/A'}</p>
-                                   </div>
-                                   <div>
-                                      <p className="text-[9px] font-black text-gray-400 uppercase mb-1">NID No.</p>
-                                      <p className="text-xs font-mono font-black text-[#B22222]">{guest.nidNumber}</p>
-                                   </div>
-                                </div>
-                                <div className="space-y-3">
-                                   <a href={`tel:${guest.phone}`} className="flex items-center gap-2 text-[10px] font-black text-[#B22222] hover:underline">
-                                      <Phone size={12}/> Phone: {guest.phone}
-                                   </a>
-                                   <a href={`tel:${guest.guardianPhone}`} className="flex items-center gap-2 text-[10px] font-black text-gray-500 hover:underline">
-                                      <ShieldCheck size={12}/> Guardian: {guest.guardianPhone}
-                                   </a>
-                                </div>
-                             </div>
-                             <div className="space-y-3">
-                                <p className="text-[9px] font-black text-gray-400 uppercase">Government ID Scan</p>
-                                <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-gray-200 aspect-video group">
-                                   <img src={guest.nidImageUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" alt="NID Scan" />
-                                   <a href={guest.nidImageUrl} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Eye className="text-white" size={32} />
-                                   </a>
-                                </div>
-                             </div>
-                          </div>
-                       </div>
-                    ))}
-                 </div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
               </div>
 
-              <div className="p-8 md:p-10 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4">
-                 <button onClick={() => setSelectedBooking(null)} className="px-10 py-5 bg-white border border-gray-200 rounded-[2rem] text-[11px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition-all">Close Entry</button>
+              {/* Footer Actions (Locked) */}
+              <div className="p-8 md:p-10 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4 shrink-0">
+                 <button onClick={() => setSelectedBooking(null)} className="px-10 py-5 bg-white border border-gray-200 rounded-[2rem] text-[11px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Dismiss Panel</button>
                  <div className="flex-1"></div>
                  {selectedBooking.status === 'pending' && (
                    <>
-                      <button onClick={() => setRejectingBookingId(selectedBooking.id)} className="px-8 py-5 rounded-[2rem] border border-red-100 text-red-600 font-black text-[11px] uppercase tracking-widest hover:bg-red-50">Reject Entry</button>
-                      <button onClick={() => setAcceptingBookingId(selectedBooking.id)} className="px-12 py-5 bg-[#B22222] text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-red-100">Confirm Reservation</button>
+                      <button onClick={() => setRejectingBookingId(selectedBooking.id)} className="px-8 py-5 rounded-[2rem] border border-red-100 text-red-600 font-black text-[11px] uppercase tracking-widest hover:bg-red-50 transition-all">Decline Registry</button>
+                      <button onClick={() => setAcceptingBookingId(selectedBooking.id)} className="px-12 py-5 bg-[#B22222] text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all">Authorize Stay</button>
                    </>
                  )}
                  {selectedBooking.status === 'accepted' && (
                     <div className="flex gap-4">
                        {!selectedBooking.arrivedAt && (
-                          <button onClick={() => handleStatusChange(selectedBooking.id, 'accepted', 'arrivedAt')} className="px-12 py-5 bg-green-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl shadow-green-100 flex items-center gap-3">
+                          <button onClick={() => handleStatusChange(selectedBooking.id, 'accepted', 'arrivedAt')} className="px-12 py-5 bg-green-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl shadow-green-100 flex items-center gap-3 hover:bg-green-700 transition-all active:scale-95">
                              <UserCheck size={18} /> Confirm Arrival
                           </button>
                        )}
                        {!selectedBooking.leftAt && (
-                          <button onClick={() => handleStatusChange(selectedBooking.id, 'completed', 'leftAt')} className="px-12 py-5 bg-gray-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-3">
+                          <button onClick={() => handleStatusChange(selectedBooking.id, 'completed', 'leftAt')} className="px-12 py-5 bg-gray-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-3 hover:bg-black transition-all active:scale-95">
                              <LogOut size={18} /> Confirm Departure
                           </button>
                        )}
@@ -439,7 +447,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Existing Assignment Modals */}
+      {/* Assignment Modals */}
       {acceptingBookingId && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl animate-fade-in">
@@ -477,10 +485,10 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* User Record Detail */}
+      {/* User Record Detail Modal (Already correct layout but re-synced) */}
       {selectedUser && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-xl rounded-[3rem] overflow-hidden shadow-2xl">
+          <div className="bg-white w-full max-w-xl rounded-[3rem] overflow-hidden shadow-2xl border border-white/20">
             <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div className="flex items-center gap-5">
                 <img src={selectedUser.photoURL} className="w-14 h-14 rounded-2xl border-2 border-white shadow-md" alt="User" />
@@ -493,11 +501,11 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                 <div className="bg-gray-50 p-4 rounded-2xl">
+                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Registry NID</p>
                    <p className="text-sm font-mono font-black text-gray-700">{selectedUser.nidNumber}</p>
                  </div>
-                 <div className="bg-gray-50 p-4 rounded-2xl">
+                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Member Age</p>
                    <p className="text-sm font-black text-gray-700">{selectedUser.age || 'N/A'}</p>
                  </div>
