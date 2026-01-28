@@ -542,7 +542,7 @@ const AppContent = () => {
                 onImageUpload={(f) => uploadToR2(f, 'guide')} 
               />
             } />
-            <Route path="/helpdex" element={<HelpDex />} />
+            <Route path="/helpdex" element={<HelpDex profile={profile} />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
             <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen font-black text-gray-400 uppercase text-[10px] tracking-widest">Access Denied</div>} />

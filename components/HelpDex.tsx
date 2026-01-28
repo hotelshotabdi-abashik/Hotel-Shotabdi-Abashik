@@ -11,7 +11,11 @@ import {
 } from '../services/firebase';
 import { HelpDexMessage, ChatSession, UserProfile } from '../types';
 
-const HelpDex: React.FC = () => {
+interface HelpDexProps {
+  profile: UserProfile | null;
+}
+
+const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
   const user = auth.currentUser;
   const isAdmin = user?.email === OWNER_EMAIL;
   
@@ -92,7 +96,7 @@ const HelpDex: React.FC = () => {
       const newMessage: HelpDexMessage = {
         id: msgRef.key!,
         senderId: user.uid,
-        senderName: user.displayName || 'Anonymous Guest',
+        senderName: isAdmin ? 'Registry Admin' : (profile?.legalName || user.displayName || 'Guest'),
         senderPhoto: user.photoURL || '',
         text,
         timestamp,
@@ -102,38 +106,34 @@ const HelpDex: React.FC = () => {
       await set(msgRef, newMessage);
 
       // Update Session Overview
-      const sessionData = {
-        userId: activeUserId,
-        userName: isAdmin ? 'Hotel Registry' : (user.displayName || 'Guest'),
-        userPhoto: user.photoURL || '',
-        lastMessage: text,
-        lastTimestamp: timestamp,
-      };
-
       if (!isAdmin) {
-        // Increment unread for admin
+        // GUEST SENDING MESSAGE
         const currentRef = ref(db, `help_dex/active_chats/${user.uid}`);
         const snapshot = await get(currentRef);
         const currentUnread = (snapshot.exists() ? snapshot.val().unreadCount : 0) + 1;
         
-        await update(currentRef, { 
-          ...sessionData, 
-          unreadCount: currentUnread,
-          userName: user.displayName || 'Guest' 
-        });
-        
+        const sessionData: Partial<ChatSession> = {
+          userId: user.uid,
+          userName: profile?.legalName || user.displayName || 'Unverified Guest',
+          userPhoto: user.photoURL || '',
+          lastMessage: text,
+          lastTimestamp: timestamp,
+          unreadCount: currentUnread
+        };
+
+        await update(currentRef, sessionData);
         setCooldown(60); // 1 minute anti-spam
       } else {
+        // ADMIN SENDING MESSAGE
+        // We update the session without overwriting the guest's name/photo in the list
         await update(ref(db, `help_dex/active_chats/${activeUserId}`), {
-          ...sessionData,
-          unreadCount: 0
+          lastMessage: text,
+          lastTimestamp: timestamp,
+          unreadCount: 0 // Admin viewing/replying resets unread
         });
       }
 
-      // Create Notification for the OTHER party
-      const notifyUserId = isAdmin ? activeUserId : 'admin_broadcast'; // Simplified logic
-      // In production, we'd fetch the specific owner UID. Here we just target the admin role.
-      
+      // Create Notification
       await createNotification(isAdmin ? activeUserId : 'hotelshotabdiabashik@gmail.com', {
         title: isAdmin ? 'New Registry Message' : 'Help Dex Inquiry',
         message: text,
@@ -148,8 +148,8 @@ const HelpDex: React.FC = () => {
   };
 
   const filteredSessions = sessions.filter(s => 
-    s.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+    (s.userName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!user) {
@@ -191,13 +191,13 @@ const HelpDex: React.FC = () => {
                   onClick={() => setActiveUserId(session.userId)}
                   className={`w-full p-6 text-left border-b border-gray-50 transition-all flex gap-4 relative group ${activeUserId === session.userId ? 'bg-white shadow-inner' : 'hover:bg-white'}`}
                 >
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-sm">
-                    <img src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}`} className="w-full h-full object-cover" />
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-sm ring-2 ring-white">
+                    <img src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}&background=random`} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight truncate">{session.userName}</h4>
-                       <span className="text-[8px] font-bold text-gray-300">{new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight truncate">{session.userName || 'Unknown Guest'}</h4>
+                       <span className="text-[8px] font-bold text-gray-300 shrink-0">{new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <p className="text-[10px] text-gray-400 font-medium truncate italic">{session.lastMessage}</p>
                   </div>
