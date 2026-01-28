@@ -32,7 +32,7 @@ import {
   onMessage
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, Download, Upload } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, Download, Upload, ShieldCheck, Gavel } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -546,9 +546,9 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        <footer className="bg-white border-t border-gray-50 py-16 px-6 md:px-12">
+        <footer className="bg-white border-t border-gray-100 py-20 px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Logo" />
@@ -557,7 +557,34 @@ const AppContent = () => {
                     <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
                   </div>
                 </div>
+                <p className="text-[11px] text-gray-400 font-medium leading-relaxed max-w-xs">
+                  Premium hospitality and residential excellence in the heart of Sylhet.
+                </p>
               </div>
+
+              <div className="space-y-6">
+                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Compliance</h4>
+                 <nav className="flex flex-col gap-4">
+                    <Link to="/privacypolicy" className="text-[10px] font-black text-gray-400 hover:text-hotel-primary uppercase tracking-widest flex items-center gap-2 transition-colors">
+                       <ShieldCheck size={14} /> Privacy Policy
+                    </Link>
+                    <Link to="/termsofservice" className="text-[10px] font-black text-gray-400 hover:text-hotel-primary uppercase tracking-widest flex items-center gap-2 transition-colors">
+                       <Gavel size={14} /> Terms of Service
+                    </Link>
+                 </nav>
+              </div>
+
+              <div className="space-y-6">
+                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Contact</h4>
+                 <div className="flex flex-col gap-3">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">hotelshotabdiabashik@gmail.com</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">+880 1717-425702</p>
+                 </div>
+              </div>
+            </div>
+            
+            <div className="pt-10 border-t border-gray-50 text-center">
+               <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em]">© 2024 Hotel Shotabdi Residential. All Rights Reserved.</p>
             </div>
           </div>
         </footer>
