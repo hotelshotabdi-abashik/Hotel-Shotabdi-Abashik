@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -268,7 +269,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
             <div className="w-7 h-7 md:w-10 md:h-10 bg-white/5 backdrop-blur rounded-full flex items-center justify-center text-white/40 border border-white/10">
                 <ChevronDown size={18} />
             </div>
-            <span className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Explore Stay</span>
+            <span className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Tourist Guide</span>
         </div>
       </div>
       
