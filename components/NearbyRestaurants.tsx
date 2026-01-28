@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, Search, Wand2, CheckSquare, Phone, AlertCircle } from 'lucide-react';
 import { Restaurant } from '../types';
@@ -180,7 +181,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
           <div className="relative w-full">
             <input 
               type="text" 
-              placeholder="Search by restaurant name or cuisine (e.g. Biryani, Italian)..."
+              placeholder="Search cuisine (e.g. Biryani)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white border border-gray-100 shadow-xl rounded-[1.5rem] py-5 pl-14 pr-6 text-sm focus:border-blue-600 outline-none transition-all"
@@ -216,147 +217,108 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
         {filteredList.slice(0, visibleItems).map((res) => (
-          <div key={res.id} className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative">
-            <div className="h-48 relative overflow-hidden shrink-0">
+          <div key={res.id} className="group bg-white rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative">
+            <div className="h-32 md:h-48 relative overflow-hidden shrink-0">
               <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
-              <div className="absolute top-4 left-4">
+              <div className="absolute top-2 md:top-4 left-2 md:left-4">
                 {isEditMode ? (
                   <input 
-                    className="bg-white/95 backdrop-blur shadow-sm px-3 py-1 rounded-xl text-[9px] font-black text-gray-800 outline-none border border-blue-200"
+                    className="bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-800 outline-none border border-blue-200"
                     value={res.tag}
                     onChange={(e) => updateRes(res.id, 'tag', e.target.value)}
                   />
                 ) : (
-                  <span className="bg-white/95 backdrop-blur shadow-sm px-3 py-1 rounded-xl text-[9px] font-black text-gray-800">
+                  <span className="bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-800">
                     {res.tag}
                   </span>
                 )}
               </div>
               
               {isEditMode && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <label className="cursor-pointer bg-white p-3 rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 md:gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <label className="cursor-pointer bg-white p-2 md:p-3 rounded-xl md:rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all">
                       <input type="file" className="hidden" onChange={(e) => handleImageChange(res.id, e)} />
-                      {uploadingId === res.id ? <RefreshCw size={20} className="animate-spin" /> : <Camera size={20} />}
+                      {uploadingId === res.id ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
                    </label>
                    <button 
                     onClick={() => deleteRes(res.id)}
-                    className="bg-white p-3 rounded-2xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                    className="bg-white p-2 md:p-3 rounded-xl md:rounded-2xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
                    >
-                     <Trash2 size={20} />
+                     <Trash2 size={14} />
                    </button>
                 </div>
               )}
             </div>
 
-            <div className="p-6 flex-1 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
+            <div className="p-4 md:p-6 flex-1 flex flex-col">
+              <div className="flex flex-col md:flex-row justify-between items-start mb-2 md:mb-4 gap-1 md:gap-2">
+                <div className="flex-1 min-w-0">
                   {isEditMode ? (
                     <input 
-                      className="text-xl font-black text-gray-900 border-b-2 border-blue-600 outline-none w-full"
+                      className="text-sm md:text-xl font-black text-gray-900 border-b border-blue-600 outline-none w-full"
                       value={res.name}
-                      placeholder="Restaurant Name"
+                      placeholder="Name"
                       onChange={(e) => updateRes(res.id, 'name', e.target.value)}
                     />
                   ) : (
-                    <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{res.name}</h3>
+                    <h3 className="text-sm md:text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate">{res.name}</h3>
                   )}
                   {isEditMode ? (
                     <input 
-                      className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 w-full outline-none"
+                      className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 w-full outline-none"
                       value={res.cuisine}
-                      placeholder="Cuisine Type"
+                      placeholder="Cuisine"
                       onChange={(e) => updateRes(res.id, 'cuisine', e.target.value)}
                     />
                   ) : (
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{res.cuisine}</p>
+                    <p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1 truncate">{res.cuisine}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded-lg">
-                  <span className="text-xs font-black">{res.rating}</span>
-                  <Star size={10} fill="currentColor" />
+                <div className="flex items-center gap-0.5 bg-green-50 text-green-600 px-1.5 py-0.5 rounded-md self-end md:self-start">
+                  <span className="text-[10px] md:text-xs font-black">{res.rating}</span>
+                  <Star size={8} fill="currentColor" />
                 </div>
               </div>
 
               <div className="mb-4">
                 {isEditMode ? (
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
+                    <Phone className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" size={10} />
                     <input 
-                      className="w-full bg-gray-50 rounded-xl py-2 pl-8 pr-4 text-[10px] font-bold text-gray-700 outline-none border border-gray-100"
+                      className="w-full bg-gray-50 rounded-lg py-1 pl-6 pr-2 text-[9px] font-bold text-gray-700 outline-none border border-gray-100"
                       value={res.phone || ''}
-                      placeholder="Phone Number"
+                      placeholder="Phone"
                       onChange={(e) => updateRes(res.id, 'phone', e.target.value)}
                     />
                   </div>
                 ) : res.phone && (
-                  <a href={`tel:${res.phone}`} className="flex items-center gap-2 text-[10px] font-black text-blue-600 hover:underline">
-                    <Phone size={12} /> {res.phone}
+                  <a href={`tel:${res.phone}`} className="flex items-center gap-1.5 text-[9px] font-black text-blue-600 hover:underline">
+                    <Phone size={10} /> {res.phone}
                   </a>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-auto pt-6 border-t border-gray-50">
-                <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">Travel Time</span>
-                  <div className="flex items-center gap-2 text-[11px] font-black text-gray-700">
-                    <Clock size={12} className="text-blue-600" />
-                    {isEditMode ? (
-                      <input 
-                        className="w-full bg-gray-50 rounded px-1 outline-none border-b border-blue-200"
-                        value={res.time}
-                        onChange={(e) => updateRes(res.id, 'time', e.target.value)}
-                      />
-                    ) : res.time}
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-auto pt-4 border-t border-gray-50">
+                <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] font-black text-gray-700">
+                  <Clock size={10} className="text-blue-600" />
+                  <span>{res.time}</span>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">From Hotel</span>
-                  <div className="flex items-center gap-2 text-[11px] font-black text-gray-700">
-                    <MapPin size={12} className="text-blue-600" />
-                    {isEditMode ? (
-                      <input 
-                        className="w-full bg-gray-50 rounded px-1 outline-none border-b border-blue-200"
-                        value={res.distance}
-                        onChange={(e) => updateRes(res.id, 'distance', e.target.value)}
-                      />
-                    ) : res.distance}
-                  </div>
+                <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] font-black text-gray-700">
+                  <MapPin size={10} className="text-blue-600" />
+                  <span>{res.distance}</span>
                 </div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-4 md:mt-6">
                 {isEditMode ? (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                       <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Sync (Titled)</label>
-                       <div className="flex gap-2">
-                         <button 
-                            onClick={() => syncMapLink(res.id)}
-                            className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline group/sync"
-                            title="Auto-fill search link for title"
-                          >
-                            <Wand2 size={10} className="group-hover/sync:rotate-12 transition-transform" /> Magic Sync
-                          </button>
-                          {res.mapUrl && (
-                            <a 
-                              href={res.mapUrl} 
-                              target="_blank" 
-                              className="text-[8px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
-                            >
-                              <CheckSquare size={10} /> Live Test
-                            </a>
-                          )}
-                       </div>
-                    </div>
+                  <div className="space-y-1">
                     <div className="relative">
-                      <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
+                      <Globe size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-blue-600" />
                       <input 
-                        className="w-full bg-gray-50 rounded-xl py-3 pl-8 pr-4 text-[10px] font-medium outline-none border border-gray-100 focus:border-blue-600"
-                        placeholder="Search link will appear here..."
+                        className="w-full bg-gray-50 rounded-lg py-2 pl-6 pr-2 text-[8px] font-medium outline-none border border-gray-100 focus:border-blue-600"
+                        placeholder="Map link..."
                         value={res.mapUrl || ''}
                         onChange={(e) => updateRes(res.id, 'mapUrl', e.target.value)}
                       />
@@ -367,9 +329,9 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                     href={res.mapUrl || generateMapUrl(res.name)} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/map"
+                    className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest py-2 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-1.5 group/map"
                   >
-                    <MapIcon size={14} className="group-hover/map:text-white transition-colors" /> View Location
+                    <MapIcon size={12} className="group-hover/map:text-white transition-colors" /> Location
                   </a>
                 )}
               </div>
@@ -389,12 +351,12 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       </div>
 
       {visibleItems < filteredList.length && (
-        <div className="mt-16 text-center">
+        <div className="mt-12 md:mt-16 text-center">
           <button 
             onClick={() => setVisibleItems(prev => prev + 9)}
-            className="group px-10 py-5 bg-white border-2 border-gray-100 text-gray-900 font-black text-[11px] uppercase tracking-[0.2em] rounded-[2rem] hover:border-blue-600 hover:text-blue-600 transition-all shadow-xl shadow-gray-100/50"
+            className="group px-6 md:px-10 py-3 md:py-5 bg-white border-2 border-gray-100 text-gray-900 font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] rounded-xl md:rounded-[2rem] hover:border-blue-600 hover:text-blue-600 transition-all shadow-xl shadow-gray-100/50"
           >
-            Show More Local Eateries <ChevronRight size={16} className="inline ml-2 group-hover:translate-x-1 transition-transform" />
+            Show More <ChevronRight size={14} className="inline ml-1 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone } from 'lucide-react';
 import { Attraction } from '../types';
@@ -59,7 +60,7 @@ const DEFAULT_ATTRACTIONS: Attraction[] = [
   { id: 47, name: "Amborkhana Point", subtitle: "Landmark", distance: "1.8 km", description: "A major intersection and gateway to the airport and tea gardens.", image: "https://images.unsplash.com/photo-1623057000739-30ac5bb06227?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Amborkhana+Point+Sylhet" },
   { id: 48, name: "Bandar Bazar", subtitle: "Leisure", distance: "0.9 km", description: "One of the oldest wholesale and retail markets in the city.", image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Bandar+Bazar+Sylhet" },
   { id: 49, name: "Shah Amanat Shopping", subtitle: "Leisure", distance: "1.2 km", description: "Reliable shopping mall for local needs and affordable clothing.", image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Shah+Amanat+Shopping+Sylhet" },
-  { id: 50, name: "Hotel Shotabdi Lobby", subtitle: "Home", distance: "0 km", description: "Our very own lounge, providing information and travel assistance for guests.", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential+Sylhet" }
+  { id: 50, name: "Hotel Shotabdi Lobby", subtitle: "Home", distance: "0 km", description: "Our very own lobby lounge, providing information and travel assistance for guests.", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80", mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential+Sylhet" }
 ];
 
 const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdate, onImageUpload }) => {
@@ -126,178 +127,111 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
 
   return (
     <section id="guide" className="bg-gray-50/50 min-h-screen w-full">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-8 md:pb-12">
         <div className="text-center flex flex-col items-center">
-            <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6 shadow-sm">
-              <Compass size={32} />
+            <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm">
+              <Compass size={24} />
             </div>
-            <h2 className="text-3xl md:text-6xl font-sans text-gray-900 mb-6 font-black tracking-tighter">Sylhet Navigator</h2>
-            <p className="text-gray-500 text-sm md:text-lg max-w-2xl mx-auto leading-relaxed font-light mb-10">
-               From spiritual shrines to mystical swamp forests, discover the absolute best of Sylhet. Distances are calculated from <span className="text-hotel-primary font-black">Hotel Shotabdi</span>.
+            <h2 className="text-3xl md:text-6xl font-sans text-gray-900 mb-4 md:mb-6 font-black tracking-tighter">Sylhet Navigator</h2>
+            <p className="text-gray-500 text-xs md:text-lg max-w-2xl mx-auto leading-relaxed font-light mb-8 md:mb-10 px-4">
+               Explore shrines, nature, and culture. Distances from <span className="text-hotel-primary font-black">Hotel Shotabdi</span>.
             </p>
             
-            <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl">
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl px-4 md:px-0">
               <div className="relative flex-1 w-full">
                   <input 
                       type="text" 
-                      placeholder="Search landmarks, shrines, nature spots..."
+                      placeholder="Search landmarks..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white border border-gray-100 shadow-xl rounded-[1.5rem] py-5 pl-14 pr-6 text-sm focus:border-blue-600 outline-none transition-all"
+                      className="w-full bg-white border border-gray-100 shadow-xl rounded-xl md:rounded-[1.5rem] py-3 md:py-5 pl-10 md:pl-14 pr-4 text-xs md:text-sm focus:border-blue-600 outline-none transition-all"
                   />
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
+                  <Search className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
               </div>
               
               {isEditMode && (
                 <button 
                   onClick={addSpot}
-                  className="bg-green-600 text-white px-8 py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-green-100 hover:scale-105 active:scale-95 transition-all w-full md:w-auto shrink-0"
+                  className="bg-green-600 text-white px-6 md:px-8 py-3 md:py-5 rounded-xl md:rounded-[1.5rem] font-black text-[8px] md:text-[10px] uppercase tracking-widest flex items-center gap-2 md:gap-3 shadow-xl shadow-green-100 hover:scale-105 active:scale-95 transition-all w-full md:w-auto shrink-0"
                 >
-                  <Plus size={20} /> Add Place
+                  <Plus size={16} /> Add Place
                 </button>
               )}
             </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-32">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-24 md:pb-32">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
           {filtered.slice(0, visibleCount).map((spot) => (
-            <div key={spot.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 group flex flex-col h-full relative hover:shadow-2xl transition-all duration-700">
-              <div className="relative h-52 overflow-hidden shrink-0">
+            <div key={spot.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 group flex flex-col h-full relative hover:shadow-2xl transition-all duration-700">
+              <div className="relative h-32 md:h-52 overflow-hidden shrink-0">
                 <img src={spot.image} alt={spot.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                 
-                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur shadow-xl text-blue-600 text-[9px] font-black px-3 py-1.5 rounded-xl border border-blue-50">
-                  {isEditMode ? (
-                    <div className="flex items-center gap-1">
-                      <MapPin size={10} />
-                      <input 
-                        className="bg-transparent border-none outline-none w-14 font-black" 
-                        value={spot.distance} 
-                        onChange={(e) => updateSpot(spot.id, 'distance', e.target.value)} 
-                      />
-                    </div>
-                  ) : (
-                    <span className="flex items-center gap-1.5"><MapPin size={10} /> {spot.distance}</span>
-                  )}
+                <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-white/95 backdrop-blur shadow-xl text-blue-600 text-[7px] md:text-[9px] font-black px-2 py-1 rounded-lg md:rounded-xl border border-blue-50">
+                  <span className="flex items-center gap-1"><MapPin size={8} /> {spot.distance}</span>
                 </div>
 
                 {isEditMode && (
-                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <label className="cursor-pointer bg-white p-3 rounded-2xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <label className="cursor-pointer bg-white p-2 rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
                         <input type="file" className="hidden" onChange={(e) => handleImageChange(spot.id, e)} />
-                        {uploadingId === spot.id ? <RefreshCw size={20} className="animate-spin" /> : <Camera size={20} />}
+                        {uploadingId === spot.id ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
                      </label>
                      <button 
                       onClick={() => deleteSpot(spot.id)}
-                      className="bg-white p-3 rounded-2xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                      className="bg-white p-2 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
                      >
-                       <Trash2 size={20} />
+                       <Trash2 size={14} />
                      </button>
                   </div>
                 )}
               </div>
 
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="mb-4">
+              <div className="p-3 md:p-6 flex-1 flex flex-col">
+                <div className="mb-2 md:mb-4">
                   {isEditMode ? (
                     <input 
-                      className="text-lg font-black text-gray-900 border-b-2 border-blue-600 outline-none w-full mb-1"
+                      className="text-sm md:text-lg font-black text-gray-900 border-b border-blue-600 outline-none w-full mb-1"
                       value={spot.name}
-                      placeholder="Place Name"
+                      placeholder="Name"
                       onChange={(e) => updateSpot(spot.id, 'name', e.target.value)}
                     />
                   ) : (
-                    <h3 className="text-lg font-black text-gray-900 group-hover:text-blue-600 transition-colors">{spot.name}</h3>
+                    <h3 className="text-[12px] md:text-lg font-black text-gray-900 group-hover:text-blue-600 transition-colors leading-tight line-clamp-1">{spot.name}</h3>
                   )}
-                  {isEditMode ? (
-                    <input 
-                      className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1.5 w-full bg-gray-50 rounded px-2 py-1 outline-none"
-                      value={spot.subtitle}
-                      placeholder="Category (e.g. Nature)"
-                      onChange={(e) => updateSpot(spot.id, 'subtitle', e.target.value)}
-                    />
-                  ) : (
-                    <span className="text-[9px] font-black text-blue-600 tracking-[0.2em] uppercase block mt-1.5">{spot.subtitle}</span>
-                  )}
+                  <span className="text-[7px] md:text-[9px] font-black text-blue-600 tracking-wider uppercase block mt-0.5">{spot.subtitle}</span>
                 </div>
 
-                {/* Optional Phone Display for Guide */}
-                <div className="mb-4">
-                  {isEditMode ? (
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
-                      <input 
-                        className="w-full bg-gray-50 rounded-xl py-2 pl-8 pr-4 text-[10px] font-bold text-gray-700 outline-none border border-gray-100"
-                        value={spot.phone || ''}
-                        placeholder="Contact Number (Optional)"
-                        onChange={(e) => updateSpot(spot.id, 'phone', e.target.value)}
-                      />
-                    </div>
-                  ) : spot.phone && (
-                    <a href={`tel:${spot.phone}`} className="flex items-center gap-2 text-[10px] font-black text-blue-600 hover:underline">
-                      <Phone size={12} /> {spot.phone}
+                <div className="mb-2 md:mb-4">
+                  {spot.phone && (
+                    <a href={`tel:${spot.phone}`} className="flex items-center gap-1 text-[8px] md:text-[10px] font-black text-blue-600 hover:underline">
+                      <Phone size={8} /> {spot.phone}
                     </a>
                   )}
                 </div>
                 
                 {isEditMode ? (
                   <textarea 
-                    className="text-[11px] text-gray-500 bg-gray-50 rounded-xl p-3 h-24 w-full outline-none mt-2 leading-relaxed font-medium"
+                    className="text-[9px] md:text-[11px] text-gray-500 bg-gray-50 rounded-lg p-2 h-16 w-full outline-none leading-relaxed font-medium"
                     value={spot.description}
-                    placeholder="Brief history or attraction details..."
                     onChange={(e) => updateSpot(spot.id, 'description', e.target.value)}
                   />
                 ) : (
-                  <p className="text-[11px] text-gray-500 leading-relaxed mb-6 flex-grow line-clamp-3 italic">
+                  <p className="text-[9px] md:text-[11px] text-gray-500 leading-relaxed mb-3 md:mb-6 flex-grow line-clamp-2 md:line-clamp-3 italic">
                     {spot.description}
                   </p>
                 )}
 
-                <div className="mt-auto pt-6 border-t border-gray-50">
-                  {isEditMode ? (
-                    <div className="flex flex-col gap-2">
-                       <div className="flex justify-between items-center">
-                          <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Map Sync (Titled)</label>
-                          <div className="flex gap-2">
-                             <button 
-                                onClick={() => syncMapLink(spot.id)}
-                                className="text-[8px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline group/sync"
-                                title="Auto-generate link for titled name"
-                              >
-                                <Wand2 size={10} className="group-hover/sync:rotate-12 transition-transform" /> Magic Sync
-                              </button>
-                              {spot.mapUrl && (
-                                <a 
-                                  href={spot.mapUrl} 
-                                  target="_blank" 
-                                  className="text-[8px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
-                                >
-                                  <CheckSquare size={10} /> Live Test
-                                </a>
-                              )}
-                          </div>
-                       </div>
-                       <div className="relative">
-                         <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
-                         <input 
-                            className="w-full bg-gray-50 rounded-xl py-2 pl-8 pr-4 text-[10px] font-medium outline-none border border-gray-100 focus:border-blue-600"
-                            placeholder="URL will auto-fill..."
-                            value={spot.mapUrl}
-                            onChange={(e) => updateSpot(spot.id, 'mapUrl', e.target.value)}
-                         />
-                       </div>
-                    </div>
-                  ) : (
-                    <a 
-                      href={spot.mapUrl.startsWith('http') ? spot.mapUrl : generateMapUrl(spot.mapUrl || spot.name)} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-500 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn"
-                    >
-                      <MapIcon size={14} className="group-hover/btn:text-white transition-colors" /> Location Details
-                    </a>
-                  )}
+                <div className="mt-auto pt-3 md:pt-6 border-t border-gray-50">
+                  <a 
+                    href={spot.mapUrl.startsWith('http') ? spot.mapUrl : generateMapUrl(spot.mapUrl || spot.name)} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-500 font-black text-[8px] md:text-[10px] uppercase tracking-widest py-2 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-1.5 group/btn"
+                  >
+                    <MapIcon size={12} className="group-hover/btn:text-white transition-colors" /> Location
+                  </a>
                 </div>
               </div>
             </div>
@@ -305,12 +239,12 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
         </div>
 
         {visibleCount < filtered.length && (
-          <div className="mt-20 text-center">
+          <div className="mt-12 md:mt-20 text-center">
             <button 
               onClick={() => setVisibleCount(prev => prev + 12)}
-              className="px-10 py-5 bg-blue-600 text-white font-black text-[11px] uppercase tracking-[0.3em] rounded-[2rem] shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
+              className="px-8 md:px-10 py-3 md:py-5 bg-blue-600 text-white font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] rounded-xl md:rounded-[2rem] shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95"
             >
-              Explore More Landmarks
+              Load More Places
             </button>
           </div>
         )}
