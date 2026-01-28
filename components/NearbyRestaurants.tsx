@@ -21,8 +21,7 @@ const DEFAULT_RESTAURANTS: Restaurant[] = [
     image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80", 
     tag: "🏢 AC Rooms • Restaurant", 
     description: "An affordable, mid-range hotel with clean AC rooms, a restaurant, and helpful staff.",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=Rutbah+Hotel+International+Sylhet",
-    isRecommended: true
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Rutbah+Hotel+International+Sylhet" 
   },
   { 
     id: 102, 
@@ -48,7 +47,7 @@ const DEFAULT_RESTAURANTS: Restaurant[] = [
     description: "A budget-friendly option located close to the city center, noted for clean rooms and well-behaved staff.",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Grand+Brother's+Sylhet" 
   },
-  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "5m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pansi+Restaurant+Sylhet", phone: "01726-100200", isRecommended: true },
+  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "5m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pansi+Restaurant+Sylhet", phone: "01726-100200" },
   { id: 2, name: "Pach Bhai Restaurant", cuisine: "Bengali", rating: 4.7, time: "6m", distance: "0.3 km", image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80", tag: "🍛 Traditional Thali", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pach+Bhai+Restaurant+Sylhet", phone: "01723-556677" },
   { id: 3, name: "Woondaal King Kebab", cuisine: "Mughlai", rating: 4.6, time: "8m", distance: "0.5 km", image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&q=80", tag: "🍢 Kebab • Biryani", mapUrl: "https://www.google.com/maps/search/?api=1&query=Woondaal+King+Kebab+Sylhet", phone: "01712-889900" },
   { id: 4, name: "Eatopia", cuisine: "International", rating: 4.5, time: "10m", distance: "0.8 km", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80", tag: "🍕 Pizza • Pasta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Eatopia+Sylhet", phone: "01715-443322" },
@@ -62,21 +61,15 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
 
   const displayList = restaurants.length > 0 ? restaurants : DEFAULT_RESTAURANTS;
 
-  // Filtered and sorted list: recommended first
+  // Filtered list based on search
   const filteredList = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    const filtered = q 
-      ? displayList.filter(res => 
-          res.name.toLowerCase().includes(q) || 
-          res.cuisine.toLowerCase().includes(q) || 
-          (res.tag && res.tag.toLowerCase().includes(q))
-        )
-      : displayList;
-    
-    return [...filtered].sort((a, b) => {
-      if (a.isRecommended === b.isRecommended) return 0;
-      return a.isRecommended ? -1 : 1;
-    });
+    if (!q) return displayList;
+    return displayList.filter(res => 
+      res.name.toLowerCase().includes(q) || 
+      res.cuisine.toLowerCase().includes(q) || 
+      (res.tag && res.tag.toLowerCase().includes(q))
+    );
   }, [displayList, searchQuery]);
 
   const generateMapUrl = (name: string) => {
@@ -120,8 +113,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
       tag: "🍴 New Experience",
       description: "Brief description of the place and what makes it special.",
       mapUrl: "",
-      phone: "",
-      isRecommended: false
+      phone: ""
     };
     onUpdate?.([newItem, ...displayList]);
   };
@@ -162,14 +154,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
           <div key={res.id} className="group bg-white rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative h-full">
             <div className="h-32 md:h-48 relative overflow-hidden shrink-0">
               <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
-              
-              {/* Badges Overlay */}
-              <div className="absolute top-2 md:top-4 left-2 md:left-4 flex flex-col gap-1.5">
-                {res.isRecommended && (
-                  <span className="bg-amber-400 text-gray-900 px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 border border-white/50">
-                    <Star size={10} fill="currentColor" /> Highly Recommended
-                  </span>
-                )}
+              <div className="absolute top-2 md:top-4 left-2 md:left-4">
                 {isEditMode ? (
                   <input 
                     className="bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-800 outline-none border border-blue-200"
@@ -189,12 +174,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                       <input type="file" className="hidden" onChange={(e) => handleImageChange(res.id, e)} />
                       {uploadingId === res.id ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
                    </label>
-                   <button 
-                      onClick={() => updateRes(res.id, 'isRecommended', !res.isRecommended)} 
-                      className={`p-2 md:p-3 rounded-xl md:rounded-2xl transition-all ${res.isRecommended ? 'bg-amber-400 text-gray-900' : 'bg-white text-gray-400'}`}
-                    >
-                      <Star size={14} fill={res.isRecommended ? "currentColor" : "none"} />
-                    </button>
                    <button 
                     onClick={() => deleteRes(res.id)}
                     className="bg-white p-2 md:p-3 rounded-xl md:rounded-2xl text-red-600 hover:bg-red-600 hover:text-white transition-all"

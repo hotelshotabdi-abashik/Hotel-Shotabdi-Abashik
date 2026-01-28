@@ -82,7 +82,7 @@ const AppContent = () => {
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
-      title: "Experience Luxury",
+      title: "",
       subtitle: "Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       buttonText: "Book Now",
@@ -90,34 +90,71 @@ const AppContent = () => {
     },
     rooms: ROOMS_DATA,
     offers: [],
-    restaurants: [],
+    restaurants: [
+      { 
+        id: 101, 
+        name: "Rutbah Hotel International", 
+        cuisine: "Mid-range Hotel", 
+        rating: 4.3, 
+        time: "12m", 
+        distance: "1.5 km", 
+        image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80", 
+        tag: "🏢 AC Rooms • Restaurant", 
+        description: "An affordable, mid-range hotel with clean AC rooms, a restaurant, and helpful staff.",
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=Rutbah+Hotel+International+Sylhet" 
+      },
+      { 
+        id: 102, 
+        name: "SAUDIA RESIDENTIAL HOTEL", 
+        cuisine: "Residential Hotel", 
+        rating: 4.2, 
+        time: "8m", 
+        distance: "0.8 km", 
+        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80", 
+        tag: "🧹 Clean • Friendly Staff", 
+        description: "Praised for its clean environment, good location, and friendly staff. Some guests noted the absence of on-site food facilities.",
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=SAUDIA+RESIDENTIAL+HOTEL+Sylhet" 
+      },
+      { 
+        id: 103, 
+        name: "Hotel Grand Brother's", 
+        cuisine: "Budget Hotel", 
+        rating: 3.5, 
+        time: "10m", 
+        distance: "1.2 km", 
+        image: "https://images.unsplash.com/photo-1551882547-ff43c59fe4c2?auto=format&fit=crop&q=80", 
+        tag: "💰 Budget Friendly", 
+        description: "A budget-friendly option located close to the city center, noted for clean rooms and well-behaved staff.",
+        mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Grand+Brother's+Sylhet" 
+      }
+    ],
     touristGuides: [],
     announcement: "25% OFF DISCOUNT",
     lastUpdated: 0
   });
 
-  // REAL-TIME SYNC FROM FIREBASE - Strictly restore from remote
-  useEffect(() => {
-    const configRef = ref(db, 'site-config');
-    const unsubscribe = onValue(configRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        // Force local state to match Firebase unless the user is actively saving their local changes
-        setSiteConfig(prev => {
-          if (!isSaving) {
-            return { ...prev, ...data };
-          }
-          return prev;
-        });
+  const fetchConfig = useCallback(async () => {
+    try {
+      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data === 'object') {
+          setSiteConfig(prev => {
+             const merged = { ...prev, ...data };
+             return (data.lastUpdated || 0) > prev.lastUpdated ? merged : prev;
+          });
+        }
       }
+    } catch (e) {
+      console.warn("Using default settings.");
+    } finally {
       setIsConfigLoading(false);
-    }, (error) => {
-      console.error("Firebase sync error:", error);
-      setIsConfigLoading(false);
-    });
+    }
+  }, []);
 
-    return () => unsubscribe();
-  }, [isSaving]);
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   const validOffers = useMemo(() => {
     const now = Date.now();
@@ -165,25 +202,23 @@ const AppContent = () => {
     setIsSaving(true);
     try {
       const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
-      
-      // Update Firebase (Primary Source of Truth)
-      await set(ref(db, 'site-config'), updatedConfig);
-
-      // Backup to Worker (Optional secondary store)
-      fetch(`${CMS_WORKER_URL}/site-config.json`, {
+      const res = await fetch(`${CMS_WORKER_URL}/site-config.json`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': ADMIN_SECRET 
         },
         body: JSON.stringify(updatedConfig)
-      }).catch(() => {});
-
-      alert("Website published live!");
-      setIsEditMode(false);
+      });
+      if (res.ok) {
+        setSiteConfig(updatedConfig);
+        alert("Website published live!");
+        setIsEditMode(false);
+      } else {
+        throw new Error("Save failed");
+      }
     } catch (e) {
-      alert("Error saving settings to Firebase.");
-      console.error(e);
+      alert("Error saving settings.");
     } finally {
       setIsSaving(false);
     }
@@ -318,7 +353,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Restoring Hub Configuration...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Configuration...</p>
       </div>
     );
   }
@@ -362,8 +397,8 @@ const AppContent = () => {
                 <input
                   className="bg-white/20 border-none outline-none text-center w-full font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] py-1 rounded-lg placeholder:text-white/40"
                   value={siteConfig.announcement}
-                  onChange={(e) => setSiteConfig(prev => ({ ...prev, announcement: e.target.value }))}
-                  placeholder="ANNOUNCEMENT TEXT (e.g. 25% OFF DISCOUNT)"
+                  onChange={(e) => setSiteConfig(prev => ({ ...prev, announcement: e.target.value, lastUpdated: Date.now() }))}
+                  placeholder="ENTER ANNOUNCEMENT TEXT (E.G. 25% OFF DISCOUNT)"
                 />
               </div>
             ) : (
@@ -453,41 +488,10 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               <div className="animate-fade-in">
-                <Hero 
-                  config={siteConfig.hero} 
-                  isEditMode={isEditMode} 
-                  onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'hero')} 
-                />
-                <ExclusiveOffers 
-                  offers={validOffers} 
-                  isEditMode={isEditMode} 
-                  claimedOfferId={claimedOfferId} 
-                  onClaim={handleClaimOffer} 
-                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'offers')} 
-                />
-                <RoomGrid 
-                  rooms={siteConfig.rooms} 
-                  isEditMode={isEditMode} 
-                  activeDiscount={activeDiscount} 
-                  isBookingDisabled={hasPendingBooking} 
-                  onBook={handleRoomBookingInit} 
-                  onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'rooms')} 
-                />
-                <NearbyRestaurants 
-                  restaurants={siteConfig.restaurants} 
-                  isEditMode={isEditMode} 
-                  onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
-                />
-                <TouristGuide 
-                  touristGuides={siteConfig.touristGuides} 
-                  isEditMode={isEditMode} 
-                  onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'guide')} 
-                />
+                <Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'hero')} />
+                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
+                <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />
+                <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />
               </div>
             } />
             <Route path="/offers" element={
@@ -496,47 +500,16 @@ const AppContent = () => {
                    <h1 className="text-4xl md:text-6xl font-sans font-black text-gray-900 tracking-tighter">Promotions</h1>
                    <p className="text-gray-500 mt-4 max-w-2xl font-light">Explore our latest exclusive deals.</p>
                 </div>
-                <ExclusiveOffers 
-                  offers={validOffers} 
-                  isEditMode={isEditMode} 
-                  claimedOfferId={claimedOfferId} 
-                  onClaim={handleClaimOffer} 
-                  onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
-                  onImageUpload={(f) => uploadToR2(f, 'offers')} 
-                />
+                <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
               </div>
             } />
-            <Route path="/rooms" element={
-              <RoomGrid 
-                rooms={siteConfig.rooms} 
-                activeDiscount={activeDiscount} 
-                isBookingDisabled={hasPendingBooking} 
-                onBook={handleRoomBookingInit} 
-                isEditMode={isEditMode} 
-                onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} 
-                onImageUpload={(f) => uploadToR2(f, 'rooms')} 
-              />
-            } />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />} />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} onClaim={handleClaimOffer} />} />
-            <Route path="/restaurants" element={
-              <NearbyRestaurants 
-                restaurants={siteConfig.restaurants} 
-                isEditMode={isEditMode} 
-                onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} 
-                onImageUpload={(f) => uploadToR2(f, 'restaurants')} 
-              />
-            } />
-            <Route path="/guide" element={
-              <TouristGuide 
-                touristGuides={siteConfig.touristGuides} 
-                isEditMode={isEditMode} 
-                onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} 
-                onImageUpload={(f) => uploadToR2(f, 'guide')} 
-              />
-            } />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
-            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen font-black text-gray-400 uppercase text-[10px] tracking-widest">Access Denied</div>} />
+            <Route path="/admin" element={(isAdmin || isOwner) ? <AdminDashboard /> : <div className="p-20 text-center min-h-screen">Denied</div>} />
           </Routes>
         </div>
 
@@ -562,17 +535,10 @@ const AppContent = () => {
                   <p className="text-[11px] text-gray-500">hotelshotabdiabashik@gmail.com</p>
               </div>
             </div>
-            <div className="pt-8 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-               <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">© 2024 Hotel Shotabdi Residential. All Rights Reserved.</p>
-               <div className="flex gap-6">
-                 <Link to="/privacypolicy" className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors">Privacy</Link>
-                 <Link to="/termsofservice" className="text-[9px] font-black text-gray-300 uppercase tracking-widest hover:text-hotel-primary transition-colors">Terms</Link>
-               </div>
-            </div>
           </div>
         </footer>
 
-        {/* AUTHORIZED POPUPS */}
+        {/* AUTHORIZED POPUPS (Z-LEVELS handled within individual Portal components) */}
         <AuthModal isOpen={isAuthModalOpen} onClose={closeAllPopups} />
         {selectedRoomToBook && profile && (
           <BookingModal 

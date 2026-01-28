@@ -9,7 +9,6 @@ export interface Room {
   features: string[];
   image: string;
   capacity: number;
-  isRecommended?: boolean;
 }
 
 export interface HeroConfig {
@@ -32,7 +31,6 @@ export interface Restaurant {
   description?: string;
   mapUrl?: string;
   phone?: string;
-  isRecommended?: boolean;
 }
 
 export interface Attraction {
@@ -44,7 +42,6 @@ export interface Attraction {
   image: string;
   mapUrl: string;
   phone?: string;
-  isRecommended?: boolean;
 }
 
 export interface Offer {
@@ -58,7 +55,6 @@ export interface Offer {
   isOneTime?: boolean;
   startDate?: number;
   endDate?: number;
-  isRecommended?: boolean;
 }
 
 export interface SiteConfig {

@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ChevronRight, Plus, Trash2, Camera, 
-  Tag, Settings2, ShieldCheck, X, CheckCircle2, Loader2, CalendarRange, Star
+  Tag, Settings2, ShieldCheck, X, CheckCircle2, Loader2, CalendarRange
 } from 'lucide-react';
 import { Offer } from '../types';
 
@@ -21,21 +21,13 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
   const [isUploading, setIsUploading] = useState(false);
   const swiperRef = useRef<any>(null);
 
-  // Sort offers: recommended first
-  const sortedOffers = useMemo(() => {
-    return [...offers].sort((a, b) => {
-      if (a.isRecommended === b.isRecommended) return 0;
-      return a.isRecommended ? -1 : 1;
-    });
-  }, [offers]);
-
   useEffect(() => {
     if (!(window as any).Swiper) return;
     
     swiperRef.current = new (window as any).Swiper('.offers-swiper', {
       slidesPerView: 1,
       spaceBetween: 24,
-      loop: sortedOffers.length > 3,
+      loop: offers.length > 3,
       autoplay: isEditMode ? false : {
         delay: 5000,
         disableOnInteraction: false,
@@ -57,7 +49,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
     return () => {
       if (swiperRef.current) swiperRef.current.destroy();
     };
-  }, [sortedOffers, isEditMode]);
+  }, [offers, isEditMode]);
 
   const deleteOffer = (id: string) => {
     if (window.confirm("Delete this offer permanently?")) {
@@ -73,11 +65,10 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
       mediaUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       mediaType: 'image',
       ctaText: "Claim Now",
-      discountPercent: 25, 
-      isOneTime: true, 
+      discountPercent: 10,
+      isOneTime: true, // Default to single use
       startDate: Date.now(),
-      endDate: Date.now() + (7 * 24 * 60 * 60 * 1000),
-      isRecommended: false
+      endDate: Date.now() + (7 * 24 * 60 * 60 * 1000)
     };
     onUpdate?.([...offers, newOffer]);
     setActiveSettingsId(newOffer.id);
@@ -93,7 +84,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
     const updated = offers.map(o => o.id === id ? { 
       ...o, 
       isOneTime: updatedValue,
-      endDate: updatedValue ? (o.endDate || Date.now() + 604800000) : undefined 
+      endDate: updatedValue ? (o.endDate || Date.now() + 604800000) : undefined // If Unlimited (isOneTime false), remove endDate
     } : o);
     onUpdate?.(updated);
   };
@@ -140,7 +131,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
 
         <div className="swiper offers-swiper !overflow-visible">
           <div className="swiper-wrapper">
-            {sortedOffers.map((offer) => (
+            {offers.map((offer) => (
               <div key={offer.id} className="swiper-slide h-auto">
                 <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden group shadow-2xl bg-gray-100 transition-all duration-700 hover:-translate-y-2">
                   {offer.mediaType === 'video' ? (
@@ -149,12 +140,9 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                     <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} />
                   )}
                   
+                  {/* Removed dark gradient overlay for cleaner look */}
+                  
                   <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
-                    {offer.isRecommended && (
-                      <span className="bg-amber-400 text-gray-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg ring-1 ring-white/50">
-                        <Star size={12} fill="currentColor" /> Hot Deal
-                      </span>
-                    )}
                     <span className="bg-[#B22222] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg ring-1 ring-white/20">
                       <Tag size={12} /> {offer.discountPercent}% OFF
                     </span>
@@ -192,18 +180,12 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                   </div>
 
                   {isEditMode && (
-                    <div className="absolute top-6 right-6 z-20 flex flex-col gap-2">
+                    <div className="absolute top-6 right-6 z-20 flex gap-2">
                       <button 
                         onClick={() => setActiveSettingsId(offer.id)}
                         className="bg-white/95 p-3 rounded-xl text-gray-700 hover:text-[#B22222] shadow-xl transition-all hover:scale-110"
                       >
                         <Settings2 size={16} />
-                      </button>
-                      <button 
-                        onClick={() => updateOffer(offer.id, 'isRecommended', !offer.isRecommended)} 
-                        className={`p-3 rounded-xl shadow-xl transition-all hover:scale-110 ${offer.isRecommended ? 'bg-amber-400 text-gray-900' : 'bg-white/95 text-gray-400'}`}
-                      >
-                        <Star size={16} fill={offer.isRecommended ? "currentColor" : "none"} />
                       </button>
                       <button 
                         onClick={() => deleteOffer(offer.id)}
@@ -229,6 +211,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
       {activeSettingsId && isEditMode && activeOffer && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in overflow-hidden">
           <div className="bg-white/95 backdrop-blur-3xl w-full max-w-5xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col max-h-[90vh] border border-white/20 overflow-hidden ring-1 ring-white/10">
+            {/* Modal Header */}
             <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <div className="flex items-center gap-5">
                  <div className="w-12 h-12 bg-[#B22222]/10 rounded-2xl flex items-center justify-center text-[#B22222] shadow-inner">
@@ -244,8 +227,11 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
               </button>
             </div>
             
+            {/* Modal Body: Two Column Grid */}
             <div className="flex-1 overflow-hidden p-8 md:p-10 no-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-full">
+                
+                {/* Left Column: Form Controls */}
                 <div className="space-y-5 flex flex-col justify-start">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Marketing Headline</label>
@@ -282,17 +268,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Priority Promotion</label>
-                    <button 
-                        onClick={() => updateOffer(activeSettingsId, 'isRecommended', !activeOffer.isRecommended)}
-                        className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeOffer.isRecommended ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
-                    >
-                      {activeOffer.isRecommended ? 'Hot Deal (Top)' : 'Standard Placement'}
-                      <Star size={16} fill={activeOffer.isRecommended ? "currentColor" : "none"} />
-                    </button>
-                  </div>
-
+                  {/* Dates only show if not Unlimited/Forever */}
                   {activeOffer.isOneTime && (
                     <div className="grid grid-cols-2 gap-5 animate-fade-in">
                       <div className="space-y-1.5">
@@ -327,6 +303,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                   </div>
                 </div>
 
+                {/* Right Column: Visual Preview & Upload */}
                 <div className="flex flex-col gap-6">
                   <div className="space-y-3 flex-1 flex flex-col justify-center">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 text-center block">16:9 Media Asset Preview</label>
@@ -367,6 +344,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
               </div>
             </div>
 
+            {/* Modal Footer */}
             <div className="p-8 md:p-10 bg-gray-50/80 border-t border-gray-100 flex gap-6 shrink-0">
               <button 
                 onClick={() => setActiveSettingsId(null)} 

@@ -1,7 +1,6 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star } from 'lucide-react';
+import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert } from 'lucide-react';
 import { Room } from '../types';
 
 interface RoomGridProps {
@@ -48,14 +47,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
     }
   }, [location.search]);
 
-  // Sort rooms: recommended first
-  const sortedRooms = useMemo(() => {
-    return [...rooms].sort((a, b) => {
-      if (a.isRecommended === b.isRecommended) return 0;
-      return a.isRecommended ? -1 : 1;
-    });
-  }, [rooms]);
-
   const parseNumeric = (str: string) => {
     const numeric = parseFloat((str || "").replace(/[^0-9.]/g, ''));
     return isNaN(numeric) ? 0 : numeric;
@@ -90,14 +81,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
     const newRoom: Room = {
       id: `room-${Date.now()}`,
       title: "New Room Type",
-      price: "1333",
-      discountPrice: "1000", 
+      price: "2000",
+      discountPrice: "1500",
       tag: "NEW",
       desc: "Clean and comfortable room for your stay.",
       features: ["Wi-Fi", "AC", "TV"],
       image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
-      capacity: 2,
-      isRecommended: false
+      capacity: 2
     };
     onUpdate?.([...rooms, newRoom]);
   };
@@ -119,13 +109,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
             onClick={addNewRoom}
             className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-hotel-primary transition-all active:scale-95 shadow-md mx-auto md:mx-0"
           >
-            <Plus size={16} /> Add New Category
+            <Plus size={16} /> Add Unit
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {sortedRooms.map((room) => {
+        {rooms.map((room) => {
           const isHighlighted = highlightedId === room.id;
           const numericBase = parseNumeric(room.price);
           const numericDiscounted = parseNumeric(room.discountPrice);
@@ -143,11 +133,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                 <img src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-110" alt={room.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-                  {room.isRecommended && (
-                    <span className="bg-amber-400 text-gray-900 px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/50">
-                      <Star size={10} fill="currentColor" /> Recommended
-                    </span>
-                  )}
                   <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black text-gray-900 uppercase tracking-widest shadow-sm">{room.tag}</span>
                   {activeDiscount > 25 && (
                     <span className="bg-[#B22222] text-white px-2 py-0.5 rounded-lg text-[6px] md:text-[8px] font-black uppercase tracking-widest flex items-center gap-1 animate-bounce">
@@ -161,12 +146,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                       <input type="file" className="hidden" onChange={(e) => handleImageChange(room.id, e)} />
                       {uploadingId === room.id ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
                     </label>
-                    <button 
-                      onClick={() => updateRoom(room.id, 'isRecommended', !room.isRecommended)} 
-                      className={`p-2.5 rounded-xl transition-all transform hover:scale-110 ${room.isRecommended ? 'bg-amber-400 text-gray-900' : 'bg-white text-gray-400'}`}
-                    >
-                      <Star size={14} fill={room.isRecommended ? "currentColor" : "none"} />
-                    </button>
                     <button onClick={() => deleteRoom(room.id)} className="bg-white p-2.5 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all transform hover:scale-110"><Trash2 size={14} /></button>
                   </div>
                 )}
@@ -185,15 +164,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                   
                   <div className="flex flex-wrap items-baseline gap-2">
                     {isEditMode ? (
-                      <div className="flex flex-col gap-2 w-full">
-                         <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
-                            <span className="text-[9px] font-bold text-gray-400">Base ৳</span>
-                            <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.price || ""} placeholder="Old Price" onChange={(e) => updateRoom(room.id, 'price', e.target.value)} />
-                         </div>
-                         <div className="flex items-center gap-1 border-b border-gray-100 bg-red-50 px-3 py-1.5 rounded-xl w-full">
-                            <span className="text-[9px] font-bold text-[#B22222]">New ৳</span>
-                            <input className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Discounted" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
-                         </div>
+                      <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-1.5 rounded-xl w-full">
+                         <span className="text-[9px] font-bold text-gray-400">৳</span>
+                         <input className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" value={room.discountPrice || ""} placeholder="Price" onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} />
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
