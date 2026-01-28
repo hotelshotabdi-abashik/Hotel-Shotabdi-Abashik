@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -132,14 +133,14 @@ const AppContent = () => {
     lastUpdated: 0
   });
 
-  // REAL-TIME SYNC FROM FIREBASE
+  // REAL-TIME SYNC FROM FIREBASE - Ensure previous updates are preserved
   useEffect(() => {
     const configRef = ref(db, 'site-config');
     const unsubscribe = onValue(configRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         setSiteConfig(prev => {
-          // Use remote data if its timestamp is newer or equal to ensure sync
+          // Priority logic: only update if remote timestamp is newer or equal
           if ((data.lastUpdated || 0) >= prev.lastUpdated) {
             return { ...prev, ...data };
           }
@@ -202,10 +203,10 @@ const AppContent = () => {
     try {
       const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
       
-      // Update Firebase first (Source of Truth)
+      // Update Firebase first (Primary Source of Truth)
       await set(ref(db, 'site-config'), updatedConfig);
 
-      // Attempt Worker backup
+      // Backup to Worker for safety
       fetch(`${CMS_WORKER_URL}/site-config.json`, {
         method: 'PUT',
         headers: { 
@@ -213,7 +214,7 @@ const AppContent = () => {
           'Authorization': ADMIN_SECRET 
         },
         body: JSON.stringify(updatedConfig)
-      }).catch(e => console.warn("Worker backup failed."));
+      }).catch(e => console.warn("Worker backup non-critical failure."));
 
       setSiteConfig(updatedConfig);
       alert("Website published live!");
@@ -494,6 +495,8 @@ const AppContent = () => {
                 <ExclusiveOffers offers={validOffers} isEditMode={isEditMode} claimedOfferId={claimedOfferId} onClaim={handleClaimOffer} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />
                 <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} activeDiscount={activeDiscount} isBookingDisabled={hasPendingBooking} onBook={handleRoomBookingInit} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} />
                 <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />
+                {/* Added Tourist Guide to homepage as requested */}
+                <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg, lastUpdated: Date.now()}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />
               </div>
             } />
             <Route path="/offers" element={
