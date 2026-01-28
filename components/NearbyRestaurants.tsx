@@ -10,57 +10,13 @@ interface Props {
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const DEFAULT_RESTAURANTS: Restaurant[] = [
-  { 
-    id: 101, 
-    name: "Rutbah Hotel International", 
-    cuisine: "Mid-range Hotel", 
-    rating: 4.3, 
-    time: "12m", 
-    distance: "1.5 km", 
-    image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80", 
-    tag: "🏢 AC Rooms • Restaurant", 
-    description: "An affordable, mid-range hotel with clean AC rooms, a restaurant, and helpful staff.",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=Rutbah+Hotel+International+Sylhet",
-    isRecommended: true
-  },
-  { 
-    id: 102, 
-    name: "SAUDIA RESIDENTIAL HOTEL", 
-    cuisine: "Residential Hotel", 
-    rating: 4.2, 
-    time: "8m", 
-    distance: "0.8 km", 
-    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80", 
-    tag: "🧹 Clean • Friendly Staff", 
-    description: "Praised for its clean environment, good location, and friendly staff. Some guests noted the absence of on-site food facilities.",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=SAUDIA+RESIDENTIAL+HOTEL+Sylhet" 
-  },
-  { 
-    id: 103, 
-    name: "Hotel Grand Brother's", 
-    cuisine: "Budget Hotel", 
-    rating: 3.5, 
-    time: "10m", 
-    distance: "1.2 km", 
-    image: "https://images.unsplash.com/photo-1551882547-ff43c59fe4c2?auto=format&fit=crop&q=80", 
-    tag: "💰 Budget Friendly", 
-    description: "A budget-friendly option located close to the city center, noted for clean rooms and well-behaved staff.",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Grand+Brother's+Sylhet" 
-  },
-  { id: 1, name: "Pansi Restaurant", cuisine: "Bengali", rating: 4.8, time: "5m", distance: "0.2 km", image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80", tag: "🥘 Bengali • Bhorta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pansi+Restaurant+Sylhet", phone: "01726-100200", isRecommended: true },
-  { id: 2, name: "Pach Bhai Restaurant", cuisine: "Bengali", rating: 4.7, time: "6m", distance: "0.3 km", image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80", tag: "🍛 Traditional Thali", mapUrl: "https://www.google.com/maps/search/?api=1&query=Pach+Bhai+Restaurant+Sylhet", phone: "01723-556677" },
-  { id: 3, name: "Woondaal King Kebab", cuisine: "Mughlai", rating: 4.6, time: "8m", distance: "0.5 km", image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&q=80", tag: "🍢 Kebab • Biryani", mapUrl: "https://www.google.com/maps/search/?api=1&query=Woondaal+King+Kebab+Sylhet", phone: "01712-889900" },
-  { id: 4, name: "Eatopia", cuisine: "International", rating: 4.5, time: "10m", distance: "0.8 km", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80", tag: "🍕 Pizza • Pasta", mapUrl: "https://www.google.com/maps/search/?api=1&query=Eatopia+Sylhet", phone: "01715-443322" },
-  { id: 5, name: "Handi Restaurant", cuisine: "Indian", rating: 4.7, time: "12m", distance: "0.6 km", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80", tag: "🥘 Indian • Curry", mapUrl: "https://www.google.com/maps/search/?api=1&query=Handi+Restaurant+Sylhet", phone: "01721-332211" }
-];
-
 const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUpdate, onImageUpload }) => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const displayList = restaurants.length > 0 ? restaurants : DEFAULT_RESTAURANTS;
+  // No hardcoded hotel defaults anymore
+  const displayList = restaurants;
 
   // Filtered and sorted list: recommended first
   const filteredList = useMemo(() => {
@@ -111,8 +67,8 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   const addRes = () => {
     const newItem: Restaurant = {
       id: Date.now(),
-      name: "New Spot",
-      cuisine: "Category Type",
+      name: "New Restaurant",
+      cuisine: "Cuisine Type",
       rating: 4.5,
       time: "10m",
       distance: "0.5 km",
@@ -129,16 +85,16 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   return (
     <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in">
       <div className="mb-12 text-center flex flex-col items-center">
-        <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy & Stays</span>
+        <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">Gastronomy</span>
         <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-10">
-          A curated selection of the finest eateries and residential options in Sylhet, all located near <span className="text-hotel-primary font-bold">Hotel Shotabdi</span>.
+          A curated selection of the finest eateries in Sylhet, ranging from local favorites to international cuisines, all near <span className="text-hotel-primary font-bold">Hotel Shotabdi</span>.
         </p>
 
         <div className="w-full max-w-2xl mb-12 flex flex-col items-center gap-4">
           <div className="relative w-full">
             <input 
               type="text" 
-              placeholder="Search by name or category..."
+              placeholder="Search by restaurant name or cuisine..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white border border-gray-100 shadow-xl rounded-[1.5rem] py-5 pl-14 pr-6 text-sm focus:border-blue-600 outline-none transition-all"
@@ -152,7 +108,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
             onClick={addRes}
             className="flex items-center gap-3 bg-green-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 hover:scale-105 transition-all mb-10"
           >
-            <Plus size={18} /> Add New Spot
+            <Plus size={18} /> Add New Restaurant
           </button>
         )}
       </div>
@@ -163,7 +119,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
             <div className="h-32 md:h-48 relative overflow-hidden shrink-0">
               <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
               
-              {/* Badges Overlay */}
               <div className="absolute top-2 md:top-4 left-2 md:left-4 flex flex-col gap-1.5">
                 {res.isRecommended && (
                   <span className="bg-amber-400 text-gray-900 px-2 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 border border-white/50">
@@ -212,7 +167,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                     <input 
                       className="text-sm md:text-xl font-black text-gray-900 border-b border-blue-600 outline-none w-full"
                       value={res.name}
-                      placeholder="Name"
+                      placeholder="Restaurant Name"
                       onChange={(e) => updateRes(res.id, 'name', e.target.value)}
                     />
                   ) : (
@@ -232,7 +187,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                     <textarea 
                       className="w-full bg-gray-50 rounded-lg p-2 text-[10px] font-medium outline-none border border-gray-100 h-16 resize-none"
                       value={res.description || ''}
-                      placeholder="Place description..."
+                      placeholder="Restaurant description..."
                       onChange={(e) => updateRes(res.id, 'description', e.target.value)}
                     />
                   ) : (
