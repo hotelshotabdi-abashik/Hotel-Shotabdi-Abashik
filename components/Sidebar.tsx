@@ -6,7 +6,7 @@ import { NAV_ITEMS } from '../constants';
 const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
   const [showCallChoices, setShowCallChoices] = useState(false);
-  const mapUrl = "https://www.google.com/maps/search/?api=1&query=Hotel+Shotabdi+Residential,+WR6H%2BQ2P,+Sylhet%203100";
+  const mapUrl = "https://maps.app.goo.gl/Fqxeny69cdNArTfA9";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">

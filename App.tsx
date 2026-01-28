@@ -624,38 +624,46 @@ const AppContent = () => {
                 <div className="flex items-center gap-4">
                   <img src={LOGO_ICON_URL} className="w-12 h-12 grayscale opacity-40" alt="Hotel Shotabdi Logo" />
                   <div>
-                    <p className="text-[12px] font-black text-gray-900 uppercase tracking-[0.4em]">Hotel Shotabdi</p>
-                    <p className="text-[10px] text-hotel-primary font-black uppercase tracking-[0.2em] mt-0.5">Residential Service</p>
+                    <p className="text-[12px] font-bold text-gray-900 uppercase tracking-[0.2em]">Hotel Shotabdi</p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-[0.1em] mt-0.5">Residential Service</p>
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400 font-medium leading-relaxed max-w-xs">
+                <p className="text-[11px] text-gray-500 font-normal leading-relaxed max-w-xs">
                   Premium hospitality and residential excellence in the heart of Sylhet. Fully indexed and ready for your next stay.
                 </p>
               </div>
 
               <div className="space-y-6">
-                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Compliance</h4>
+                 <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Compliance</h4>
                  <nav className="flex flex-col gap-4">
-                    <Link to="/privacypolicy" className="text-[10px] font-black text-gray-400 hover:text-hotel-primary uppercase tracking-widest flex items-center gap-2 transition-colors">
+                    <Link to="/privacypolicy" className="text-xs text-gray-500 font-normal hover:text-hotel-primary transition-colors flex items-center gap-2">
                        <ShieldCheck size={14} /> Privacy Policy
                     </Link>
-                    <Link to="/termsofservice" className="text-[10px] font-black text-gray-400 hover:text-hotel-primary uppercase tracking-widest flex items-center gap-2 transition-colors">
+                    <Link to="/termsofservice" className="text-xs text-gray-500 font-normal hover:text-hotel-primary transition-colors flex items-center gap-2">
                        <Gavel size={14} /> Terms of Service
                     </Link>
                  </nav>
               </div>
 
               <div className="space-y-6">
-                 <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Contact HQ</h4>
+                 <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Contact HQ</h4>
                  <address className="flex flex-col gap-3 not-italic">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Mail size={12}/> hotelshotabdiabashik@gmail.com</p>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Phone size={12}/> +880 1717-425702</p>
+                    <p className="text-xs text-gray-500 font-normal flex items-center gap-2">
+                      <Mail size={12}/> hotelshotabdiabashik@gmail.com
+                    </p>
+                    <p className="text-xs text-gray-500 font-normal flex items-center gap-2">
+                      <Phone size={12}/> +880 1717-425702
+                    </p>
+                    <p className="text-xs text-gray-500 font-normal flex items-start gap-2">
+                      <MapPin size={12} className="mt-1 shrink-0" /> 
+                      Kumargaon Bus Stand, Sunamganj Road, Sylhet, Bangladesh.
+                    </p>
                  </address>
               </div>
             </div>
             
             <div className="pt-10 border-t border-gray-50 text-center">
-               <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em]">© 2024 Hotel Shotabdi Residential. All Rights Reserved.</p>
+               <p className="text-[10px] text-gray-400 font-normal uppercase tracking-widest">© 2024 Hotel Shotabdi Residential. All Rights Reserved.</p>
             </div>
           </div>
         </footer>
@@ -670,7 +678,6 @@ const AppContent = () => {
 
 const App: React.FC = () => (
   <BrowserRouter>
-    <RouteMetadata />
     <AppContent />
   </BrowserRouter>
 );
