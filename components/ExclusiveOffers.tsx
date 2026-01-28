@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ChevronRight, Plus, Trash2, Camera, 
-  Tag, Settings2, ShieldCheck, X, CheckCircle2, Loader2, CalendarRange
+  Tag, Settings2, ShieldCheck, X, CheckCircle2, Loader2, CalendarRange, Star
 } from 'lucide-react';
 import { Offer } from '../types';
 
@@ -20,13 +21,21 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
   const [isUploading, setIsUploading] = useState(false);
   const swiperRef = useRef<any>(null);
 
+  // Sort offers: recommended first
+  const sortedOffers = useMemo(() => {
+    return [...offers].sort((a, b) => {
+      if (a.isRecommended === b.isRecommended) return 0;
+      return a.isRecommended ? -1 : 1;
+    });
+  }, [offers]);
+
   useEffect(() => {
     if (!(window as any).Swiper) return;
     
     swiperRef.current = new (window as any).Swiper('.offers-swiper', {
       slidesPerView: 1,
       spaceBetween: 24,
-      loop: offers.length > 3,
+      loop: sortedOffers.length > 3,
       autoplay: isEditMode ? false : {
         delay: 5000,
         disableOnInteraction: false,
@@ -48,7 +57,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
     return () => {
       if (swiperRef.current) swiperRef.current.destroy();
     };
-  }, [offers, isEditMode]);
+  }, [sortedOffers, isEditMode]);
 
   const deleteOffer = (id: string) => {
     if (window.confirm("Delete this offer permanently?")) {
@@ -64,10 +73,11 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
       mediaUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       mediaType: 'image',
       ctaText: "Claim Now",
-      discountPercent: 25, // Updated default to 25%
+      discountPercent: 25, 
       isOneTime: true, 
       startDate: Date.now(),
-      endDate: Date.now() + (7 * 24 * 60 * 60 * 1000)
+      endDate: Date.now() + (7 * 24 * 60 * 60 * 1000),
+      isRecommended: false
     };
     onUpdate?.([...offers, newOffer]);
     setActiveSettingsId(newOffer.id);
@@ -130,7 +140,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
 
         <div className="swiper offers-swiper !overflow-visible">
           <div className="swiper-wrapper">
-            {offers.map((offer) => (
+            {sortedOffers.map((offer) => (
               <div key={offer.id} className="swiper-slide h-auto">
                 <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden group shadow-2xl bg-gray-100 transition-all duration-700 hover:-translate-y-2">
                   {offer.mediaType === 'video' ? (
@@ -140,6 +150,11 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                   )}
                   
                   <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
+                    {offer.isRecommended && (
+                      <span className="bg-amber-400 text-gray-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg ring-1 ring-white/50">
+                        <Star size={12} fill="currentColor" /> Hot Deal
+                      </span>
+                    )}
                     <span className="bg-[#B22222] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg ring-1 ring-white/20">
                       <Tag size={12} /> {offer.discountPercent}% OFF
                     </span>
@@ -177,12 +192,18 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                   </div>
 
                   {isEditMode && (
-                    <div className="absolute top-6 right-6 z-20 flex gap-2">
+                    <div className="absolute top-6 right-6 z-20 flex flex-col gap-2">
                       <button 
                         onClick={() => setActiveSettingsId(offer.id)}
                         className="bg-white/95 p-3 rounded-xl text-gray-700 hover:text-[#B22222] shadow-xl transition-all hover:scale-110"
                       >
                         <Settings2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => updateOffer(offer.id, 'isRecommended', !offer.isRecommended)} 
+                        className={`p-3 rounded-xl shadow-xl transition-all hover:scale-110 ${offer.isRecommended ? 'bg-amber-400 text-gray-900' : 'bg-white/95 text-gray-400'}`}
+                      >
+                        <Star size={16} fill={offer.isRecommended ? "currentColor" : "none"} />
                       </button>
                       <button 
                         onClick={() => deleteOffer(offer.id)}
@@ -259,6 +280,17 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
                          {activeOffer.isOneTime ? <ShieldCheck size={16} /> : <CheckCircle2 size={16} />}
                        </button>
                     </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Priority Promotion</label>
+                    <button 
+                        onClick={() => updateOffer(activeSettingsId, 'isRecommended', !activeOffer.isRecommended)}
+                        className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeOffer.isRecommended ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
+                    >
+                      {activeOffer.isRecommended ? 'Hot Deal (Top)' : 'Standard Placement'}
+                      <Star size={16} fill={activeOffer.isRecommended ? "currentColor" : "none"} />
+                    </button>
                   </div>
 
                   {activeOffer.isOneTime && (
