@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Calendar, Users, ShieldCheck, Loader2, CheckCircle2, 
   Camera, IdCard, Info, AlertTriangle, ArrowRight, UserPlus,
-  Clock // Added missing Clock icon import
+  Clock, User
 } from 'lucide-react';
-import { db, ref, push, set } from '../services/firebase';
+import { db, ref, set } from '../services/firebase';
 import { Room, UserProfile, GuestInfo, Booking } from '../types';
 
 interface Props {
@@ -27,19 +27,41 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
     checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0]
   });
 
-  const [guests, setGuests] = useState<GuestInfo[]>([
-    { 
-      legalName: profile.legalName, 
-      age: profile.age || '', 
-      nidNumber: profile.nidNumber, 
-      phone: profile.phone, 
-      guardianPhone: profile.guardianPhone,
-      nidImageUrl: profile.nidImageUrl 
-    },
-    { legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' }
-  ]);
+  const [guests, setGuests] = useState<GuestInfo[]>(() => {
+    const initial = [
+      { 
+        legalName: profile.legalName, 
+        age: profile.age || '', 
+        nidNumber: profile.nidNumber, 
+        phone: profile.phone, 
+        guardianPhone: profile.guardianPhone,
+        nidImageUrl: profile.nidImageUrl 
+      }
+    ];
+    // Fill remaining to match totalGuests
+    for (let i = 1; i < (room.id.includes('single') ? 1 : 2); i++) {
+      initial.push({ legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' });
+    }
+    return initial;
+  });
 
-  // Use the manual discountPrice from the room object directly
+  // Keep guests array in sync with totalGuests
+  useEffect(() => {
+    setGuests(prev => {
+      const current = [...prev];
+      if (current.length < totalGuests) {
+        // Add new guests
+        for (let i = current.length; i < totalGuests; i++) {
+          current.push({ legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' });
+        }
+      } else if (current.length > totalGuests) {
+        // Remove extra
+        return current.slice(0, totalGuests);
+      }
+      return current;
+    });
+  }, [totalGuests]);
+
   const finalPrice = room.discountPrice;
 
   const handleGuestChange = (idx: number, field: keyof GuestInfo, val: string) => {
@@ -77,7 +99,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
         checkIn: dates.checkIn,
         checkOut: dates.checkOut,
         totalGuests: totalGuests,
-        guests: guests.slice(0, room.id.includes('single') ? 1 : 2),
+        guests: guests,
         price: finalPrice,
         status: 'pending',
         hasEdited: false,
@@ -85,7 +107,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
       };
 
       await set(ref(db, `bookings/${bookingId}`), bookingData);
-      alert("Booking Request Logged! Our registry will verify your NID details shortly.");
+      alert("Booking Request Logged! Our registry will verify all guest details shortly.");
       onClose();
     } catch (err) {
       alert("System registry error. Try again.");
@@ -95,14 +117,26 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
   };
 
   const isStep1Valid = dates.checkIn && dates.checkOut;
-  const isStep2Valid = guests[0].legalName && guests[0].nidNumber && guests[0].nidImageUrl && (room.id.includes('single') || (guests[1].legalName && guests[1].nidImageUrl));
+  
+  const isStep2Valid = guests.every((g, idx) => {
+    if (idx === 0) {
+      // Primary Guest: Name, NID, Image
+      return g.legalName && g.nidNumber && g.nidImageUrl;
+    } else if (idx === 1) {
+      // Companion (Guest 2): Name, NID, Image
+      return g.legalName && g.nidNumber && g.nidImageUrl;
+    } else {
+      // Others (Guest 3+): Name and Age
+      return g.legalName && g.age;
+    }
+  });
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-4">
              <div className="w-12 h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-lg">
                 <Calendar size={24} />
@@ -167,74 +201,93 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                 </div>
              </div>
            ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-fade-in">
-                {/* Guest 1 (Main Verified) */}
-                <div className="space-y-6">
-                   <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={16} className="text-green-500"/> Guest 1 (Primary)</h4>
-                      <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase">Verified Identity</span>
-                   </div>
-                   <div className="space-y-4 p-6 bg-gray-50/50 rounded-[2rem] border border-gray-100">
-                      <div>
-                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Legal Name</p>
-                         <p className="text-xs font-black text-gray-900">{guests[0].legalName}</p>
-                      </div>
-                      <div>
-                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">NID Digits</p>
-                         <p className="text-xs font-mono font-black text-gray-700">{guests[0].nidNumber}</p>
-                      </div>
-                      <div className="aspect-video rounded-2xl overflow-hidden border-2 border-white shadow-lg bg-gray-200">
-                         <img src={guests[0].nidImageUrl} className="w-full h-full object-cover" />
-                      </div>
-                   </div>
-                </div>
+             <div className="space-y-10 animate-fade-in">
+                {guests.map((guest, idx) => (
+                  <div key={idx} className="space-y-6 border-b border-gray-100 pb-10 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                           {idx === 0 ? <ShieldCheck size={16} className="text-green-500"/> : <UserPlus size={16} className="text-hotel-primary"/>}
+                           Guest {idx + 1} {idx === 0 ? '(Primary)' : idx === 1 ? '(Companion)' : '(Additional)'}
+                        </h4>
+                        {idx === 0 && <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase">Verified Identity</span>}
+                    </div>
 
-                {/* Guest 2 (If applicable) */}
-                {!room.id.includes('single') ? (
-                   <div className="space-y-6">
-                      <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2"><UserPlus size={16} className="text-hotel-primary"/> Guest 2 (Identity Required)</h4>
-                      <div className="space-y-4">
-                         <input 
-                            placeholder="Companion Legal Name" 
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary" 
-                            value={guests[1].legalName}
-                            onChange={e => handleGuestChange(1, 'legalName', e.target.value)}
-                         />
-                         <input 
-                            placeholder="Companion NID Number" 
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono" 
-                            value={guests[1].nidNumber}
-                            onChange={e => handleGuestChange(1, 'nidNumber', e.target.value.replace(/\D/g, ''))}
-                         />
-                         <div className={`relative border-2 border-dashed rounded-2xl p-6 transition-all ${guests[1].nidImageUrl ? 'border-green-200 bg-green-50/20' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
-                            <input type="file" accept="image/*" onChange={e => handleNidUpload(1, e)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                            {guests[1].nidImageUrl ? (
-                               <div className="flex items-center gap-4">
-                                  <img src={guests[1].nidImageUrl} className="w-16 h-10 rounded-lg object-cover border-2 border-white shadow-md" />
-                                  <p className="text-[10px] font-black text-green-600 uppercase">NID Attached</p>
-                               </div>
-                            ) : (
-                               <div className="text-center">
-                                  {uploadingGuestIndex === 1 ? <Loader2 className="animate-spin text-hotel-primary mx-auto" size={16}/> : <Camera size={16} className="text-gray-300 mx-auto mb-1" />}
-                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Attach Companion NID</p>
-                               </div>
-                            )}
-                         </div>
-                      </div>
-                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full opacity-40">
-                     <div className="text-center">
-                        <IdCard size={48} className="mx-auto text-gray-300 mb-4" />
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deluxe Single Policy<br/>Maximum 1 Occupant</p>
-                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       {/* Left side: Basic Info */}
+                       <div className="space-y-4">
+                          <div className="space-y-1.5">
+                             <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
+                             <input 
+                                placeholder="Full Name as per ID" 
+                                className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70' : ''}`} 
+                                value={guest.legalName}
+                                disabled={idx === 0}
+                                onChange={e => handleGuestChange(idx, 'legalName', e.target.value)}
+                             />
+                          </div>
+
+                          {(idx === 0 || idx === 1) ? (
+                            <div className="space-y-1.5">
+                               <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Digits</label>
+                               <input 
+                                  placeholder="NID Number" 
+                                  className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono ${idx === 0 ? 'opacity-70' : ''}`} 
+                                  value={guest.nidNumber}
+                                  disabled={idx === 0}
+                                  onChange={e => handleGuestChange(idx, 'nidNumber', e.target.value.replace(/\D/g, ''))}
+                               />
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5">
+                               <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Age</label>
+                               <input 
+                                  type="number"
+                                  placeholder="Guest Age" 
+                                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary" 
+                                  value={guest.age}
+                                  onChange={e => handleGuestChange(idx, 'age', e.target.value)}
+                               />
+                            </div>
+                          )}
+                       </div>
+
+                       {/* Right side: Identity Image (Only for first 2 guests) */}
+                       {(idx === 0 || idx === 1) ? (
+                          <div className="space-y-1.5">
+                             <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Registry Scan</label>
+                             <div className={`relative border-2 border-dashed rounded-[2rem] p-6 transition-all h-full min-h-[120px] flex items-center justify-center ${guest.nidImageUrl ? 'border-green-200 bg-green-50/10' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
+                                {idx !== 0 && (
+                                   <input type="file" accept="image/*" onChange={e => handleNidUpload(idx, e)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                )}
+                                {guest.nidImageUrl ? (
+                                   <div className="flex flex-col items-center gap-2">
+                                      <div className="w-24 h-16 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-gray-200">
+                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover" />
+                                      </div>
+                                      <p className="text-[9px] font-black text-green-600 uppercase">Document Linked</p>
+                                   </div>
+                                ) : (
+                                   <div className="text-center">
+                                      {uploadingGuestIndex === idx ? <Loader2 className="animate-spin text-hotel-primary mx-auto" size={16}/> : <Camera size={16} className="text-gray-300 mx-auto mb-1" />}
+                                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Attach ID Photo</p>
+                                   </div>
+                                )}
+                             </div>
+                          </div>
+                       ) : (
+                          <div className="bg-gray-50/50 rounded-[2rem] border border-gray-100 p-8 flex flex-col items-center justify-center opacity-40">
+                             <User size={32} className="text-gray-300 mb-2" />
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Identity Record<br/>Verification Waived</p>
+                          </div>
+                       )}
+                    </div>
                   </div>
-                )}
+                ))}
              </div>
            )}
         </div>
 
-        <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-4">
+        <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-4 shrink-0">
            {step === 2 && (
              <button onClick={() => setStep(1)} className="px-10 py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest text-gray-400 hover:bg-white transition-all">Back</button>
            )}
@@ -252,7 +305,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose,
                 disabled={loading || !isStep2Valid}
                 className="flex-1 bg-hotel-primary text-white py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
              >
-                {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Authorize Reservation</>}
+                {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Book Now</>}
              </button>
            )}
         </div>

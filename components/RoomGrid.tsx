@@ -209,7 +209,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], activeDiscount = 0, isB
                       : 'bg-[#9B1C1C] hover:bg-[#B22222] text-white'
                     }`}
                   >
-                    {isBookingDisabled && !isEditMode ? 'Pending' : 'Reserve Room'}
+                    {isBookingDisabled && !isEditMode ? 'Pending' : 'Book Now'}
                     {!isBookingDisabled && <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
                   </button>
                 </div>
