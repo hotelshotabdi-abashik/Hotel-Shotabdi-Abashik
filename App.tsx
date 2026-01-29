@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import ExclusiveOffers from './components/ExclusiveOffers';
@@ -39,65 +38,86 @@ import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } fro
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
 const ADMIN_SECRET = "kahar02";
 
-const PageSEO = () => {
+const RouteMetadata = () => {
   const { pathname } = useLocation();
   
-  const meta = useMemo(() => {
-    const config: Record<string, { title: string; desc: string }> = {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    
+    const metaConfig: Record<string, { title: string; desc: string }> = {
       '/': { 
-        title: 'Hotel Shotabdi Residential | Official Website | Sylhet',
-        desc: 'Official website of Hotel Shotabdi Residential, Sylhet. Located at Kumargaon Bus Stand. Luxury AC rooms, 24/7 room service, and the best residential experience.'
+        title: 'Hotel Shotabdi Residential | Best Luxury Stay in Sylhet',
+        desc: 'Book your stay at Hotel Shotabdi Residential, the premier luxury hotel in Sylhet. 24/7 service, free Wi-Fi, and prime location near Keane Bridge.'
       },
       '/offers': { 
-        title: 'Exclusive Deals & Discounts | Hotel Shotabdi Residential',
-        desc: 'Explore the latest promotions and seasonal discounts. Claim 25% OFF your luxury stay in Sylhet with our official direct booking offers.'
+        title: 'Exclusive Hotel Deals & Discounts | Hotel Shotabdi',
+        desc: 'Discover seasonal offers and 25% discounts at Hotel Shotabdi Residential. Best residential rates in Sylhet for families and solo travelers.'
       },
       '/rooms': { 
-        title: 'Luxury Rooms & Rates | Hotel Shotabdi Residential Sylhet',
-        desc: 'Deluxe Single, Double, and Family Suites in Sylhet. View room photos, features, and official residential rates for your next stay.'
+        title: 'Luxury Rooms & Family Suites | Hotel Shotabdi Sylhet',
+        desc: 'Explore our range of Deluxe Single, Double, and Super Deluxe rooms. Comfort and luxury residential experience at the heart of Sylhet.'
       },
       '/restaurants': { 
-        title: 'Best Dining & Restaurants Near Hotel Shotabdi | Sylhet',
-        desc: 'Curated list of the top restaurants near Kumargaon and Zindabazar. Discover authentic Sylheti cuisine and international dining options.'
+        title: 'Best Restaurants Near Hotel Shotabdi | Sylhet Dining Guide',
+        desc: 'Explore the top eateries and traditional restaurants near Hotel Shotabdi. From Panshi to Sultan\'s Dine, discover the flavors of Sylhet.'
       },
       '/guide': { 
-        title: 'Sylhet Tourist Guide | Places to Visit | Hotel Shotabdi',
-        desc: 'Your ultimate guide to Sylhet. Visit Keane Bridge, Shah Jalal Dargah, and tea gardens. Distances and directions from Hotel Shotabdi Residential.'
+        title: 'Sylhet Tourist Attractions & Travel Guide | Hotel Shotabdi',
+        desc: 'Plan your Sylhet trip with our local guide. Visit Keane Bridge, Shah Jalal Dargah, and tea gardens easily from Hotel Shotabdi.'
       },
       '/helpdex': { 
-        title: 'Customer Support Registry | Help Dex Assistant',
-        desc: '24/7 live assistance for guests. Manage your stay inquiries, registry updates, and service requests at Hotel Shotabdi Residential.'
+        title: 'Help Dex Live Assistance | Hotel Shotabdi Resident Support',
+        desc: 'Connect with our 24/7 support registry for room services, laundry, and local assistance at Hotel Shotabdi Residential.'
       },
       '/privacypolicy': { 
-        title: 'Privacy Policy | Guest Data Protection | Hotel Shotabdi',
-        desc: 'Official privacy policy for Hotel Shotabdi Residential. Learn how we secure your guest identity data and NID records.'
+        title: 'Privacy Policy | Hotel Shotabdi Residential',
+        desc: 'Learn about how Hotel Shotabdi Residential handles guest data and privacy compliance for a secure stay.'
       },
       '/termsofservice': { 
-        title: 'Terms of Service | Guest Policies | Hotel Shotabdi',
-        desc: 'Official terms and conditions for staying at Hotel Shotabdi Residential, Sylhet. Registry rules and cancellation policies.'
+        title: 'Terms of Service | Hotel Shotabdi Residential',
+        desc: 'Review the terms and conditions for booking and staying at Hotel Shotabdi Residential, Sylhet.'
       },
       '/admin': { 
-        title: 'Admin Control Hub | Hotel Registry Management',
-        desc: 'Secure portal for administrative staff to manage guest bookings, stay records, and website configuration.'
+        title: 'Admin Dashboard | Hotel Shotabdi Registry Control',
+        desc: 'Management portal for Hotel Shotabdi Residential registry and guest bookings.'
       }
     };
-    return config[pathname] || config['/'];
+
+    const currentMeta = metaConfig[pathname] || metaConfig['/'];
+    document.title = currentMeta.title;
+    
+    // Update SEO Meta Tags
+    const updateMeta = (name: string, content: string) => {
+      let element = document.querySelector(`meta[name="${name}"]`) || document.querySelector(`meta[property="${name}"]`);
+      if (element) {
+        element.setAttribute('content', content);
+      } else {
+        const meta = document.createElement('meta');
+        if (name.includes('og:')) {
+          meta.setAttribute('property', name);
+        } else {
+          meta.setAttribute('name', name);
+        }
+        meta.setAttribute('content', content);
+        document.head.appendChild(meta);
+      }
+    };
+
+    updateMeta('description', currentMeta.desc);
+    updateMeta('og:title', currentMeta.title);
+    updateMeta('og:description', currentMeta.desc);
+    updateMeta('twitter:title', currentMeta.title);
+    updateMeta('twitter:description', currentMeta.desc);
+
+    // Update Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute('href', `https://hotelshotabdiabashik.com${pathname === '/' ? '' : pathname}`);
+    }
+
   }, [pathname]);
-
-  const canonicalUrl = `https://hotelshotabdiabashik.com${pathname === '/' ? '' : pathname}`;
-
-  return (
-    <Helmet>
-      <title>{meta.title}</title>
-      <meta name="description" content={meta.desc} />
-      <link rel="canonical" href={canonicalUrl} />
-      <meta property="og:title" content={meta.title} />
-      <meta property="og:description" content={meta.desc} />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta name="twitter:title" content={meta.title} />
-      <meta name="twitter:description" content={meta.desc} />
-    </Helmet>
-  );
+  
+  return null;
 };
 
 const AppContent = () => {
@@ -373,8 +393,6 @@ const AppContent = () => {
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
-      <PageSEO />
-      
       {isOwner && (
         <div className="fixed bottom-24 right-6 z-[2000] flex flex-col items-end gap-3 pointer-events-auto">
           <button 
