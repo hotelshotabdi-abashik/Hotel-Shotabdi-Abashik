@@ -1,5 +1,5 @@
 {
-  "name": "hotel-shotabdi-residential",
+  "name": "shotabdi-residential---luxury-stay",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,14 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^5.1.2",
     "react": "^19.2.4",
-    "react-router-dom": "^7.13.0",
+    "react-dom": "^19.2.4",
     "lucide-react": "^0.563.0",
     "@google/genai": "^1.38.0",
-    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.0",
+    "firebase": "^12.8.0",
     "vite": "^7.3.1",
-    "firebase": "^12.8.0"
+    "@vitejs/plugin-react": "^5.1.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

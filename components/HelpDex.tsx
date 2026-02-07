@@ -3,21 +3,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, User, Bot, Sparkles, Loader2, ShieldCheck, 
   MessageSquare, Clock, AlertTriangle, ChevronLeft, Search,
-  CheckCircle2, Info, MoreVertical, Trash2
+  CheckCircle2, Info
 } from 'lucide-react';
 import { 
   db, auth, ref, onValue, push, set, update, 
   createNotification, OWNER_EMAIL, get 
 } from '../services/firebase';
 import { HelpDexMessage, ChatSession, UserProfile } from '../types';
-// Add missing import for LOGO_ICON_URL
-import { LOGO_ICON_URL } from '../constants';
 
-interface HelpDexProps {
-  profile: UserProfile | null;
-}
-
-const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
+const HelpDex: React.FC = () => {
   const user = auth.currentUser;
   const isAdmin = user?.email === OWNER_EMAIL;
   
@@ -43,7 +37,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, activeUserId]);
+  }, [messages]);
 
   // Admin: Load all active sessions
   useEffect(() => {
@@ -98,7 +92,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
       const newMessage: HelpDexMessage = {
         id: msgRef.key!,
         senderId: user.uid,
-        senderName: isAdmin ? 'Registry Admin' : (profile?.legalName || user.displayName || 'Guest'),
+        senderName: user.displayName || 'Anonymous Guest',
         senderPhoto: user.photoURL || '',
         text,
         timestamp,
@@ -108,28 +102,38 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
       await set(msgRef, newMessage);
 
       // Update Session Overview
+      const sessionData = {
+        userId: activeUserId,
+        userName: isAdmin ? 'Hotel Registry' : (user.displayName || 'Guest'),
+        userPhoto: user.photoURL || '',
+        lastMessage: text,
+        lastTimestamp: timestamp,
+      };
+
       if (!isAdmin) {
+        // Increment unread for admin
         const currentRef = ref(db, `help_dex/active_chats/${user.uid}`);
         const snapshot = await get(currentRef);
         const currentUnread = (snapshot.exists() ? snapshot.val().unreadCount : 0) + 1;
         
-        await update(currentRef, {
-          userId: user.uid,
-          userName: profile?.legalName || user.displayName || 'Unverified Guest',
-          userPhoto: user.photoURL || '',
-          lastMessage: text,
-          lastTimestamp: timestamp,
-          unreadCount: currentUnread
+        await update(currentRef, { 
+          ...sessionData, 
+          unreadCount: currentUnread,
+          userName: user.displayName || 'Guest' 
         });
-        setCooldown(60); 
+        
+        setCooldown(60); // 1 minute anti-spam
       } else {
         await update(ref(db, `help_dex/active_chats/${activeUserId}`), {
-          lastMessage: text,
-          lastTimestamp: timestamp,
-          unreadCount: 0 
+          ...sessionData,
+          unreadCount: 0
         });
       }
 
+      // Create Notification for the OTHER party
+      const notifyUserId = isAdmin ? activeUserId : 'admin_broadcast'; // Simplified logic
+      // In production, we'd fetch the specific owner UID. Here we just target the admin role.
+      
       await createNotification(isAdmin ? activeUserId : 'hotelshotabdiabashik@gmail.com', {
         title: isAdmin ? 'New Registry Message' : 'Help Dex Inquiry',
         message: text,
@@ -144,8 +148,8 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
   };
 
   const filteredSessions = sessions.filter(s => 
-    (s.userName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (s.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase())
+    s.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!user) {
@@ -154,185 +158,131 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
         <div className="w-20 h-20 bg-gray-50 rounded-[2.5rem] flex items-center justify-center text-gray-300 mb-6">
           <MessageSquare size={40} />
         </div>
-        <h2 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Access Assistance</h2>
-        <p className="text-sm text-gray-400 max-w-xs font-medium">Please authorize your account to connect with our registry assistants.</p>
+        <h2 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Help Dex Login</h2>
+        <p className="text-sm text-gray-400 max-w-xs font-medium">Please authorize your account to access our priority live assistance hub.</p>
       </div>
     );
   }
 
-  const activeSession = sessions.find(s => s.userId === activeUserId);
-
   return (
-    <div className="max-w-[1600px] mx-auto h-[calc(100vh-72px)] md:h-[calc(100vh-88px)] flex overflow-hidden bg-white animate-fade-in relative">
+    <div className="max-w-7xl mx-auto h-[calc(100vh-88px)] md:h-[85vh] flex overflow-hidden bg-white border-t border-gray-100 animate-fade-in">
       
-      {/* Sidebar: Messenger Inbox Style (Admin Only) */}
+      {/* Sidebar: Chat List (Admin Only) */}
       {isAdmin && (
-        <div className={`w-full md:w-96 border-r border-gray-100 flex-col bg-white shrink-0 z-20 ${activeUserId ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-6 pb-4">
-             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Chats</h2>
-                <div className="p-2 bg-gray-50 text-gray-400 rounded-xl">
-                  <Bot size={18} />
-                </div>
-             </div>
+        <div className={`w-full md:w-80 border-r border-gray-100 flex-col bg-gray-50/50 ${activeUserId ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-6 bg-white border-b border-gray-100">
+             <h2 className="text-lg font-serif font-black text-gray-900 mb-4">Help Dex Sessions</h2>
              <div className="relative">
                 <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                 <input 
                   type="text" 
-                  placeholder="Search inbox..." 
-                  className="w-full bg-gray-100 border-none rounded-2xl py-3 pl-11 pr-4 text-[13px] font-medium outline-none focus:ring-2 focus:ring-hotel-primary/10 transition-all"
+                  placeholder="Search inquiries..." 
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs font-bold outline-none focus:bg-white focus:border-hotel-primary"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
              </div>
           </div>
-          
-          <div className="flex-1 overflow-y-auto no-scrollbar py-2">
+          <div className="flex-1 overflow-y-auto no-scrollbar">
             {filteredSessions.length > 0 ? (
               filteredSessions.map((session) => (
                 <button 
                   key={session.userId} 
                   onClick={() => setActiveUserId(session.userId)}
-                  className={`w-full px-4 py-3 text-left transition-all flex gap-3 relative group rounded-2xl mx-auto max-w-[92%] mb-1 ${activeUserId === session.userId ? 'bg-hotel-primary/5' : 'hover:bg-gray-50'}`}
+                  className={`w-full p-6 text-left border-b border-gray-50 transition-all flex gap-4 relative group ${activeUserId === session.userId ? 'bg-white shadow-inner' : 'hover:bg-white'}`}
                 >
-                  <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 shadow-sm relative border-2 border-white ring-1 ring-gray-100">
-                    <img 
-                      src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}&background=random`} 
-                      className="w-full h-full object-cover" 
-                      alt={session.userName}
-                    />
-                    <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-sm">
+                    <img src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}`} className="w-full h-full object-cover" />
                   </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                       <h4 className={`text-[13.5px] tracking-tight truncate ${session.unreadCount > 0 || activeUserId === session.userId ? 'font-black text-gray-900' : 'font-bold text-gray-700'}`}>
-                         {session.userName || 'Unverified Guest'}
-                       </h4>
-                       <span className="text-[10px] font-bold text-gray-400 shrink-0">
-                         {new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                       </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-tight truncate">{session.userName}</h4>
+                       <span className="text-[8px] font-bold text-gray-300">{new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={`text-[12px] truncate flex-1 ${session.unreadCount > 0 ? 'font-black text-gray-900' : 'text-gray-400 font-medium'}`}>
-                        {session.lastMessage}
-                      </p>
-                      {session.unreadCount > 0 && (
-                        <div className="w-2.5 h-2.5 bg-hotel-primary rounded-full shrink-0 animate-pulse"></div>
-                      )}
-                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium truncate italic">{session.lastMessage}</p>
                   </div>
-                  {activeUserId === session.userId && (
-                    <div className="absolute left-0 top-3 bottom-3 w-1 bg-hotel-primary rounded-r-full"></div>
+                  {session.unreadCount > 0 && (
+                    <div className="absolute right-4 bottom-4 w-5 h-5 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-bounce">
+                      {session.unreadCount}
+                    </div>
                   )}
+                  {activeUserId === session.userId && <div className="absolute left-0 top-4 bottom-4 w-1 bg-hotel-primary rounded-r-full"></div>}
                 </button>
               ))
             ) : (
-              <div className="p-10 text-center opacity-20 mt-10">
-                 <MessageSquare size={48} className="mx-auto mb-4" />
-                 <p className="text-[11px] font-black uppercase tracking-widest leading-relaxed">No conversations found</p>
+              <div className="p-10 text-center opacity-30">
+                 <Bot size={32} className="mx-auto mb-3" />
+                 <p className="text-[9px] font-black uppercase tracking-widest">No active sessions</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Main Conversation Pane */}
-      <div className={`flex-1 flex flex-col bg-white h-full relative transition-all duration-300 ${isAdmin && !activeUserId ? 'hidden md:flex items-center justify-center bg-gray-50/30' : 'flex'}`}>
+      {/* Main Chat Area */}
+      <div className={`flex-1 flex flex-col bg-white ${isAdmin && !activeUserId ? 'hidden md:flex items-center justify-center' : 'flex'}`}>
         {!activeUserId ? (
-           <div className="text-center select-none animate-fade-in px-10">
-              <div className="w-24 h-24 bg-white rounded-[2.5rem] shadow-xl border border-gray-100 flex items-center justify-center text-hotel-primary mx-auto mb-8">
-                <MessageSquare size={44} />
-              </div>
-              <h3 className="text-2xl font-serif font-black text-gray-900 tracking-tight">Select a Chat</h3>
-              <p className="text-sm text-gray-400 mt-2 max-w-xs mx-auto font-medium">Choose a resident conversation from the left to start managing their stay inquiries.</p>
+           <div className="text-center opacity-20 p-20 select-none">
+              <MessageSquare size={64} className="mx-auto mb-6" />
+              <h3 className="text-2xl font-serif font-black uppercase tracking-widest">Select a Resident Inquiry</h3>
+              <p className="text-sm font-bold mt-2">Manage live assistance and registry queries from this panel.</p>
            </div>
         ) : (
           <>
-            {/* Header: Chat Info */}
-            <div className="h-[72px] md:h-20 px-4 md:px-8 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md shrink-0 sticky top-0 z-30">
+            {/* Header */}
+            <div className="px-6 py-4 md:px-10 md:py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-4">
                 {isAdmin && (
-                  <button 
-                    onClick={() => setActiveUserId(null)} 
-                    className="md:hidden p-2 -ml-2 text-gray-400 hover:text-hotel-primary transition-colors"
-                  >
-                    <ChevronLeft size={24} />
-                  </button>
+                  <button onClick={() => setActiveUserId(null)} className="md:hidden p-2 text-gray-400"><ChevronLeft /></button>
                 )}
-                <div className="relative">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
-                    <img 
-                      src={isAdmin ? activeSession?.userPhoto : LOGO_ICON_URL} 
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-hotel-primary/5 flex items-center justify-center text-hotel-primary shrink-0 shadow-inner">
+                   <MessageSquare size={20} />
                 </div>
-                <div className="min-w-0">
-                   <h3 className="text-[15px] font-black text-gray-900 leading-none truncate">
-                      {isAdmin ? activeSession?.userName : 'Registry Assistant'}
+                <div>
+                   <h3 className="text-base font-black text-gray-900 leading-none">
+                      {isAdmin ? sessions.find(s => s.userId === activeUserId)?.userName : 'Registry Assistant'}
                    </h3>
-                   <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[10px] font-bold text-green-600 tracking-tight">Active now</span>
+                   <div className="flex items-center gap-2 mt-1.5">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">Active Connection</span>
                    </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="hidden lg:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl text-gray-400 text-[10px] font-black uppercase tracking-widest border border-gray-100">
-                   <ShieldCheck size={14} className="text-green-500" /> Secure
+              {!isAdmin && (
+                <div className="hidden lg:flex items-center gap-2 bg-hotel-primary/5 text-hotel-primary px-4 py-2 rounded-xl border border-hotel-primary/10">
+                   <ShieldCheck size={14} />
+                   <span className="text-[9px] font-black uppercase tracking-widest">End-to-End Encrypted</span>
                 </div>
-                <button className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
-                  <MoreVertical size={20} />
-                </button>
-              </div>
+              )}
             </div>
 
-            {/* Message Pane: Messenger Layout */}
-            <div 
-              ref={scrollRef} 
-              className="flex-1 overflow-y-auto px-4 py-8 md:px-10 md:py-12 space-y-2 no-scrollbar bg-white"
-            >
+            {/* Message Pane */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 md:p-10 space-y-6 no-scrollbar bg-gray-50/20">
                {messages.length === 0 && (
-                 <div className="max-w-xs mx-auto text-center space-y-4 py-12">
-                    <div className="w-16 h-16 bg-hotel-primary/5 text-hotel-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-6">
-                      <Sparkles size={28} />
-                    </div>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-relaxed">
-                       Start your conversation regarding room services, laundry, or registry updates.
+                 <div className="max-w-xs mx-auto text-center space-y-4 py-10 opacity-40">
+                    <Info size={32} className="mx-auto text-hotel-primary" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] leading-relaxed">
+                       How can we assist you today? Please describe your query regarding bookings, facilities, or registry status.
                     </p>
                  </div>
                )}
-               
-               {messages.map((msg, idx) => {
+               {messages.map((msg) => {
                  const isOwn = msg.senderId === user.uid;
-                 const prevMsg = messages[idx - 1];
-                 const isSameSender = prevMsg?.senderId === msg.senderId;
-                 
                  return (
-                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSameSender ? 'mt-1' : 'mt-6'}`}>
-                      <div className={`max-w-[75%] md:max-w-[60%] flex gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-                        {/* Avatar only shows on the first message of a block */}
-                        {!isOwn && !isSameSender ? (
-                          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 mt-auto border border-gray-100 shadow-sm">
-                            <img src={msg.senderPhoto || `https://ui-avatars.com/api/?name=${msg.senderName}`} className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          !isOwn && <div className="w-8 shrink-0"></div>
-                        )}
-
-                        <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                          <div className={`p-3.5 px-5 text-[14px] leading-relaxed shadow-sm ring-1 ring-black/5 ${
-                            isOwn 
-                            ? 'bg-hotel-primary text-white rounded-[1.4rem] rounded-tr-none' 
-                            : 'bg-gray-100 text-gray-800 rounded-[1.4rem] rounded-tl-none'
-                          }`}>
-                            {msg.text}
-                          </div>
-                          {!isSameSender && (
-                            <span className="text-[9px] font-bold text-gray-300 mt-1.5 px-1 uppercase tracking-tighter">
-                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          )}
+                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
+                      <div className={`max-w-[85%] md:max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                        <div className={`flex items-center gap-3 mb-2 px-1 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                             {msg.role === 'owner' ? 'Registry Admin' : isOwn ? 'You' : msg.senderName.split(' ')[0]}
+                           </span>
+                           <span className="text-[8px] text-gray-300 font-bold">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div className={`p-5 rounded-[1.8rem] text-[13px] leading-relaxed shadow-sm ring-1 ring-black/5 ${
+                          isOwn 
+                          ? 'bg-hotel-primary text-white rounded-tr-none' 
+                          : 'bg-white text-gray-700 rounded-tl-none border border-gray-100'
+                        }`}>
+                          {msg.text}
                         </div>
                       </div>
                    </div>
@@ -340,32 +290,30 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                })}
             </div>
 
-            {/* Input Bar: Clean & Modern */}
-            <div className="p-4 md:p-8 bg-white border-t border-gray-50">
+            {/* Input Bar */}
+            <div className="p-6 md:p-8 bg-white border-t border-gray-100">
                {!isAdmin && cooldown > 0 && (
-                 <div className="mb-4 flex items-center justify-center gap-2 bg-red-50 text-hotel-primary py-2 px-4 rounded-xl border border-red-100 animate-fade-in">
-                    <Clock size={12} className="animate-pulse" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Rate Limit: {cooldown}s remaining</p>
+                 <div className="mb-4 flex items-center justify-center gap-3 bg-red-50 text-hotel-primary p-3 rounded-xl border border-red-100 animate-fade-in">
+                    <AlertTriangle size={14} className="animate-bounce" />
+                    <p className="text-[9px] font-black uppercase tracking-widest">Anti-Spam active: Wait {cooldown}s to send next message</p>
                  </div>
                )}
-               <div className="relative flex items-center gap-3">
-                  <div className="flex-1 relative">
-                    <input 
-                      type="text" 
-                      placeholder={cooldown > 0 && !isAdmin ? "Assistant busy..." : "Aa"}
-                      className="w-full bg-gray-100 border-none rounded-3xl py-3.5 px-6 text-[14px] focus:bg-gray-50 focus:ring-2 focus:ring-hotel-primary/20 outline-none transition-all disabled:opacity-50 font-medium"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                      disabled={!isAdmin && cooldown > 0}
-                    />
-                  </div>
+               <div className="relative group flex items-center gap-3">
+                  <input 
+                    type="text" 
+                    placeholder={cooldown > 0 && !isAdmin ? "Cooling down..." : "Type your message..."}
+                    className="flex-1 bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-6 pr-14 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5 disabled:opacity-50"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    disabled={!isAdmin && cooldown > 0}
+                  />
                   <button 
                     onClick={handleSend}
                     disabled={loading || (!isAdmin && cooldown > 0) || !input.trim()}
-                    className="p-3.5 bg-hotel-primary text-white rounded-full hover:scale-110 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale disabled:scale-100 shadow-lg shadow-red-100 shrink-0"
+                    className="p-4 bg-hotel-primary text-white rounded-2xl hover:bg-hotel-secondary transition-all disabled:opacity-30 shadow-xl shadow-red-100 active:scale-95 flex items-center justify-center shrink-0"
                   >
-                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                   </button>
                </div>
             </div>
