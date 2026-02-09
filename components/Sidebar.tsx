@@ -1,24 +1,34 @@
+
 import React, { useState } from 'react';
 import { Phone, LayoutDashboard, ChevronRight, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS, LOGO_ICON_URL } from '../constants';
 
 const Sidebar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = false }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isLogoSpinning, setIsLogoSpinning] = useState(false);
   const [showCallChoices, setShowCallChoices] = useState(false);
-  const mapUrl = "https://maps.app.goo.gl/Fqxeny69cdNArTfA9";
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLogoSpinning(true);
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => setIsLogoSpinning(false), 2000);
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col shadow-sm z-50">
       {/* Branding */}
       <div className="p-8 pb-4 flex items-center justify-center">
-        <Link to="/" className="group flex flex-col items-center gap-2">
-           <img src={LOGO_ICON_URL} className="w-20 h-20 object-contain transition-transform group-hover:scale-110" alt="Shotabdi Abashik" />
+        <a href="/" onClick={handleLogoClick} className="group flex flex-col items-center gap-2">
+           <img src={LOGO_ICON_URL} className={`w-20 h-20 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Shotabdi Abashik" />
            <div className="text-center">
              <h2 className="text-sm font-serif font-black text-gray-900 tracking-widest uppercase">Shotabdi</h2>
              <p className="text-[8px] text-hotel-primary font-black uppercase tracking-[0.4em]">Abashik</p>
            </div>
-        </Link>
+        </a>
       </div>
 
       <div className="p-6 flex-1 overflow-y-auto no-scrollbar">

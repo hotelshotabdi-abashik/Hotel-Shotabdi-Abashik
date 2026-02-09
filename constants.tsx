@@ -1,3 +1,4 @@
+
 // DO NOT REMOVE OR OVERWRITE - ACTIVE PRODUCTION DATA.
 // This file contains the primary registry for rooms, restaurants, and tourist guides.
 
@@ -122,7 +123,7 @@ export const SYLHET_ATTRACTIONS: Attraction[] = [
 ];
 
 export const NAV_ITEMS = [
-  { id: 'overview', path: '/', label: 'Overview', icon: <Home size={20} /> },
+  { id: 'home', path: '/', label: 'Home', icon: <Home size={20} /> },
   { id: 'offers', path: '/offers', label: 'Exclusive Offers', icon: <Tag size={20} /> },
   { id: 'rooms', path: '/rooms', label: 'Our Rooms', icon: <Bed size={20} /> },
   { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
