@@ -143,6 +143,7 @@ export interface HelpDexMessage {
   text: string;
   timestamp: number;
   role: 'guest' | 'admin' | 'owner';
+  status?: 'sent' | 'seen';
 }
 
 export interface ChatSession {

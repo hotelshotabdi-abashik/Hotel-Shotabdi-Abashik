@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, User, Bot, Sparkles, Loader2, ShieldCheck, 
   MessageSquare, Clock, ChevronLeft, Search,
-  CheckCircle2, MoreVertical, Mail, UserCheck
+  CheckCircle2, MoreVertical, Mail, UserCheck, Check, CheckCheck
 } from 'lucide-react';
 import { 
   db, auth, ref, onValue, push, set, update, 
@@ -41,6 +41,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     }
   }, [messages, activeUserId]);
 
+  // Load Sessions for Admin
   useEffect(() => {
     if (!isAdmin) return;
     const sessionsRef = ref(db, 'help_dex/active_chats');
@@ -55,6 +56,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     return () => unsub();
   }, [isAdmin]);
 
+  // Load Messages & Mark as Seen
   useEffect(() => {
     if (!activeUserId) {
       setMessages([]);
@@ -63,8 +65,24 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     const msgsRef = ref(db, `help_dex/messages/${activeUserId}`);
     const unsub = onValue(msgsRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = Object.values(snapshot.val()) as HelpDexMessage[];
+        const rawData = snapshot.val();
+        const data = Object.values(rawData) as HelpDexMessage[];
         setMessages(data.sort((a, b) => a.timestamp - b.timestamp));
+        
+        // Mark Incoming Messages as Seen
+        const updates: any = {};
+        Object.keys(rawData).forEach(key => {
+          const msg = rawData[key] as HelpDexMessage;
+          // If I'm reading someone else's message and it's currently 'sent'
+          if (msg.senderId !== user?.uid && msg.status !== 'seen') {
+            updates[`help_dex/messages/${activeUserId}/${key}/status`] = 'seen';
+          }
+        });
+        
+        if (Object.keys(updates).length > 0) {
+          update(ref(db), updates);
+        }
+
         if (isAdmin) {
           update(ref(db, `help_dex/active_chats/${activeUserId}`), { unreadCount: 0 });
         }
@@ -73,7 +91,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
       }
     });
     return () => unsub();
-  }, [activeUserId, isAdmin]);
+  }, [activeUserId, isAdmin, user?.uid]);
 
   const handleSend = async () => {
     if (!input.trim() || !user || !activeUserId || loading) return;
@@ -94,7 +112,8 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
         senderPhoto: String(user.photoURL || ''),
         text: String(text),
         timestamp,
-        role: isAdmin ? 'owner' : 'guest'
+        role: isAdmin ? 'owner' : 'guest',
+        status: 'sent'
       };
 
       await set(msgRef, newMessage);
@@ -157,59 +176,64 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     <div className="max-w-[1600px] mx-auto h-[calc(100vh-72px)] md:h-[calc(100vh-88px)] flex overflow-hidden bg-white animate-fade-in relative">
       
       {isAdmin && (
-        <div className={`w-full md:w-96 border-r border-gray-100 flex-col bg-white shrink-0 z-20 ${activeUserId ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-6 pb-4">
-             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Support Inbox</h2>
-                <div className="p-2 bg-hotel-primary/10 text-hotel-primary rounded-xl">
-                  <UserCheck size={18} />
+        <div className={`w-full md:w-[400px] border-r border-gray-100 flex-col bg-white shrink-0 z-20 ${activeUserId ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-8 pb-6 bg-white sticky top-0 z-10">
+             <div className="flex items-center justify-between mb-8">
+                <div>
+                   <h2 className="text-2xl font-black text-gray-900 tracking-tight">Help Dex</h2>
+                   <p className="text-[10px] text-hotel-primary font-black uppercase tracking-widest mt-1">Registry Support Hub</p>
+                </div>
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 border border-gray-100">
+                  <UserCheck size={20} />
                 </div>
              </div>
-             <div className="relative">
-                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+             <div className="relative group">
+                <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" />
                 <input 
                   type="text" 
-                  placeholder="Search name or email..." 
-                  className="w-full bg-gray-100 border-none rounded-2xl py-3.5 pl-11 pr-4 text-[13px] font-medium outline-none focus:ring-2 focus:ring-hotel-primary/10 transition-all"
+                  placeholder="Search residents..." 
+                  className="w-full bg-gray-50 border border-gray-100 rounded-[1.5rem] py-4 pl-14 pr-6 text-sm font-semibold outline-none focus:ring-4 focus:ring-hotel-primary/5 focus:bg-white transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
              </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto no-scrollbar py-2">
+          <div className="flex-1 overflow-y-auto no-scrollbar py-2 px-4 space-y-1">
             {filteredSessions.length > 0 ? (
               filteredSessions.map((session) => (
                 <button 
                   key={session.userId} 
                   onClick={() => setActiveUserId(session.userId)}
-                  className={`w-full px-5 py-4 text-left transition-all flex gap-4 relative group mx-auto max-w-[94%] mb-1 rounded-3xl ${activeUserId === session.userId ? 'bg-hotel-primary/5 shadow-inner' : 'hover:bg-gray-50'}`}
+                  className={`w-full p-5 text-left transition-all flex gap-5 relative group rounded-[2rem] border ${activeUserId === session.userId ? 'bg-hotel-primary/5 border-hotel-primary/10 shadow-sm' : 'hover:bg-gray-50 border-transparent'}`}
                 >
-                  <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 shadow-sm relative border-2 border-white ring-1 ring-gray-100 p-0.5">
-                    <img 
-                      src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}&background=E53935&color=fff`} 
-                      className="w-full h-full object-cover rounded-full" 
-                      alt={session.userName}
-                    />
-                    <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
+                  <div className="relative shrink-0">
+                    <div className="w-16 h-16 rounded-[1.5rem] overflow-hidden shadow-xl relative border-4 border-white ring-1 ring-gray-100 p-0.5">
+                      <img 
+                        src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}&background=E53935&color=fff`} 
+                        className="w-full h-full object-cover rounded-[1.2rem]" 
+                        alt={session.userName}
+                      />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-[3px] border-white rounded-full shadow-md animate-pulse"></div>
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                       <h4 className={`text-[14px] tracking-tight truncate ${session.unreadCount > 0 || activeUserId === session.userId ? 'font-black text-gray-900' : 'font-bold text-gray-700'}`}>
-                         {String(session.userName || 'Guest')}
+                    <div className="flex justify-between items-baseline mb-1">
+                       <h4 className={`text-[15px] tracking-tight truncate ${session.unreadCount > 0 || activeUserId === session.userId ? 'font-black text-gray-900' : 'font-bold text-gray-700'}`}>
+                         {String(session.userName || 'Resident')}
                        </h4>
-                       <span className="text-[9px] font-bold text-gray-400 shrink-0 ml-2">
+                       <span className="text-[10px] font-bold text-gray-400 shrink-0 ml-2">
                          {new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                        </span>
                     </div>
                     <div className="flex flex-col gap-0.5">
-                       <p className={`text-[11px] truncate leading-tight ${session.unreadCount > 0 ? 'font-black text-gray-900' : 'text-gray-400 font-medium'}`}>
+                       <p className={`text-xs truncate leading-tight ${session.unreadCount > 0 ? 'font-black text-gray-900' : 'text-gray-400 font-medium'}`}>
                          {String(session.lastMessage)}
                        </p>
-                       <p className="text-[9px] text-hotel-primary font-black truncate tracking-tight uppercase opacity-50">{String(session.userEmail)}</p>
+                       <p className="text-[9px] text-gray-300 font-bold truncate tracking-tight uppercase mt-0.5">{String(session.userEmail)}</p>
                     </div>
                     {session.unreadCount > 0 && (
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full shrink-0 shadow-lg shadow-red-100">
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 bg-hotel-primary text-white text-[10px] font-black flex items-center justify-center rounded-full shrink-0 shadow-lg shadow-red-200 animate-bounce">
                         {session.unreadCount}
                       </div>
                     )}
@@ -217,72 +241,73 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                 </button>
               ))
             ) : (
-              <div className="p-10 text-center opacity-20 mt-10">
-                 <MessageSquare size={48} className="mx-auto mb-4" />
-                 <p className="text-[11px] font-black uppercase tracking-widest">No matching registry found</p>
+              <div className="p-20 text-center opacity-20">
+                 <MessageSquare size={64} className="mx-auto mb-6" />
+                 <p className="text-xs font-black uppercase tracking-[0.3em]">Registry Empty</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      <div className={`flex-1 flex flex-col bg-white h-full relative ${isAdmin && !activeUserId ? 'hidden md:flex items-center justify-center bg-gray-50/20' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col bg-white h-full relative ${isAdmin && !activeUserId ? 'hidden md:flex items-center justify-center bg-gray-50/10' : 'flex'}`}>
         {!activeUserId ? (
-           <div className="text-center select-none animate-fade-in px-10">
-              <div className="w-24 h-24 flex items-center justify-center mx-auto mb-8 p-4">
+           <div className="text-center select-none animate-fade-in px-12">
+              <div className="w-28 h-28 flex items-center justify-center mx-auto mb-10 p-5 bg-white rounded-[2.5rem] shadow-2xl shadow-red-50 border border-gray-50">
                 <img src={LOGO_ICON_URL} className="w-full h-full object-contain" alt="Hotel Logo" />
               </div>
-              <h3 className="text-2xl font-serif font-black text-gray-900 tracking-tight">Concierge Desktop</h3>
-              <p className="text-sm text-gray-400 mt-2 max-w-xs mx-auto font-medium">Select a resident from the inbox to begin live high-priority support.</p>
+              <h3 className="text-3xl font-serif font-black text-gray-900 tracking-tight">Registry Portal</h3>
+              <p className="text-sm text-gray-400 mt-4 max-w-sm mx-auto font-medium leading-relaxed">Select a resident from the vault to begin high-priority synchronization.</p>
            </div>
         ) : (
           <>
-            <div className="h-[72px] md:h-20 px-4 md:px-8 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md shrink-0 sticky top-0 z-30">
-              <div className="flex items-center gap-4">
+            <div className="h-20 md:h-24 px-6 md:px-12 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-xl shrink-0 sticky top-0 z-30">
+              <div className="flex items-center gap-5">
                 {isAdmin && (
                   <button 
                     onClick={() => setActiveUserId(null)} 
-                    className="md:hidden p-2 -ml-2 text-gray-400 hover:text-hotel-primary transition-colors"
+                    className="md:hidden p-3 -ml-4 text-gray-400 hover:text-hotel-primary transition-colors"
                   >
-                    <ChevronLeft size={24} />
+                    <ChevronLeft size={28} />
                   </button>
                 )}
                 <div className="relative">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100 p-0.5">
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-[1.2rem] md:rounded-[1.5rem] overflow-hidden border-4 border-white shadow-lg ring-1 ring-gray-100 p-0.5">
                     <img 
                       src={isAdmin ? (activeSession?.userPhoto || `https://ui-avatars.com/api/?name=${activeSession?.userName}`) : LOGO_ICON_URL} 
-                      className={`w-full h-full ${isAdmin ? 'object-cover rounded-full' : 'object-contain'}`} 
+                      className={`w-full h-full ${isAdmin ? 'object-cover rounded-[1rem]' : 'object-contain'}`} 
                     />
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
                 </div>
                 <div className="min-w-0">
-                   <h3 className="text-[15px] font-black text-gray-900 leading-none truncate">
+                   <h3 className="text-base md:text-xl font-black text-gray-900 leading-none truncate tracking-tight">
                       {isAdmin ? String(activeSession?.userName || 'Resident') : 'Registry Assistant'}
                    </h3>
-                   <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[10px] font-bold text-green-600 tracking-tight">Active Support Tunnel</span>
+                   <div className="flex items-center gap-2 mt-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-[10px] font-black text-green-600 tracking-widest uppercase">Live Connection</span>
                    </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="hidden lg:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl text-gray-400 text-[10px] font-black uppercase tracking-widest border border-gray-100">
-                   <ShieldCheck size={14} className="text-green-500" /> Secure
+              <div className="flex items-center gap-4">
+                <div className="hidden lg:flex items-center gap-3 bg-gray-50 px-6 py-2.5 rounded-2xl text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border border-gray-100">
+                   <ShieldCheck size={16} className="text-green-500" /> Authorized Tunnel
                 </div>
-                <button className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
+                <button className="p-3 text-gray-300 hover:text-gray-900 transition-colors bg-gray-50 rounded-2xl">
                   <MoreVertical size={20} />
                 </button>
               </div>
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-8 md:px-10 md:py-12 space-y-2 no-scrollbar bg-white">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-10 md:px-16 md:py-16 space-y-3 no-scrollbar bg-white">
                {messages.length === 0 && (
-                 <div className="max-w-xs mx-auto text-center space-y-4 py-12">
-                    <div className="w-16 h-16 flex items-center justify-center mx-auto mb-6 p-3">
-                      <img src={LOGO_ICON_URL} className="w-full h-full object-contain" alt="Logo" />
+                 <div className="max-w-sm mx-auto text-center space-y-6 py-20">
+                    <div className="w-20 h-20 bg-gray-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 p-5 border border-gray-100 shadow-inner">
+                      <img src={LOGO_ICON_URL} className="w-full h-full object-contain opacity-40" alt="Logo" />
                     </div>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-relaxed">
-                       You are now connected with the Hotel Shotabdi concierge team.
+                    <p className="text-[12px] font-black text-gray-300 uppercase tracking-[0.4em] leading-relaxed">
+                       Synchronizing with Registry...
                     </p>
                  </div>
                )}
@@ -291,30 +316,43 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                  const isOwn = msg.senderId === user.uid;
                  const prevMsg = messages[idx - 1];
                  const isSameSender = prevMsg?.senderId === msg.senderId;
+                 const isLastInGroup = messages[idx + 1]?.senderId !== msg.senderId;
                  
                  return (
-                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSameSender ? 'mt-1' : 'mt-6'}`}>
-                      <div className={`max-w-[78%] md:max-w-[65%] flex gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSameSender ? 'mt-1' : 'mt-8'}`}>
+                      <div className={`max-w-[85%] md:max-w-[70%] flex gap-4 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
                         {!isOwn && !isSameSender ? (
-                          <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border border-gray-100 shadow-sm p-0.5">
-                            <img src={msg.senderPhoto || `https://ui-avatars.com/api/?name=${msg.senderName}`} className="w-full h-full object-contain" />
+                          <div className="w-10 h-10 rounded-2xl overflow-hidden shrink-0 mt-auto border-2 border-white shadow-md p-0.5 ring-1 ring-gray-100">
+                            <img src={msg.senderPhoto || `https://ui-avatars.com/api/?name=${msg.senderName}`} className="w-full h-full object-contain rounded-xl" />
                           </div>
                         ) : (
-                          !isOwn && <div className="w-9 shrink-0"></div>
+                          !isOwn && <div className="w-10 shrink-0"></div>
                         )}
 
                         <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                          <div className={`p-4 px-6 text-[14.5px] leading-relaxed shadow-sm ring-1 ring-black/5 ${
+                          <div className={`p-4 md:p-5 px-6 md:px-7 text-[15px] md:text-[16px] leading-relaxed shadow-sm transition-all ${
                             isOwn 
-                            ? 'bg-hotel-primary text-white rounded-[1.5rem] rounded-tr-none' 
-                            : 'bg-gray-100 text-gray-800 rounded-[1.5rem] rounded-tl-none'
+                            ? 'bg-hotel-primary text-white rounded-[2rem] rounded-tr-none' 
+                            : 'bg-gray-100 text-gray-800 rounded-[2rem] rounded-tl-none'
                           }`}>
                             {String(msg.text)}
                           </div>
-                          {!isSameSender && (
-                            <span className="text-[9px] font-black text-gray-300 mt-2 px-1 uppercase tracking-tighter">
-                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+                          <div className="flex items-center gap-2 mt-2 px-2">
+                             <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">
+                               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                             </span>
+                             {isOwn && (
+                               <div className="flex items-center">
+                                 {msg.status === 'seen' ? (
+                                   <CheckCheck size={14} className="text-blue-500" />
+                                 ) : (
+                                   <Check size={14} className="text-gray-300" />
+                                 )}
+                               </div>
+                             )}
+                          </div>
+                          {isOwn && msg.status === 'seen' && isLastInGroup && (
+                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest mt-1 px-2">Seen</span>
                           )}
                         </div>
                       </div>
@@ -323,19 +361,19 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                })}
             </div>
 
-            <div className="p-4 md:p-8 bg-white border-t border-gray-50">
+            <div className="p-6 md:p-10 bg-white border-t border-gray-100">
                {!isAdmin && cooldown > 0 && (
-                 <div className="mb-4 flex items-center justify-center gap-2 bg-red-50 text-hotel-primary py-2 px-4 rounded-xl border border-red-100 animate-fade-in">
-                    <Clock size={12} className="animate-pulse" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Team busy: {cooldown}s</p>
+                 <div className="mb-6 flex items-center justify-center gap-3 bg-red-50 text-hotel-primary py-3 px-6 rounded-2xl border border-red-100 animate-fade-in shadow-sm">
+                    <Clock size={14} className="animate-pulse" />
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">Registry Delay: {cooldown}s Remaining</p>
                  </div>
                )}
-               <div className="relative flex items-center gap-3">
-                  <div className="flex-1 relative">
+               <div className="relative flex items-center gap-4">
+                  <div className="flex-1 relative group">
                     <input 
                       type="text" 
-                      placeholder={cooldown > 0 && !isAdmin ? "Locked..." : "Type your query..."}
-                      className="w-full bg-gray-100 border-none rounded-[1.8rem] py-4 px-7 text-[15px] focus:bg-gray-50 focus:ring-2 focus:ring-hotel-primary/20 outline-none transition-all disabled:opacity-50 font-medium"
+                      placeholder={cooldown > 0 && !isAdmin ? "Synchronizing..." : "Command the registry..."}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-[2rem] py-5 px-8 text-base focus:bg-white focus:ring-4 focus:ring-hotel-primary/5 focus:border-hotel-primary outline-none transition-all disabled:opacity-50 font-semibold"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -345,9 +383,9 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                   <button 
                     onClick={handleSend}
                     disabled={loading || (!isAdmin && cooldown > 0) || !input.trim()}
-                    className="p-4 bg-hotel-primary text-white rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 shadow-xl shadow-red-100 shrink-0"
+                    className="w-16 h-16 bg-hotel-primary text-white rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 shadow-2xl shadow-red-200 shrink-0 flex items-center justify-center"
                   >
-                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={20} />}
+                    {loading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} />}
                   </button>
                </div>
             </div>
