@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, User, Bot, Sparkles, Loader2, ShieldCheck, 
@@ -41,7 +42,6 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     }
   }, [messages, activeUserId]);
 
-  // Load Sessions for Admin
   useEffect(() => {
     if (!isAdmin) return;
     const sessionsRef = ref(db, 'help_dex/active_chats');
@@ -56,7 +56,6 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     return () => unsub();
   }, [isAdmin]);
 
-  // Load Messages & Mark as Seen
   useEffect(() => {
     if (!activeUserId) {
       setMessages([]);
@@ -69,11 +68,9 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
         const data = Object.values(rawData) as HelpDexMessage[];
         setMessages(data.sort((a, b) => a.timestamp - b.timestamp));
         
-        // Mark Incoming Messages as Seen
         const updates: any = {};
         Object.keys(rawData).forEach(key => {
           const msg = rawData[key] as HelpDexMessage;
-          // If I'm reading someone else's message and it's currently 'sent'
           if (msg.senderId !== user?.uid && msg.status !== 'seen') {
             updates[`help_dex/messages/${activeUserId}/${key}/status`] = 'seen';
           }
@@ -332,13 +329,13 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                         <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                           <div className={`p-4 md:p-5 px-6 md:px-7 text-[15px] md:text-[16px] leading-relaxed shadow-sm transition-all ${
                             isOwn 
-                            ? 'bg-hotel-primary text-white rounded-[2rem] rounded-tr-none' 
-                            : 'bg-gray-100 text-gray-800 rounded-[2rem] rounded-tl-none'
+                            ? 'bg-hotel-primary text-white rounded-[2rem] rounded-tr-none shadow-lg shadow-red-50' 
+                            : 'bg-gray-100 text-gray-800 rounded-[2rem] rounded-tl-none border border-gray-200/50'
                           }`}>
                             {String(msg.text)}
                           </div>
                           <div className="flex items-center gap-2 mt-2 px-2">
-                             <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">
+                             <span className="text-[9px] font-bold text-gray-300 uppercase tracking-tighter">
                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                              </span>
                              {isOwn && (

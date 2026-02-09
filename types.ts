@@ -1,3 +1,4 @@
+
 export interface Room {
   id: string;
   title: string;
@@ -68,6 +69,7 @@ export interface SiteConfig {
   touristGuides: Attraction[];
   offers: Offer[];
   announcement: string;
+  logoUrl?: string;
   lastUpdated: number;
 }
 

@@ -28,7 +28,7 @@ import {
   update
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -40,7 +40,6 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
     
-    // Default SEO Base
     let title = 'Hotel Shotabdi Abashik | Best Luxury Stay in Sylhet';
     let desc = 'Book your stay at Hotel Shotabdi Abashik, the premier luxury residential hotel in Sylhet. 24/7 service, free Wi-Fi, and prime location near Keane Bridge.';
     
@@ -120,6 +119,7 @@ const AppContent = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
+  const [isLogoUpdating, setIsLogoUpdating] = useState(false);
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -130,7 +130,6 @@ const AppContent = () => {
   const [hasPendingBooking, setHasPendingBooking] = useState(false);
 
   const [activeDiscount, setActiveDiscount] = useState<number>(0);
-  const [claimedOfferId, setClaimedOfferId] = useState<string | null>(null);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -149,6 +148,7 @@ const AppContent = () => {
     restaurants: SYLHET_RESTAURANTS,
     touristGuides: SYLHET_ATTRACTIONS,
     announcement: "25% OFF DISCOUNT",
+    logoUrl: LOGO_ICON_URL,
     lastUpdated: 0
   });
 
@@ -208,6 +208,31 @@ const AppContent = () => {
     setTimeout(() => setIsLogoSpinning(false), 2000);
   };
 
+  const uploadToR2 = async (file: File, folder: string): Promise<string> => {
+    const filename = `${folder}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+    const url = `${CMS_WORKER_URL}/${filename}`;
+    await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.type, 'Authorization': ADMIN_SECRET }, body: file });
+    return url;
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/svg+xml')) {
+      setIsLogoUpdating(true);
+      try {
+        const url = await uploadToR2(file, 'Logo');
+        setSiteConfig(prev => ({ ...prev, logoUrl: url }));
+        alert("Branding Updated. Don't forget to Publish Site to save permanently.");
+      } catch (err) {
+        alert("Logo update failed.");
+      } finally {
+        setIsLogoUpdating(false);
+      }
+    } else if (file) {
+      alert("Please upload a PNG or SVG for proper transparency.");
+    }
+  };
+
   const saveConfig = async () => {
     setIsSaving(true);
     try {
@@ -220,13 +245,6 @@ const AppContent = () => {
     } finally { setIsSaving(false); }
   };
 
-  const uploadToR2 = async (file: File, folder: string): Promise<string> => {
-    const filename = `${folder}/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-    const url = `${CMS_WORKER_URL}/${filename}`;
-    await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.type, 'Authorization': ADMIN_SECRET }, body: file });
-    return url;
-  };
-
   if (isConfigLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
@@ -234,10 +252,12 @@ const AppContent = () => {
     </div>
   );
 
+  const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
+
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <RouteMetadata siteConfig={siteConfig} />
-      <Sidebar isAdmin={isAdmin || isOwner} />
+      <Sidebar isAdmin={isAdmin || isOwner} logoUrl={currentLogo} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
         {(siteConfig.announcement || isEditMode) && (
@@ -250,22 +270,27 @@ const AppContent = () => {
 
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center h-[72px] md:h-[88px]">
           <div className="flex items-center gap-4">
-            {/* Mobile Header Logo */}
-            <div className="lg:hidden flex items-center gap-3 md:gap-4 group cursor-pointer" onClick={handleLogoClick}>
-              <img src={LOGO_ICON_URL} className={`w-12 h-12 md:w-16 md:h-16 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Hotel Shotabdi Abashik" />
+            <div className="lg:hidden flex items-center gap-3 md:gap-4 group cursor-pointer relative" onClick={handleLogoClick}>
+              <div className="relative">
+                <img src={currentLogo} className={`w-12 h-12 md:w-16 md:h-16 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Hotel Shotabdi Abashik" />
+                {isEditMode && (
+                  <label className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
+                    <input type="file" className="hidden" accept=".png,.svg" onChange={handleLogoChange} />
+                    {isLogoUpdating ? <RefreshCw className="animate-spin text-white" size={16} /> : <Camera className="text-white" size={16} />}
+                  </label>
+                )}
+              </div>
               <div className="flex flex-col select-none leading-none -space-y-1">
                 <h1 className="text-lg md:text-xl font-serif font-black text-gray-900 tracking-tight">Hotel Shotabdi</h1>
                 <p className="text-[8px] md:text-[9px] text-hotel-primary font-black uppercase tracking-[0.4em]">Abashik</p>
               </div>
             </div>
-            {/* Desktop Header Title */}
             <div className="hidden lg:block">
                <h2 className="text-xs font-black uppercase tracking-[0.5em] text-gray-400">Hotel Shotabdi Abashik</h2>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Admin Edit Web Toggle */}
             {(isAdmin || isOwner) && (
               <button 
                 onClick={() => setIsEditMode(!isEditMode)}
@@ -293,7 +318,6 @@ const AppContent = () => {
           </div>
         </header>
 
-        {/* Floating Save Changes Bar */}
         {isEditMode && (
           <div className="fixed bottom-32 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex items-center gap-10 animate-fade-in ring-1 ring-white/20">
              <div className="flex items-center gap-4">
@@ -334,11 +358,11 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        <footer className="bg-white border-t border-gray-100 py-20 px-6 md:px-12">
+        <footer id="main-footer" className="bg-white border-t border-gray-100 py-20 px-6 md:px-12">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
-                <img src={LOGO_ICON_URL} className="w-14 h-14 object-contain transition-transform group-hover:scale-110" alt="Hotel Shotabdi Abashik Logo" />
+                <img src={currentLogo} className="w-14 h-14 object-contain transition-transform group-hover:scale-110 grayscale" alt="Hotel Shotabdi Abashik Logo" />
                 <div>
                   <p className="text-[12px] font-black text-gray-900 uppercase tracking-[0.2em]">Hotel Shotabdi</p>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.1em] mt-0.5">Abashik Hub</p>
