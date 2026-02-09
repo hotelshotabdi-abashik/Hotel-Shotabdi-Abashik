@@ -4,7 +4,7 @@ import {
   Users, User, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer
+  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck
 } from 'lucide-react';
 import { db, ref, onValue, update, createNotification, deleteUserProfile, get } from '../services/firebase';
 import { UserProfile, Booking } from '../types';
@@ -45,11 +45,6 @@ const AdminDashboard: React.FC = () => {
 
     return () => { uUnsub(); bUnsub(); };
   }, []);
-
-  const handlePrint = () => {
-    // Media query in index.html ensures ONLY #print-record is visible
-    window.print();
-  };
 
   const handleBookingAction = async (booking: Booking, status: 'accepted' | 'rejected', meta?: string) => {
     try {
@@ -113,144 +108,138 @@ const AdminDashboard: React.FC = () => {
   const renderSelectedBooking = () => {
     if (!selectedBooking) return null;
     const content = (
-      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden print:static print:bg-white print:p-0">
-         <div id="print-record" className="bg-white w-full max-w-6xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:shadow-none print:border-none print:rounded-none print:max-h-none print:static print:w-full">
+      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden">
+         <div className="bg-white w-full max-w-6xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative">
             
-            {/* Header / Actions (HIDDEN on PRINT) */}
-            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:hidden">
+            {/* Unified Registry Header */}
+            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-hotel-primary/10 rounded-2xl flex items-center justify-center text-hotel-primary shadow-inner">
-                     <Building2 size={32} />
+                  <div className="w-16 h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100">
+                     <ClipboardCheck size={32} />
                   </div>
                   <div>
-                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none">Stay Record View</h2>
+                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none">Stay Entry Record</h2>
                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                       <Database size={12} /> ID: {selectedBooking.id}
+                       <Database size={12} /> Registry ID: {selectedBooking.id}
                      </p>
                   </div>
                </div>
-               <div className="flex items-center gap-3">
-                 <button 
-                  onClick={handlePrint}
-                  className="hidden md:flex items-center gap-2 px-6 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all"
-                 >
-                   <Printer size={18} /> Download PDF Record
-                 </button>
+               <div className="flex items-center gap-4">
+                 <div className="hidden lg:flex flex-col items-end mr-4">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Entry Timestamp</p>
+                    <p className="text-xs font-black text-gray-900">{formatTime(selectedBooking.createdAt)}</p>
+                 </div>
                  <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
                    <XCircle size={28}/>
                  </button>
                </div>
             </div>
 
-            {/* PRINT-ONLY HEADER */}
-            <div className="hidden print:flex items-center justify-between p-12 border-b-4 border-gray-900 mb-10">
-               <div className="flex items-center gap-6">
-                 <img src={LOGO_ICON_URL} className="w-24 h-24 object-contain" alt="Hotel Logo" />
-                 <div>
-                   <h1 className="text-4xl font-serif font-black text-gray-900">HOTEL SHOTABDI ABASHIK</h1>
-                   <p className="text-sm font-black text-hotel-primary uppercase tracking-[0.4em]">Official Guest Registration Card</p>
-                 </div>
-               </div>
-               <div className="text-right">
-                  <p className="text-[10px] font-black uppercase text-gray-400">Record ID</p>
-                  <p className="text-lg font-mono font-black">{selectedBooking.id}</p>
-                  <p className="text-[10px] font-black uppercase text-gray-400 mt-2">Export Date</p>
-                  <p className="text-xs font-bold">{new Date().toLocaleString()}</p>
-               </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible print:p-0">
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 print:grid-cols-3">
+            <div className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar">
+               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                   
-                  {/* Left: Schedule & Rates */}
-                  <div className="lg:col-span-1 space-y-8 print:col-span-1">
+                  {/* Info Sidebar */}
+                  <div className="lg:col-span-4 space-y-10">
                     <section className="space-y-4">
                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
-                        <Calendar size={16} className="text-hotel-primary"/> Schedule Details
+                        <Calendar size={16} className="text-hotel-primary"/> Stay Schedule
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-black">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Check In</p>
+                        <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Check In</p>
                           <p className="text-sm font-black text-gray-900">{selectedBooking.checkIn}</p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-black">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Check Out</p>
+                        <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Check Out</p>
                           <p className="text-sm font-black text-gray-900">{selectedBooking.checkOut}</p>
                         </div>
                       </div>
-                      <div className="bg-hotel-primary/5 p-5 rounded-2xl border border-hotel-primary/10 print:bg-white print:border-black">
-                         <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-widest mb-1">Stay Category</p>
-                         <p className="text-lg font-black text-gray-900 leading-tight">{selectedBooking.roomTitle}</p>
+                      <div className="bg-hotel-primary/5 p-6 rounded-3xl border border-hotel-primary/10">
+                         <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1">Assigned Unit</p>
+                         <p className="text-xl font-black text-gray-900 leading-tight">{selectedBooking.roomTitle}</p>
                          {selectedBooking.roomNumber && (
-                           <p className="text-xl font-black text-gray-900 mt-4 border-t border-hotel-primary/20 pt-2">Room No: {selectedBooking.roomNumber}</p>
+                           <div className="mt-4 pt-4 border-t border-hotel-primary/10">
+                              <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1">Room Allocation</p>
+                              <p className="text-2xl font-black text-gray-900">Room {selectedBooking.roomNumber}</p>
+                           </div>
                          )}
                       </div>
                     </section>
 
                     <section className="space-y-4">
                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
-                        <Tag size={16} className="text-hotel-primary"/> Pricing Agreement
+                        <Tag size={16} className="text-hotel-primary"/> Financial Data
                       </h4>
-                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex items-center justify-between print:bg-white print:border-black">
-                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Stay Rate</p>
-                         <p className="text-xl font-black text-[#B22222]">৳{selectedBooking.price}</p>
+                      <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex items-center justify-between">
+                         <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Grand Total</p>
+                            <p className="text-[9px] text-gray-400 font-bold italic mt-0.5">Includes Residential Discount</p>
+                         </div>
+                         <p className="text-3xl font-serif font-black text-[#B22222]">৳{selectedBooking.price}</p>
                       </div>
                     </section>
 
                     <section className="space-y-4">
                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
-                        <Clock size={16} className="text-hotel-primary"/> Registry History
+                        <Clock size={16} className="text-hotel-primary"/> Processing Log
                       </h4>
-                      <div className="space-y-3">
-                         <div className="flex justify-between text-[10px] font-bold">
-                           <span className="text-gray-400 uppercase">Requested</span>
-                           <span className="text-gray-900">{formatTime(selectedBooking.createdAt)}</span>
+                      <div className="space-y-4">
+                         <div className="flex justify-between items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Submission</span>
+                           <span className="text-xs font-black text-gray-900">{formatTime(selectedBooking.createdAt)}</span>
                          </div>
                          {selectedBooking.arrivedAt && (
-                           <div className="flex justify-between text-[10px] font-bold">
-                             <span className="text-green-500 uppercase">Entry Recorded</span>
-                             <span className="text-gray-900">{formatTime(selectedBooking.arrivedAt)}</span>
+                           <div className="flex justify-between items-center bg-green-50 p-4 rounded-xl border border-green-100">
+                             <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Entry Cleared</span>
+                             <span className="text-xs font-black text-gray-900">{formatTime(selectedBooking.arrivedAt)}</span>
+                           </div>
+                         )}
+                         {selectedBooking.leftAt && (
+                           <div className="flex justify-between items-center bg-gray-100 p-4 rounded-xl border border-gray-200">
+                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Exit Logged</span>
+                             <span className="text-xs font-black text-gray-900">{formatTime(selectedBooking.leftAt)}</span>
                            </div>
                          )}
                       </div>
                     </section>
                   </div>
 
-                  {/* Right: Guest Data */}
-                  <div className="lg:col-span-2 space-y-8 print:col-span-2">
+                  {/* Main Guest Content */}
+                  <div className="lg:col-span-8 space-y-10">
                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
-                       <Users size={16} className="text-hotel-primary"/> Occupant Information ({selectedBooking.totalGuests})
+                       <Users size={16} className="text-hotel-primary"/> Identity Submissions ({selectedBooking.totalGuests})
                      </h4>
                      
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {selectedBooking.guests.map((guest, idx) => (
-                          <div key={idx} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group print:border-black print:rounded-none">
-                             <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-start gap-4 print:bg-white print:border-black">
-                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-gray-300 shadow-sm shrink-0 border border-gray-100 print:hidden">
-                                   <User size={24} />
+                          <div key={idx} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all border-l-4 border-l-hotel-primary/20">
+                             <div className="p-8 bg-gray-50/50 border-b border-gray-100 flex items-start gap-5">
+                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-300 shadow-sm shrink-0 border border-gray-100">
+                                   <User size={28} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                   <p className="text-[8px] font-black text-hotel-primary uppercase tracking-widest mb-1">Legal Credential {idx + 1}</p>
-                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase">{guest.legalName || 'Guest'}</h5>
-                                   {idx === 0 && <p className="text-[9px] font-bold text-gray-400 mt-0.5">{selectedBooking.userEmail}</p>}
+                                   <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1.5">Official Guest {idx + 1}</p>
+                                   <h5 className="text-lg font-black text-gray-900 truncate uppercase tracking-tight">{guest.legalName || 'Guest Name Pending'}</h5>
+                                   {idx === 0 && <p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{selectedBooking.userEmail}</p>}
                                 </div>
                              </div>
                              
-                             <div className="p-6 space-y-4 flex-1">
-                                <div className="grid grid-cols-1 gap-3">
-                                   <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600">
-                                     <Phone size={12} className="text-gray-400" /> {guest.phone || 'No Contact'}
+                             <div className="p-8 space-y-6 flex-1">
+                                <div className="grid grid-cols-1 gap-4">
+                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
+                                     <Phone size={14} className="text-hotel-primary" /> {guest.phone || 'Registry Phone Missing'}
                                    </div>
-                                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-gray-900 bg-gray-50 p-2 rounded-lg border border-gray-100 print:bg-white print:border-black">
-                                      <IdCard size={12} className="text-gray-400" /> NID: {guest.nidNumber || 'NOT SUBMITTED'}
+                                   <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                      <IdCard size={14} className="text-hotel-primary" /> ID No: {guest.nidNumber || 'NOT SUBMITTED'}
                                    </div>
                                 </div>
 
                                 {guest.nidImageUrl && (
-                                  <div className="mt-4 relative group/nid">
-                                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-2">ID Asset Verification</p>
-                                     <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100 shadow-lg aspect-video bg-gray-100 print:border-black print:rounded-none">
-                                        <img src={guest.nidImageUrl} className="w-full h-full object-cover" alt="Guest ID" />
+                                  <div className="mt-6">
+                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Verified Document Scan</p>
+                                     <div className="relative rounded-[1.5rem] overflow-hidden border-2 border-white shadow-xl aspect-video bg-gray-100 ring-1 ring-gray-100">
+                                        <img src={guest.nidImageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Guest ID Registry" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
                                      </div>
                                   </div>
                                 )}
@@ -259,59 +248,67 @@ const AdminDashboard: React.FC = () => {
                         ))}
                      </div>
 
-                     {/* PRINT SIGNATURE BLOCK */}
-                     <div className="hidden print:grid grid-cols-2 gap-20 mt-20 pt-20 border-t-2 border-gray-900">
-                        <div className="text-center">
-                           <div className="w-full h-[1px] bg-black mb-4"></div>
-                           <p className="text-[10px] font-black uppercase tracking-widest">Primary Guest Signature</p>
+                     {/* Registry Confirmation Visual */}
+                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12">
+                        <div className="text-center md:text-left">
+                           <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-2">Registry Authentication</h5>
+                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed">This record serves as the official digital entry permit for Hotel Shotabdi Abashik.</p>
                         </div>
-                        <div className="text-center">
-                           <div className="w-full h-[1px] bg-black mb-4"></div>
-                           <p className="text-[10px] font-black uppercase tracking-widest">Hotel Registry Official</p>
+                        <div className="flex gap-12 shrink-0">
+                           <div className="text-center">
+                              <div className="w-32 h-16 border-b-2 border-gray-900 mb-2 flex items-end justify-center">
+                                 <span className="text-[9px] text-gray-300 font-black italic">Digital Signature</span>
+                              </div>
+                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Guest Initials</p>
+                           </div>
+                           <div className="text-center">
+                              <div className="w-32 h-16 border-b-2 border-gray-900 mb-2 flex items-center justify-center">
+                                 <img src={LOGO_ICON_URL} className="w-10 h-10 object-contain opacity-20" alt="Seal" />
+                              </div>
+                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Registry Seal</p>
+                           </div>
                         </div>
                      </div>
                   </div>
                </div>
             </div>
             
-            <div className="p-8 md:p-10 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4 items-center justify-between shrink-0 print:hidden">
+            <div className="p-8 md:p-10 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4 items-center justify-between shrink-0">
                <div className="flex items-center gap-4">
-                  <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                  <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm ${
                     selectedBooking.status === 'pending' ? 'bg-amber-100 text-amber-600' :
-                    selectedBooking.status === 'accepted' ? 'bg-green-100 text-green-600' :
-                    selectedBooking.status === 'rejected' ? 'bg-red-100 text-red-600' :
-                    'bg-blue-100 text-blue-600'
+                    selectedBooking.status === 'accepted' ? 'bg-green-600 text-white' :
+                    selectedBooking.status === 'rejected' ? 'bg-red-600 text-white' :
+                    'bg-blue-600 text-white'
                   }`}>
+                    {selectedBooking.status === 'accepted' && <ShieldCheck size={14} />}
                     Registry Status: {selectedBooking.status}
-                  </span>
+                  </div>
                </div>
 
                <div className="flex gap-4">
-                  <button onClick={handlePrint} className="md:hidden p-4 bg-gray-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all">
-                    <Download size={24} />
-                  </button>
                   {selectedBooking.status === 'pending' && (
                     <>
                        <button 
                         onClick={() => { setRejectingBookingId(selectedBooking.id); setSelectedBooking(null); }}
-                        className="px-8 py-4 bg-white text-gray-400 hover:text-red-600 border border-gray-200 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
+                        className="px-8 py-5 bg-white text-gray-400 hover:text-red-600 border border-gray-200 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] transition-all"
                        >
                          Reject
                        </button>
                        <button 
                         onClick={() => { setAcceptingBookingId(selectedBooking.id); setSelectedBooking(null); }}
-                        className="px-10 py-4 bg-[#B22222] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
+                        className="px-12 py-5 bg-[#B22222] text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
                        >
-                         Assign Room
+                         Assign Entry
                        </button>
                     </>
                   )}
                   {selectedBooking.status === 'accepted' && (
                     <button 
                       onClick={() => handleStatusChange(selectedBooking.id, 'completed', 'leftAt')}
-                      className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:brightness-110 transition-all"
+                      className="px-12 py-5 bg-gray-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.25em] shadow-xl hover:brightness-110 transition-all"
                     >
-                      Complete Checkout
+                      Process Check-out
                     </button>
                   )}
                </div>
