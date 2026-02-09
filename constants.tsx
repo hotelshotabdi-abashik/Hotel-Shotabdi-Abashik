@@ -3,7 +3,7 @@
 // This file contains the primary registry for rooms, restaurants, and tourist guides.
 
 import React from 'react';
-import { Home, Bed, Map, Utensils, Tag, MessageSquare } from 'lucide-react';
+import { Home, Bed, Map, Utensils, Tag, MessageSquare, History } from 'lucide-react';
 import { Room, Restaurant, Attraction } from './types';
 
 // Global application constants
@@ -128,5 +128,6 @@ export const NAV_ITEMS = [
   { id: 'rooms', path: '/rooms', label: 'Our Rooms', icon: <Bed size={20} /> },
   { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
   { id: 'guide', path: '/guide', label: 'Tourist Guide', icon: <Map size={20} /> },
+  { id: 'mystays', path: '/mystays', label: 'My Stays', icon: <History size={20} /> },
   { id: 'helpdex', path: '/helpdex', label: 'Help Dex', icon: <MessageSquare size={20} /> },
 ];

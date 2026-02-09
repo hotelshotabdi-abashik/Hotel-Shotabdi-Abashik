@@ -17,6 +17,7 @@ import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
 import AdminDashboard from './components/AdminDashboard';
 import HelpDex from './components/HelpDex';
+import MyStays from './components/MyStays';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -68,6 +69,10 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
       '/helpdex': { 
         title: 'Registry Help Dex | Hotel Shotabdi Abashik',
         desc: 'Direct synchronization with the Registry Admin for 24/7 resident support.'
+      },
+      '/mystays': {
+        title: 'My Stays | Hotel Shotabdi Abashik Stay History',
+        desc: 'Access your submitted stay records and digital identity receipts at Hotel Shotabdi Abashik.'
       }
     };
 
@@ -400,6 +405,7 @@ const AppContent = () => {
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />} />
             <Route path="/helpdex" element={<HelpDex profile={profile} />} />
+            <Route path="/mystays" element={<MyStays profile={profile} />} />
             <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center">Unauthorized</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
