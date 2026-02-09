@@ -25,10 +25,11 @@ import {
   db,
   ref,
   onValue,
-  update
+  update,
+  get
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2 } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -61,52 +62,19 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
         desc: 'Find the best restaurants near Hotel Shotabdi Abashik. Traditional Bengali and international cuisines.'
       },
       '/guide': { 
-        title: 'Sylhet Tourist Guide | Shotabdi Abashik Travel Hub',
-        desc: 'Visit Shah Jalal Dargah, Keane Bridge, and Tea Gardens from Hotel Shotabdi Abashik.'
+        title: 'Visit Shah Jalal Dargah & Keane Bridge | Sylhet Guide',
+        desc: 'Explore Sylhet with Hotel Shotabdi. Local attractions within 2km of our residence.'
       },
       '/helpdex': { 
-        title: 'Help Dex Support | Hotel Shotabdi Abashik Live Help',
-        desc: 'Connect with Hotel Shotabdi Abashik 24/7 registry support for residents.'
+        title: 'Registry Help Dex | Hotel Shotabdi Abashik',
+        desc: 'Direct synchronization with the Registry Admin for 24/7 resident support.'
       }
     };
 
-    if (pathname.startsWith('/offers/')) {
-      const offerId = pathname.split('/').pop();
-      const offer = siteConfig.offers?.find(o => o.id === offerId);
-      if (offer) {
-        title = `${offer.title} | Hotel Shotabdi Abashik`;
-        desc = offer.description.substring(0, 160);
-      }
-    } else {
-      const current = metaConfig[pathname] || metaConfig['/'];
-      title = current.title;
-      desc = current.desc;
-    }
-
-    document.title = title;
-    
-    const updateMeta = (name: string, content: string) => {
-      let element = document.querySelector(`meta[name="${name}"]`) || document.querySelector(`meta[property="${name}"]`);
-      if (element) {
-        element.setAttribute('content', content);
-      } else {
-        const meta = document.createElement('meta');
-        if (name.includes('og:')) meta.setAttribute('property', name);
-        else meta.setAttribute('name', name);
-        meta.setAttribute('content', content);
-        document.head.appendChild(meta);
-      }
-    };
-
-    updateMeta('description', desc);
-    updateMeta('og:title', title);
-    updateMeta('og:description', desc);
-    updateMeta('twitter:title', title);
-    updateMeta('twitter:description', desc);
-
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute('href', `https://hotelshotabdiabashik.com${pathname}`);
-
+    const current = metaConfig[pathname] || metaConfig['/'];
+    document.title = current.title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', current.desc);
   }, [pathname, siteConfig]);
   
   return null;
@@ -127,10 +95,8 @@ const AppContent = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [hasPendingBooking, setHasPendingBooking] = useState(false);
 
   const [activeDiscount, setActiveDiscount] = useState<number>(0);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
@@ -167,21 +133,39 @@ const AppContent = () => {
   useEffect(() => {
     if (!user) {
       setNotifications([]);
-      setHasPendingBooking(false);
       return;
     }
     const notificationsRef = ref(db, `notifications/${user.uid}`);
-    onValue(notificationsRef, (snap) => {
-      if (snap.exists()) setNotifications((Object.values(snap.val() as any) as AppNotification[]).sort((a: any, b: any) => b.createdAt - a.createdAt));
-    });
-    const bookingsRef = ref(db, `bookings`);
-    onValue(bookingsRef, (snap) => {
+    const unsub = onValue(notificationsRef, (snap) => {
       if (snap.exists()) {
-        const list = Object.values(snap.val()) as Booking[];
-        setHasPendingBooking(list.some(b => b.userId === user.uid && b.status === 'pending'));
+        const list = Object.values(snap.val()) as AppNotification[];
+        setNotifications(list.sort((a, b) => b.createdAt - a.createdAt));
+      } else {
+        setNotifications([]);
       }
     });
+    return () => unsub();
   }, [user]);
+
+  const handleMarkAsRead = async (id: string) => {
+    if (!user) return;
+    try {
+      await update(ref(db, `notifications/${user.uid}/${id}`), { read: true });
+    } catch (err) { console.error(err); }
+  };
+
+  const handleMarkAllRead = async () => {
+    if (!user || notifications.length === 0) return;
+    try {
+      const updates: any = {};
+      notifications.forEach(n => {
+        if (!n.read) updates[`notifications/${user.uid}/${n.id}/read`] = true;
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+      }
+    } catch (err) { console.error(err); }
+  };
 
   const loadProfile = useCallback(async (u: any) => {
     if (!u) return;
@@ -253,6 +237,7 @@ const AppContent = () => {
   );
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
@@ -290,7 +275,7 @@ const AppContent = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
             {(isAdmin || isOwner) && (
               <button 
                 onClick={() => setIsEditMode(!isEditMode)}
@@ -301,11 +286,74 @@ const AppContent = () => {
             )}
             
             {user ? (
-              <div className="flex items-center gap-2 md:gap-4 relative">
-                <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}>
-                  <Bell size={24} />
-                  {notifications.filter(n => !n.read).length > 0 && <span className="absolute top-2 right-2 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">!</span>}
-                </button>
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} 
+                    className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
+                  >
+                    <Bell size={24} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2 w-5 h-5 bg-hotel-primary text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notification Dropdown */}
+                  {isNotificationsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[100] bg-black/5 md:hidden" onClick={() => setIsNotificationsOpen(false)}></div>
+                      <div className="absolute right-0 top-full mt-4 w-[calc(100vw-32px)] md:w-96 bg-white rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                        <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                           <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Vault Notifications</h3>
+                           {unreadCount > 0 && (
+                             <button onClick={handleMarkAllRead} className="text-[10px] font-black text-hotel-primary hover:underline uppercase tracking-widest flex items-center gap-1.5">
+                               <CheckCheck size={14} /> Clear All
+                             </button>
+                           )}
+                        </div>
+                        <div className="max-h-[400px] overflow-y-auto no-scrollbar">
+                           {notifications.length > 0 ? (
+                             notifications.map((notif) => (
+                               <div 
+                                 key={notif.id} 
+                                 onClick={() => handleMarkAsRead(notif.id)}
+                                 className={`p-5 border-b border-gray-50 last:border-0 flex gap-4 transition-colors cursor-pointer group ${!notif.read ? 'bg-hotel-primary/[0.02]' : 'hover:bg-gray-50'}`}
+                               >
+                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${!notif.read ? 'bg-hotel-primary/10 text-hotel-primary border-hotel-primary/10' : 'bg-gray-100 text-gray-400 border-gray-100'}`}>
+                                    {notif.type === 'booking_update' ? <Calendar size={20} /> : notif.type === 'chat_message' ? <MessageSquare size={20} /> : <Shield size={20} />}
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start mb-1">
+                                      <h4 className={`text-[13px] leading-tight truncate ${!notif.read ? 'font-black text-gray-900' : 'font-bold text-gray-500'}`}>{notif.title}</h4>
+                                      {!notif.read && <div className="w-2 h-2 bg-hotel-primary rounded-full shrink-0 mt-1"></div>}
+                                    </div>
+                                    <p className={`text-[11px] leading-relaxed mb-2 ${!notif.read ? 'font-semibold text-gray-600' : 'text-gray-400'}`}>{notif.message}</p>
+                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">
+                                      {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
+                                    </span>
+                                 </div>
+                               </div>
+                             ))
+                           ) : (
+                             <div className="p-16 text-center">
+                               <div className="w-16 h-16 bg-gray-50 rounded-[2rem] flex items-center justify-center text-gray-300 mx-auto mb-4 border border-gray-100">
+                                 <Bell size={24} />
+                               </div>
+                               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Registry Vault Empty</p>
+                             </div>
+                           )}
+                        </div>
+                        {notifications.length > 0 && (
+                          <div className="p-4 bg-gray-50/50 text-center">
+                             <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em]">End of Synchronization</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
                 <button onClick={() => setIsManageAccountOpen(true)} className="w-9 h-9 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
                   <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="User" />
                 </button>

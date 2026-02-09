@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, User, Bot, Sparkles, Loader2, ShieldCheck, 
   MessageSquare, Clock, ChevronLeft, Search,
-  CheckCircle2, MoreVertical, Mail, UserCheck, Check, CheckCheck
+  CheckCircle2, MoreVertical, Mail, UserCheck, Check, CheckCheck, Wifi, WifiOff
 } from 'lucide-react';
 import { 
   db, auth, ref, onValue, push, set, update, 
@@ -27,7 +26,19 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -212,7 +223,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                         alt={session.userName}
                       />
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-[3px] border-white rounded-full shadow-md animate-pulse"></div>
+                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-300'} border-[3px] border-white rounded-full shadow-md`}></div>
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex justify-between items-baseline mb-1">
@@ -275,21 +286,23 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                       className={`w-full h-full ${isAdmin ? 'object-cover rounded-[1rem]' : 'object-contain'}`} 
                     />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
+                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${isOnline ? 'bg-green-500' : 'bg-gray-300'} border-2 border-white rounded-full shadow-sm`}></div>
                 </div>
                 <div className="min-w-0">
                    <h3 className="text-base md:text-xl font-black text-gray-900 leading-none truncate tracking-tight">
                       {isAdmin ? String(activeSession?.userName || 'Resident') : 'Registry Assistant'}
                    </h3>
                    <div className="flex items-center gap-2 mt-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-[10px] font-black text-green-600 tracking-widest uppercase">Live Connection</span>
+                      <div className={`w-2 h-2 ${isOnline ? 'bg-green-500' : 'bg-gray-300'} rounded-full`}></div>
+                      <span className={`text-[10px] font-black ${isOnline ? 'text-green-600' : 'text-gray-400'} tracking-widest uppercase`}>
+                        {isOnline ? 'Active' : 'Offline'}
+                      </span>
                    </div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="hidden lg:flex items-center gap-3 bg-gray-50 px-6 py-2.5 rounded-2xl text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border border-gray-100">
-                   <ShieldCheck size={16} className="text-green-500" /> Authorized Tunnel
+                   <ShieldCheck size={16} className={isOnline ? 'text-green-500' : 'text-gray-300'} /> Verified
                 </div>
                 <button className="p-3 text-gray-300 hover:text-gray-900 transition-colors bg-gray-50 rounded-2xl">
                   <MoreVertical size={20} />
@@ -304,7 +317,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                       <img src={LOGO_ICON_URL} className="w-full h-full object-contain opacity-40" alt="Logo" />
                     </div>
                     <p className="text-[12px] font-black text-gray-300 uppercase tracking-[0.4em] leading-relaxed">
-                       Synchronizing with Registry...
+                       {isOnline ? 'Synchronizing with Registry...' : 'Waiting for connection...'}
                     </p>
                  </div>
                )}
@@ -359,7 +372,13 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
             </div>
 
             <div className="p-6 md:p-10 bg-white border-t border-gray-100">
-               {!isAdmin && cooldown > 0 && (
+               {!isOnline && (
+                 <div className="mb-6 flex items-center justify-center gap-3 bg-gray-50 text-gray-400 py-3 px-6 rounded-2xl border border-gray-100 animate-fade-in">
+                    <WifiOff size={14} />
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">Offline Mode: Reconnecting...</p>
+                 </div>
+               )}
+               {!isAdmin && cooldown > 0 && isOnline && (
                  <div className="mb-6 flex items-center justify-center gap-3 bg-red-50 text-hotel-primary py-3 px-6 rounded-2xl border border-red-100 animate-fade-in shadow-sm">
                     <Clock size={14} className="animate-pulse" />
                     <p className="text-[11px] font-black uppercase tracking-[0.2em]">Registry Delay: {cooldown}s Remaining</p>
@@ -369,20 +388,20 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                   <div className="flex-1 relative group">
                     <input 
                       type="text" 
-                      placeholder={cooldown > 0 && !isAdmin ? "Synchronizing..." : "Command the registry..."}
+                      placeholder={!isOnline ? "Waiting for connection..." : (cooldown > 0 && !isAdmin ? "Synchronizing..." : "Command the registry...")}
                       className="w-full bg-gray-50 border border-gray-100 rounded-[2rem] py-5 px-8 text-base focus:bg-white focus:ring-4 focus:ring-hotel-primary/5 focus:border-hotel-primary outline-none transition-all disabled:opacity-50 font-semibold"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                      disabled={!isAdmin && cooldown > 0}
+                      disabled={!isOnline || (!isAdmin && cooldown > 0)}
                     />
                   </div>
                   <button 
                     onClick={handleSend}
-                    disabled={loading || (!isAdmin && cooldown > 0) || !input.trim()}
+                    disabled={loading || !isOnline || (!isAdmin && cooldown > 0) || !input.trim()}
                     className="w-16 h-16 bg-hotel-primary text-white rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 shadow-2xl shadow-red-200 shrink-0 flex items-center justify-center"
                   >
-                    {loading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} />}
+                    {loading ? <Loader2 className="animate-spin" size={24} /> : (isOnline ? <Send size={24} /> : <WifiOff size={24} />)}
                   </button>
                </div>
             </div>
