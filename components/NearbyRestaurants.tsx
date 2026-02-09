@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, Search, Wand2, CheckSquare, Phone, AlertCircle } from 'lucide-react';
 import { Restaurant } from '../types';
@@ -84,10 +83,10 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   return (
     <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in">
       <div className="mb-12 text-center flex flex-col items-center">
-        <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">nearby resturants</span>
-        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">Nearby Restaurants</h2>
+        <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">nearby restaurants</span>
+        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">Nearby Dining & Restaurants</h2>
         <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-10">
-          A curated selection of the finest eateries in Sylhet, ranging from local favorites to international cuisines, all near <span className="text-hotel-primary font-bold">Hotel Shotabdi</span>.
+          A curated selection of the finest eateries in Sylhet, ranging from local favorites to international cuisines, all near <span className="text-hotel-primary font-bold">Hotel Shotabdi Residential</span>.
         </p>
 
         <div className="w-full max-w-2xl mb-12 flex flex-col items-center gap-4">
@@ -115,9 +114,9 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
         {filteredList.slice(0, visibleItems).map((res) => (
-          <div key={res.id} className="group bg-white rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative h-full">
+          <article key={res.id} className="group bg-white rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative h-full">
             <div className="h-32 md:h-48 relative overflow-hidden shrink-0">
-              <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={res.name} />
+              <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={`Dining at ${res.name} - ${res.cuisine} in Sylhet near Hotel Shotabdi`} />
               
               <div className="absolute top-2 md:top-4 left-2 md:left-4 flex flex-col gap-1.5">
                 {res.isRecommended && (
@@ -240,7 +239,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                 </a>
               </div>
             </div>
-          </div>
+          </article>
         ))}
       </div>
 

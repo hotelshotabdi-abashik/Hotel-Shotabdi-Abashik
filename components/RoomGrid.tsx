@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star, Percent } from 'lucide-react';
@@ -120,14 +119,15 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
   return (
     <section id="rooms" className="max-w-7xl mx-auto pt-10 md:pt-20 pb-20 md:pb-28 px-4 md:px-6 bg-white w-full scroll-mt-24">
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4">
-        <div className="max-w-3xl text-center md:text-left mx-auto md:mx-0">
+        <header className="max-w-3xl text-center md:text-left mx-auto md:mx-0">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-3">
             <Zap size={10} fill="currentColor" /> Premier Units
           </div>
+          <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter mb-4">Our Luxury Rooms</h2>
           <p className="text-gray-400 text-xs md:text-lg leading-relaxed font-light px-2 md:px-0">
             Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">exclusive manual rates</span>.
           </p>
-        </div>
+        </header>
         
         {isEditMode && (
           <button 
@@ -145,7 +145,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
           const hasPrice = !!room.price;
 
           return (
-            <div 
+            <article 
               id={room.id}
               key={room.id} 
               className={`bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border transition-all duration-700 flex flex-col h-full relative shadow-[0_5px_15px_rgba(0,0,0,0.02)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.12)] ${
@@ -153,7 +153,11 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
               }`}
             >
               <div className="h-44 md:h-56 relative overflow-hidden shrink-0">
-                <img src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={room.title} />
+                <img 
+                  src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  alt={`Hotel Shotabdi Residential - ${room.title} Luxury Interior`} 
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                 
                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
@@ -273,7 +277,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                   </button>
                 </div>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>

@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  Users, Calendar, Search, CheckCircle2, XCircle, 
+  Users, User, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2
+  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer
 } from 'lucide-react';
 import { db, ref, onValue, update, createNotification, deleteUserProfile, get } from '../services/firebase';
 import { UserProfile, Booking } from '../types';
@@ -61,14 +60,16 @@ const AdminDashboard: React.FC = () => {
     return () => { uUnsub(); bUnsub(); mUnsub(); };
   }, []);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const sendPushNotification = async (userId: string, title: string, body: string) => {
     try {
       const userProfileRef = ref(db, `profiles/${userId}`);
       const snapshot = await get(userProfileRef);
       if (snapshot.exists() && snapshot.val().fcmToken) {
         const token = snapshot.val().fcmToken;
-        // In a real environment, this would call a Cloud Function or backend 
-        // to send the actual push notification via FCM V1 API securely.
         console.log(`[Push Trigger] Sending to ${token}: ${title} - ${body}`);
       }
     } catch (e) {
@@ -97,7 +98,6 @@ const AdminDashboard: React.FC = () => {
         type: 'booking_update'
       });
 
-      // Trigger Push
       await sendPushNotification(booking.userId, title, message);
 
       setAcceptingBookingId(null);
@@ -117,7 +117,7 @@ const AdminDashboard: React.FC = () => {
       const updates = { status, [timestampField]: timestamp };
       await update(ref(db, `bookings/${bookingId}`), updates);
       if (selectedBooking?.id === bookingId) {
-        setSelectedBooking({ ...selectedBooking, ...updates });
+        setSelectedBooking({ ...selectedBooking, ...updates } as any);
       }
     } catch (err) {
       console.error("Status update failed", err);
@@ -160,47 +160,235 @@ const AdminDashboard: React.FC = () => {
   const renderSelectedBooking = () => {
     if (!selectedBooking) return null;
     const content = (
-      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in overflow-hidden">
-         <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col max-h-[90vh] border border-white/20 overflow-hidden relative">
-            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden print:static print:bg-white print:p-0">
+         <div className="bg-white w-full max-w-6xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:shadow-none print:border-none print:rounded-none print:max-h-none print:static print:w-full">
+            
+            {/* Action Bar for Modal (Hidden on Print) */}
+            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:hidden">
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-[#B22222]/10 rounded-2xl flex items-center justify-center text-[#B22222] shadow-inner">
+                  <div className="w-16 h-16 bg-hotel-primary/10 rounded-2xl flex items-center justify-center text-hotel-primary shadow-inner">
                      <Building2 size={32} />
                   </div>
                   <div>
-                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none">Stay Record Overview</h2>
+                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none">Stay Record View</h2>
+                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                       <Database size={12} /> ID: {selectedBooking.id}
+                     </p>
                   </div>
                </div>
-               <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
-                 <XCircle size={28}/>
-               </button>
+               <div className="flex items-center gap-3">
+                 <button 
+                  onClick={handlePrint}
+                  className="hidden md:flex items-center gap-2 px-6 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                 >
+                   <Printer size={18} /> Print / Save PDF
+                 </button>
+                 <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
+                   <XCircle size={28}/>
+                 </button>
+               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 md:p-14 no-scrollbar">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-8">
-                     <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100">
-                        <div className="flex items-center gap-4 mb-6">
-                           <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-xl">
-                              <img src={selectedBooking.guests?.[0]?.nidImageUrl || LOGO_ICON_URL} className="w-full h-full object-cover" />
-                           </div>
-                           <div>
-                              <h3 className="text-xl font-black text-gray-900">{selectedBooking.userName}</h3>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{selectedBooking.userEmail}</p>
-                           </div>
+            {/* Document Header for PDF Print only */}
+            <div className="hidden print:flex items-center justify-between p-12 border-b-4 border-gray-900 mb-10">
+               <div className="flex items-center gap-6">
+                 <img src={LOGO_ICON_URL} className="w-24 h-24 object-contain" alt="Hotel Logo" />
+                 <div>
+                   <h1 className="text-4xl font-serif font-black text-gray-900">HOTEL SHOTABDI</h1>
+                   <p className="text-sm font-black text-hotel-primary uppercase tracking-[0.4em]">Residential Registration Card</p>
+                 </div>
+               </div>
+               <div className="text-right">
+                  <p className="text-[10px] font-black uppercase text-gray-400">Record ID</p>
+                  <p className="text-lg font-mono font-black">{selectedBooking.id}</p>
+                  <p className="text-[10px] font-black uppercase text-gray-400 mt-2">Printed On</p>
+                  <p className="text-xs font-bold">{new Date().toLocaleString()}</p>
+               </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible print:p-0">
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 print:grid-cols-3">
+                  
+                  {/* Left Column: Reservation Meta */}
+                  <div className="lg:col-span-1 space-y-8 print:col-span-1">
+                    <section className="space-y-4">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
+                        <Calendar size={16} className="text-hotel-primary print:text-black"/> Schedule & Room
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-black">
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-black">Check In</p>
+                          <p className="text-sm font-black text-gray-900">{selectedBooking.checkIn}</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                           <div className="bg-white p-4 rounded-xl border border-gray-100">
-                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Check In</p>
-                              <p className="text-sm font-bold text-gray-900">{selectedBooking.checkIn}</p>
-                           </div>
-                           <div className="bg-white p-4 rounded-xl border border-gray-100">
-                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Check Out</p>
-                              <p className="text-sm font-bold text-gray-900">{selectedBooking.checkOut}</p>
-                           </div>
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-black">
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-black">Check Out</p>
+                          <p className="text-sm font-black text-gray-900">{selectedBooking.checkOut}</p>
                         </div>
+                      </div>
+                      <div className="bg-hotel-primary/5 p-5 rounded-2xl border border-hotel-primary/10 print:bg-white print:border-black">
+                         <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-widest mb-1 print:text-black">Requested Category</p>
+                         <p className="text-lg font-black text-gray-900 leading-tight">{selectedBooking.roomTitle}</p>
+                      </div>
+                      {selectedBooking.roomNumber && (
+                        <div className="bg-green-50 p-5 rounded-2xl border border-green-100 print:bg-white print:border-black">
+                           <p className="text-[8px] font-bold text-green-600 uppercase tracking-widest mb-1 print:text-black">Assigned Room</p>
+                           <p className="text-2xl font-black text-gray-900">Room {selectedBooking.roomNumber}</p>
+                        </div>
+                      )}
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
+                        <Tag size={16} className="text-hotel-primary print:text-black"/> Pricing Details
+                      </h4>
+                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex items-center justify-between print:bg-white print:border-black">
+                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest print:text-black">Agreed Rate</p>
+                         <p className="text-xl font-black text-[#B22222] print:text-black">৳{selectedBooking.price}</p>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
+                        <Clock size={16} className="text-hotel-primary print:text-black"/> Registry Timeline
+                      </h4>
+                      <div className="space-y-3">
+                         <div className="flex justify-between text-[10px] font-bold print:text-black">
+                           <span className="text-gray-400 uppercase print:text-black">Requested</span>
+                           <span className="text-gray-900">{formatTime(selectedBooking.createdAt)}</span>
+                         </div>
+                         {selectedBooking.arrivedAt && (
+                           <div className="flex justify-between text-[10px] font-bold print:text-black">
+                             <span className="text-green-500 uppercase print:text-black">Arrival / Entry</span>
+                             <span className="text-gray-900">{formatTime(selectedBooking.arrivedAt)}</span>
+                           </div>
+                         )}
+                         {selectedBooking.leftAt && (
+                           <div className="flex justify-between text-[10px] font-bold print:text-black">
+                             <span className="text-blue-500 uppercase print:text-black">Departure / Exit</span>
+                             <span className="text-gray-900">{formatTime(selectedBooking.leftAt)}</span>
+                           </div>
+                         )}
+                      </div>
+                    </section>
+
+                    <div className="hidden print:block pt-10 mt-10 border-t-2 border-gray-900 text-center">
+                       <div className="flex justify-between gap-10">
+                          <div className="flex-1 border-t border-black pt-2">
+                             <p className="text-[9px] font-black uppercase">Guest Signature</p>
+                          </div>
+                          <div className="flex-1 border-t border-black pt-2">
+                             <p className="text-[9px] font-black uppercase">Manager Signature</p>
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Guest Registry */}
+                  <div className="lg:col-span-2 space-y-8 print:col-span-2">
+                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
+                       <Users size={16} className="text-hotel-primary print:text-black"/> Occupant Registry ({selectedBooking.totalGuests})
+                     </h4>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
+                        {selectedBooking.guests.map((guest, idx) => (
+                          <div key={idx} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:border-hotel-primary/30 transition-all print:border-black print:rounded-none">
+                             <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-start gap-4 print:bg-white print:border-black">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-gray-300 shadow-sm shrink-0 border border-gray-100 print:hidden">
+                                   <User size={24} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                   <p className="text-[8px] font-black text-hotel-primary uppercase tracking-widest mb-1 print:text-black">Verified Guest {idx + 1}</p>
+                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase print:text-black">{guest.legalName || 'N/A'}</h5>
+                                   {idx === 0 && <p className="text-[9px] font-bold text-gray-400 mt-0.5 print:text-black">{selectedBooking.userEmail}</p>}
+                                </div>
+                             </div>
+                             
+                             <div className="p-6 space-y-4 flex-1">
+                                <div className="grid grid-cols-1 gap-3">
+                                   <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 print:text-black">
+                                     <Phone size={12} className="text-gray-400 print:text-black" /> {guest.phone || 'No phone'}
+                                   </div>
+                                   {guest.guardianPhone && (
+                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 print:text-black">
+                                       <ShieldCheck size={12} className="text-gray-400 print:text-black" /> Guardian: {guest.guardianPhone}
+                                     </div>
+                                   )}
+                                   {guest.age && (
+                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 print:text-black">
+                                       <Calendar size={12} className="text-gray-400 print:text-black" /> Age: {guest.age}
+                                     </div>
+                                   )}
+                                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-gray-900 bg-gray-50 p-2 rounded-lg border border-gray-100 print:bg-white print:border-black">
+                                      <IdCard size={12} className="text-gray-400 print:text-black" /> NID: {guest.nidNumber || 'NOT SUBMITTED'}
+                                   </div>
+                                </div>
+
+                                {guest.nidImageUrl && (
+                                  <div className="mt-4 relative group/nid print:mt-10">
+                                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-2 print:text-black">Identity Verification Asset</p>
+                                     <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100 shadow-lg aspect-video bg-gray-100 print:border-black print:rounded-none">
+                                        <img src={guest.nidImageUrl} className="w-full h-full object-cover" alt="Guest ID" />
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/nid:opacity-100 transition-opacity flex items-center justify-center print:hidden">
+                                           <a href={guest.nidImageUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center gap-2">
+                                              <Download size={12} /> Inspect Original
+                                           </a>
+                                        </div>
+                                     </div>
+                                  </div>
+                                )}
+                             </div>
+                          </div>
+                        ))}
                      </div>
                   </div>
+               </div>
+            </div>
+            
+            <div className="p-8 md:p-10 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4 items-center justify-between shrink-0 print:hidden">
+               <div className="flex items-center gap-4">
+                  <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                    selectedBooking.status === 'pending' ? 'bg-amber-100 text-amber-600' :
+                    selectedBooking.status === 'accepted' ? 'bg-green-100 text-green-600' :
+                    selectedBooking.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                    'bg-blue-100 text-blue-600'
+                  }`}>
+                    Registry Status: {selectedBooking.status}
+                  </span>
+                  {selectedBooking.rejectionReason && (
+                    <p className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">
+                      Flag: {selectedBooking.rejectionReason}
+                    </p>
+                  )}
+               </div>
+
+               <div className="flex gap-4">
+                  <button onClick={handlePrint} className="md:hidden p-4 bg-gray-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all">
+                    <Download size={24} />
+                  </button>
+                  {selectedBooking.status === 'pending' && (
+                    <>
+                       <button 
+                        onClick={() => { setSelectedBooking(null); setRejectingBookingId(selectedBooking.id); }}
+                        className="px-8 py-4 bg-white text-gray-400 hover:text-red-600 border border-gray-200 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
+                       >
+                         Reject
+                       </button>
+                       <button 
+                        onClick={() => { setSelectedBooking(null); setAcceptingBookingId(selectedBooking.id); }}
+                        className="px-10 py-4 bg-[#B22222] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
+                       >
+                         Assign Room
+                       </button>
+                    </>
+                  )}
+                  {selectedBooking.status === 'accepted' && (
+                    <button 
+                      onClick={() => handleStatusChange(selectedBooking.id, 'completed', 'leftAt')}
+                      className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:brightness-110 transition-all"
+                    >
+                      Complete Checkout
+                    </button>
+                  )}
                </div>
             </div>
          </div>
@@ -219,7 +407,7 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-32 lg:pb-10 animate-fade-in relative z-10">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-32 lg:pb-10 animate-fade-in relative z-10 print:hidden">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
           <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
@@ -278,8 +466,29 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
-      
-      {/* Rejection Modal... */}
+
+      {rejectingBookingId && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl animate-fade-in relative z-[10000]">
+            <h2 className="text-2xl font-serif font-black mb-8 text-center">Reject Stay</h2>
+            <div className="space-y-4 mb-8">
+              {['NID verification failed', 'Incomplete guest info', 'Room unavailable', 'Policy violation'].map(reason => (
+                <button 
+                  key={reason}
+                  onClick={() => setRejectionReason(reason)}
+                  className={`w-full p-4 rounded-xl text-left text-[10px] font-black uppercase tracking-widest border transition-all ${rejectionReason === reason ? 'bg-red-50 border-red-200 text-red-600' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setRejectingBookingId(null)} className="flex-1 py-4 text-[9px] font-black uppercase text-gray-400">Back</button>
+              <button onClick={() => { const b = bookings.find(x => x.id === rejectingBookingId); if (b) handleBookingAction(b, 'rejected', rejectionReason); }} className="flex-1 bg-red-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase shadow-xl hover:brightness-110">Confirm Rejection</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

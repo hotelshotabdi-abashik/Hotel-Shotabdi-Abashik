@@ -1,4 +1,3 @@
-
 export interface Room {
   id: string;
   title: string;
@@ -149,6 +148,7 @@ export interface HelpDexMessage {
 export interface ChatSession {
   userId: string;
   userName: string;
+  userEmail: string;
   userPhoto: string;
   lastMessage: string;
   lastTimestamp: number;
