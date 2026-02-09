@@ -14,25 +14,19 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [mediaLibrary, setMediaLibrary] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   
   const [acceptingBookingId, setAcceptingBookingId] = useState<string | null>(null);
   const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
   const [roomNumberInput, setRoomNumberInput] = useState('');
   const [rejectionReason, setRejectionReason] = useState('NID verification failed');
-  
-  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const profilesRef = ref(db, 'profiles');
     const bookingsRef = ref(db, 'bookings');
-    const mediaRef = ref(db, 'media-library');
 
     const uUnsub = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) setUsers(Object.values(snapshot.val()));
@@ -49,32 +43,12 @@ const AdminDashboard: React.FC = () => {
       }
     });
 
-    const mUnsub = onValue(mediaRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setMediaLibrary(Object.values(snapshot.val()));
-      } else {
-        setMediaLibrary([]);
-      }
-    });
-
-    return () => { uUnsub(); bUnsub(); mUnsub(); };
+    return () => { uUnsub(); bUnsub(); };
   }, []);
 
   const handlePrint = () => {
+    // Media query in index.html ensures ONLY #print-record is visible
     window.print();
-  };
-
-  const sendPushNotification = async (userId: string, title: string, body: string) => {
-    try {
-      const userProfileRef = ref(db, `profiles/${userId}`);
-      const snapshot = await get(userProfileRef);
-      if (snapshot.exists() && snapshot.val().fcmToken) {
-        const token = snapshot.val().fcmToken;
-        console.log(`[Push Trigger] Sending to ${token}: ${title} - ${body}`);
-      }
-    } catch (e) {
-      console.warn("Push trigger failed:", e);
-    }
   };
 
   const handleBookingAction = async (booking: Booking, status: 'accepted' | 'rejected', meta?: string) => {
@@ -97,8 +71,6 @@ const AdminDashboard: React.FC = () => {
         message,
         type: 'booking_update'
       });
-
-      await sendPushNotification(booking.userId, title, message);
 
       setAcceptingBookingId(null);
       setRejectingBookingId(null);
@@ -124,31 +96,12 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
-    setDeleting(true);
-    try {
-      await deleteUserProfile(userToDelete.uid, userToDelete.username);
-      setUserToDelete(null);
-    } catch (err) {
-      console.error("Deletion failed");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const formatTime = (ts?: number) => {
     if (!ts) return "N/A";
     return new Date(ts).toLocaleString('en-US', { 
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
     });
   };
-
-  const filteredUsers = users.filter(u => 
-    u.legalName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const filteredBookings = bookings.filter(b => 
     b.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -161,9 +114,9 @@ const AdminDashboard: React.FC = () => {
     if (!selectedBooking) return null;
     const content = (
       <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden print:static print:bg-white print:p-0">
-         <div className="bg-white w-full max-w-6xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:shadow-none print:border-none print:rounded-none print:max-h-none print:static print:w-full">
+         <div id="print-record" className="bg-white w-full max-w-6xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:shadow-none print:border-none print:rounded-none print:max-h-none print:static print:w-full">
             
-            {/* Action Bar for Modal (Hidden on Print) */}
+            {/* Header / Actions (HIDDEN on PRINT) */}
             <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:hidden">
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-hotel-primary/10 rounded-2xl flex items-center justify-center text-hotel-primary shadow-inner">
@@ -181,7 +134,7 @@ const AdminDashboard: React.FC = () => {
                   onClick={handlePrint}
                   className="hidden md:flex items-center gap-2 px-6 py-4 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all"
                  >
-                   <Printer size={18} /> Print / Save PDF
+                   <Printer size={18} /> Download PDF Record
                  </button>
                  <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
                    <XCircle size={28}/>
@@ -189,19 +142,19 @@ const AdminDashboard: React.FC = () => {
                </div>
             </div>
 
-            {/* Document Header for PDF Print only */}
+            {/* PRINT-ONLY HEADER */}
             <div className="hidden print:flex items-center justify-between p-12 border-b-4 border-gray-900 mb-10">
                <div className="flex items-center gap-6">
                  <img src={LOGO_ICON_URL} className="w-24 h-24 object-contain" alt="Hotel Logo" />
                  <div>
-                   <h1 className="text-4xl font-serif font-black text-gray-900">HOTEL SHOTABDI</h1>
-                   <p className="text-sm font-black text-hotel-primary uppercase tracking-[0.4em]">Residential Registration Card</p>
+                   <h1 className="text-4xl font-serif font-black text-gray-900">HOTEL SHOTABDI ABASHIK</h1>
+                   <p className="text-sm font-black text-hotel-primary uppercase tracking-[0.4em]">Official Guest Registration Card</p>
                  </div>
                </div>
                <div className="text-right">
                   <p className="text-[10px] font-black uppercase text-gray-400">Record ID</p>
                   <p className="text-lg font-mono font-black">{selectedBooking.id}</p>
-                  <p className="text-[10px] font-black uppercase text-gray-400 mt-2">Printed On</p>
+                  <p className="text-[10px] font-black uppercase text-gray-400 mt-2">Export Date</p>
                   <p className="text-xs font-bold">{new Date().toLocaleString()}</p>
                </div>
             </div>
@@ -209,136 +162,113 @@ const AdminDashboard: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible print:p-0">
                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 print:grid-cols-3">
                   
-                  {/* Left Column: Reservation Meta */}
+                  {/* Left: Schedule & Rates */}
                   <div className="lg:col-span-1 space-y-8 print:col-span-1">
                     <section className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
-                        <Calendar size={16} className="text-hotel-primary print:text-black"/> Schedule & Room
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                        <Calendar size={16} className="text-hotel-primary"/> Schedule Details
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-black">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-black">Check In</p>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Check In</p>
                           <p className="text-sm font-black text-gray-900">{selectedBooking.checkIn}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 print:bg-white print:border-black">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-black">Check Out</p>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Check Out</p>
                           <p className="text-sm font-black text-gray-900">{selectedBooking.checkOut}</p>
                         </div>
                       </div>
                       <div className="bg-hotel-primary/5 p-5 rounded-2xl border border-hotel-primary/10 print:bg-white print:border-black">
-                         <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-widest mb-1 print:text-black">Requested Category</p>
+                         <p className="text-[8px] font-bold text-hotel-primary uppercase tracking-widest mb-1">Stay Category</p>
                          <p className="text-lg font-black text-gray-900 leading-tight">{selectedBooking.roomTitle}</p>
+                         {selectedBooking.roomNumber && (
+                           <p className="text-xl font-black text-gray-900 mt-4 border-t border-hotel-primary/20 pt-2">Room No: {selectedBooking.roomNumber}</p>
+                         )}
                       </div>
-                      {selectedBooking.roomNumber && (
-                        <div className="bg-green-50 p-5 rounded-2xl border border-green-100 print:bg-white print:border-black">
-                           <p className="text-[8px] font-bold text-green-600 uppercase tracking-widest mb-1 print:text-black">Assigned Room</p>
-                           <p className="text-2xl font-black text-gray-900">Room {selectedBooking.roomNumber}</p>
-                        </div>
-                      )}
                     </section>
 
                     <section className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
-                        <Tag size={16} className="text-hotel-primary print:text-black"/> Pricing Details
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                        <Tag size={16} className="text-hotel-primary"/> Pricing Agreement
                       </h4>
                       <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex items-center justify-between print:bg-white print:border-black">
-                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest print:text-black">Agreed Rate</p>
-                         <p className="text-xl font-black text-[#B22222] print:text-black">৳{selectedBooking.price}</p>
+                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Stay Rate</p>
+                         <p className="text-xl font-black text-[#B22222]">৳{selectedBooking.price}</p>
                       </div>
                     </section>
 
                     <section className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
-                        <Clock size={16} className="text-hotel-primary print:text-black"/> Registry Timeline
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                        <Clock size={16} className="text-hotel-primary"/> Registry History
                       </h4>
                       <div className="space-y-3">
-                         <div className="flex justify-between text-[10px] font-bold print:text-black">
-                           <span className="text-gray-400 uppercase print:text-black">Requested</span>
+                         <div className="flex justify-between text-[10px] font-bold">
+                           <span className="text-gray-400 uppercase">Requested</span>
                            <span className="text-gray-900">{formatTime(selectedBooking.createdAt)}</span>
                          </div>
                          {selectedBooking.arrivedAt && (
-                           <div className="flex justify-between text-[10px] font-bold print:text-black">
-                             <span className="text-green-500 uppercase print:text-black">Arrival / Entry</span>
+                           <div className="flex justify-between text-[10px] font-bold">
+                             <span className="text-green-500 uppercase">Entry Recorded</span>
                              <span className="text-gray-900">{formatTime(selectedBooking.arrivedAt)}</span>
-                           </div>
-                         )}
-                         {selectedBooking.leftAt && (
-                           <div className="flex justify-between text-[10px] font-bold print:text-black">
-                             <span className="text-blue-500 uppercase print:text-black">Departure / Exit</span>
-                             <span className="text-gray-900">{formatTime(selectedBooking.leftAt)}</span>
                            </div>
                          )}
                       </div>
                     </section>
-
-                    <div className="hidden print:block pt-10 mt-10 border-t-2 border-gray-900 text-center">
-                       <div className="flex justify-between gap-10">
-                          <div className="flex-1 border-t border-black pt-2">
-                             <p className="text-[9px] font-black uppercase">Guest Signature</p>
-                          </div>
-                          <div className="flex-1 border-t border-black pt-2">
-                             <p className="text-[9px] font-black uppercase">Manager Signature</p>
-                          </div>
-                       </div>
-                    </div>
                   </div>
 
-                  {/* Right Column: Guest Registry */}
+                  {/* Right: Guest Data */}
                   <div className="lg:col-span-2 space-y-8 print:col-span-2">
-                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-black">
-                       <Users size={16} className="text-hotel-primary print:text-black"/> Occupant Registry ({selectedBooking.totalGuests})
+                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                       <Users size={16} className="text-hotel-primary"/> Occupant Information ({selectedBooking.totalGuests})
                      </h4>
                      
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
                         {selectedBooking.guests.map((guest, idx) => (
-                          <div key={idx} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:border-hotel-primary/30 transition-all print:border-black print:rounded-none">
+                          <div key={idx} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group print:border-black print:rounded-none">
                              <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-start gap-4 print:bg-white print:border-black">
                                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-gray-300 shadow-sm shrink-0 border border-gray-100 print:hidden">
                                    <User size={24} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                   <p className="text-[8px] font-black text-hotel-primary uppercase tracking-widest mb-1 print:text-black">Verified Guest {idx + 1}</p>
-                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase print:text-black">{guest.legalName || 'N/A'}</h5>
-                                   {idx === 0 && <p className="text-[9px] font-bold text-gray-400 mt-0.5 print:text-black">{selectedBooking.userEmail}</p>}
+                                   <p className="text-[8px] font-black text-hotel-primary uppercase tracking-widest mb-1">Legal Credential {idx + 1}</p>
+                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase">{guest.legalName || 'Guest'}</h5>
+                                   {idx === 0 && <p className="text-[9px] font-bold text-gray-400 mt-0.5">{selectedBooking.userEmail}</p>}
                                 </div>
                              </div>
                              
                              <div className="p-6 space-y-4 flex-1">
                                 <div className="grid grid-cols-1 gap-3">
-                                   <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 print:text-black">
-                                     <Phone size={12} className="text-gray-400 print:text-black" /> {guest.phone || 'No phone'}
+                                   <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600">
+                                     <Phone size={12} className="text-gray-400" /> {guest.phone || 'No Contact'}
                                    </div>
-                                   {guest.guardianPhone && (
-                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 print:text-black">
-                                       <ShieldCheck size={12} className="text-gray-400 print:text-black" /> Guardian: {guest.guardianPhone}
-                                     </div>
-                                   )}
-                                   {guest.age && (
-                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 print:text-black">
-                                       <Calendar size={12} className="text-gray-400 print:text-black" /> Age: {guest.age}
-                                     </div>
-                                   )}
                                    <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-gray-900 bg-gray-50 p-2 rounded-lg border border-gray-100 print:bg-white print:border-black">
-                                      <IdCard size={12} className="text-gray-400 print:text-black" /> NID: {guest.nidNumber || 'NOT SUBMITTED'}
+                                      <IdCard size={12} className="text-gray-400" /> NID: {guest.nidNumber || 'NOT SUBMITTED'}
                                    </div>
                                 </div>
 
                                 {guest.nidImageUrl && (
-                                  <div className="mt-4 relative group/nid print:mt-10">
-                                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-2 print:text-black">Identity Verification Asset</p>
+                                  <div className="mt-4 relative group/nid">
+                                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-2">ID Asset Verification</p>
                                      <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100 shadow-lg aspect-video bg-gray-100 print:border-black print:rounded-none">
                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover" alt="Guest ID" />
-                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/nid:opacity-100 transition-opacity flex items-center justify-center print:hidden">
-                                           <a href={guest.nidImageUrl} target="_blank" rel="noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center gap-2">
-                                              <Download size={12} /> Inspect Original
-                                           </a>
-                                        </div>
                                      </div>
                                   </div>
                                 )}
                              </div>
                           </div>
                         ))}
+                     </div>
+
+                     {/* PRINT SIGNATURE BLOCK */}
+                     <div className="hidden print:grid grid-cols-2 gap-20 mt-20 pt-20 border-t-2 border-gray-900">
+                        <div className="text-center">
+                           <div className="w-full h-[1px] bg-black mb-4"></div>
+                           <p className="text-[10px] font-black uppercase tracking-widest">Primary Guest Signature</p>
+                        </div>
+                        <div className="text-center">
+                           <div className="w-full h-[1px] bg-black mb-4"></div>
+                           <p className="text-[10px] font-black uppercase tracking-widest">Hotel Registry Official</p>
+                        </div>
                      </div>
                   </div>
                </div>
@@ -354,11 +284,6 @@ const AdminDashboard: React.FC = () => {
                   }`}>
                     Registry Status: {selectedBooking.status}
                   </span>
-                  {selectedBooking.rejectionReason && (
-                    <p className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">
-                      Flag: {selectedBooking.rejectionReason}
-                    </p>
-                  )}
                </div>
 
                <div className="flex gap-4">
@@ -368,13 +293,13 @@ const AdminDashboard: React.FC = () => {
                   {selectedBooking.status === 'pending' && (
                     <>
                        <button 
-                        onClick={() => { setSelectedBooking(null); setRejectingBookingId(selectedBooking.id); }}
+                        onClick={() => { setRejectingBookingId(selectedBooking.id); setSelectedBooking(null); }}
                         className="px-8 py-4 bg-white text-gray-400 hover:text-red-600 border border-gray-200 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
                        >
                          Reject
                        </button>
                        <button 
-                        onClick={() => { setSelectedBooking(null); setAcceptingBookingId(selectedBooking.id); }}
+                        onClick={() => { setAcceptingBookingId(selectedBooking.id); setSelectedBooking(null); }}
                         className="px-10 py-4 bg-[#B22222] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all"
                        >
                          Assign Room
@@ -401,7 +326,7 @@ const AdminDashboard: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="animate-spin text-hotel-primary mb-4" size={40} />
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Synchronizing Hub...</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Guest Data...</p>
       </div>
     );
   }
@@ -410,7 +335,7 @@ const AdminDashboard: React.FC = () => {
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-32 lg:pb-10 animate-fade-in relative z-10 print:hidden">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
+          <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Management Panel</h1>
         </div>
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
           {['bookings', 'users', 'data'].map((tab) => (
@@ -423,15 +348,19 @@ const AdminDashboard: React.FC = () => {
 
       <div className="relative mb-10 group">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#B22222] transition-colors" size={20} />
-        <input type="text" placeholder={`Filter ${activeTab}...`} className="w-full bg-white border border-gray-100 rounded-[2rem] py-6 pl-16 pr-8 text-sm font-semibold outline-none focus:border-[#B22222] shadow-xl shadow-gray-100/50 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        <input type="text" placeholder={`Search ${activeTab}...`} className="w-full bg-white border border-gray-100 rounded-[2rem] py-6 pl-16 pr-8 text-sm font-semibold outline-none focus:border-[#B22222] shadow-xl shadow-gray-100/50 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
       <div className="space-y-5">
         {activeTab === 'bookings' && filteredBookings.map(booking => (
           <div key={booking.id} onClick={() => setSelectedBooking(booking)} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 cursor-pointer hover:shadow-2xl transition-all duration-500 group relative">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-gray-50">
-                <img src={booking.guests?.[0]?.nidImageUrl || LOGO_ICON_URL} className="w-full h-full object-cover" />
+              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-gray-50 flex items-center justify-center">
+                {booking.guests?.[0]?.nidImageUrl ? (
+                   <img src={booking.guests[0].nidImageUrl} className="w-full h-full object-cover" />
+                ) : (
+                   <User className="text-gray-300" />
+                )}
               </div>
               <div>
                 <h3 className="text-base font-black text-gray-900">{booking.userName}</h3>
@@ -439,14 +368,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3 self-end lg:self-center">
-                {booking.status === 'pending' ? (
-                  <>
-                    <button onClick={(e) => { e.stopPropagation(); setRejectingBookingId(booking.id); }} className="p-4 text-gray-400 hover:text-red-600 transition-colors bg-gray-50 rounded-2xl"><XCircle size={22} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); setAcceptingBookingId(booking.id); }} className="bg-[#B22222] text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 transition-all">Approve Stay</button>
-                  </>
-                ) : (
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${booking.status === 'accepted' ? 'text-green-600' : 'text-gray-400'}`}>{booking.status}</span>
-                )}
+                <span className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl ${booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : booking.status === 'accepted' ? 'bg-green-50 text-green-600' : 'text-gray-400'}`}>
+                  {booking.status === 'pending' ? 'Review Needed' : booking.status}
+                </span>
+                <Eye size={20} className="text-gray-300 group-hover:text-hotel-primary transition-colors ml-4" />
             </div>
           </div>
         ))}
@@ -472,7 +397,7 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl animate-fade-in relative z-[10000]">
             <h2 className="text-2xl font-serif font-black mb-8 text-center">Reject Stay</h2>
             <div className="space-y-4 mb-8">
-              {['NID verification failed', 'Incomplete guest info', 'Room unavailable', 'Policy violation'].map(reason => (
+              {['NID verification failed', 'Room unavailable', 'Policy violation'].map(reason => (
                 <button 
                   key={reason}
                   onClick={() => setRejectionReason(reason)}

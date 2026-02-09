@@ -68,9 +68,25 @@
     .swiper-button-next, .swiper-button-prev { color: #B22222 !important; }
     .swiper-pagination-bullet-active { background: #B22222 !important; }
     
+    /* Google Translate Styles */
+    #google_translate_element { display: none; }
+    .goog-te-banner-frame.skiptranslate { display: none !important; }
+    body { top: 0px !important; }
+    .goog-logo-link { display: none !important; }
+    .trans-section { display: none; }
+
     @media print {
+      body * { visibility: hidden; }
+      #print-record, #print-record * { visibility: visible; }
+      #print-record {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+      }
       .print\:hidden { display: none !important; }
-      body { background: white !important; color: black !important; }
     }
   </style>
   <script>
@@ -93,7 +109,18 @@
         }
       }
     }
+
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,bn',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
   </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 <script type="importmap">
 {
   "imports": {
@@ -112,6 +139,7 @@
 </script>
 </head>
 <body class="bg-white text-hotel-text">
+  <div id="google_translate_element"></div>
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>

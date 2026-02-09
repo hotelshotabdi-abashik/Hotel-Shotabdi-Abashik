@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -32,7 +31,7 @@ import {
   requestNotificationToken
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, ShieldCheck, Gavel } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Eye, Globe, RefreshCw, X, Info, MapPin, Phone, Mail, Tag, ShieldAlert, Languages, Megaphone, ShieldCheck, Gavel, Save, LayoutGrid } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -44,7 +43,6 @@ const LanguageContext = createContext<{ lang: Language; setLang: (l: Language) =
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
   const { pathname } = useLocation();
-  const params = useParams();
   
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -80,7 +78,6 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
       }
     };
 
-    // Handle dynamic SEO for offers
     if (pathname.startsWith('/offers/')) {
       const offerId = pathname.split('/').pop();
       const offer = siteConfig.offers?.find(o => o.id === offerId);
@@ -94,7 +91,6 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
       desc = current.desc;
     }
 
-    // Update Browser Metadata
     document.title = title;
     
     const updateMeta = (name: string, content: string) => {
@@ -163,6 +159,20 @@ const AppContent = () => {
     lastUpdated: 0
   });
 
+  // Google Translate Helper
+  const triggerGoogleTranslate = useCallback((targetLang: Language) => {
+    const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+    if (googleCombo) {
+      googleCombo.value = targetLang;
+      googleCombo.dispatchEvent(new Event('change'));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Apply translation after language state changes
+    setTimeout(() => triggerGoogleTranslate(lang), 1000);
+  }, [lang, triggerGoogleTranslate]);
+
   useEffect(() => {
     const configRef = ref(db, 'site-config');
     const unsubscribe = onValue(configRef, (snapshot) => {
@@ -183,7 +193,6 @@ const AppContent = () => {
     }
     const notificationsRef = ref(db, `notifications/${user.uid}`);
     onValue(notificationsRef, (snap) => {
-      // Fix: Cast notification data from Firebase to AppNotification[] to resolve TypeScript assignment error.
       if (snap.exists()) setNotifications((Object.values(snap.val() as any) as AppNotification[]).sort((a: any, b: any) => b.createdAt - a.createdAt));
     });
     const bookingsRef = ref(db, `bookings`);
@@ -221,6 +230,9 @@ const AppContent = () => {
       const updatedConfig = { ...siteConfig, lastUpdated: Date.now() };
       await update(ref(db), { 'site-config': updatedConfig });
       setIsEditMode(false);
+      alert("Website Updated Live!");
+    } catch (error) {
+      alert("Update Failed. Check Connectivity.");
     } finally { setIsSaving(false); }
   };
 
@@ -254,22 +266,37 @@ const AppContent = () => {
 
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center h-[72px] md:h-[88px]">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 md:gap-4 group cursor-pointer" onClick={() => { setIsLogoSpinning(true); setTimeout(() => setIsLogoSpinning(false), 2000); }}>
+            {/* Mobile Header Logo */}
+            <div className="lg:hidden flex items-center gap-3 md:gap-4 group cursor-pointer" onClick={() => { setIsLogoSpinning(true); setTimeout(() => setIsLogoSpinning(false), 2000); }}>
               <img src={LOGO_ICON_URL} className={`w-12 h-12 md:w-16 md:h-16 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Hotel Shotabdi Abashik" />
               <div className="flex flex-col select-none leading-none -space-y-1">
                 <h1 className="text-lg md:text-xl font-serif font-black text-gray-900 tracking-tight">Hotel Shotabdi</h1>
                 <p className="text-[8px] md:text-[9px] text-hotel-primary font-black uppercase tracking-[0.3em]">Abashik</p>
               </div>
             </div>
+            {/* Desktop Header Title */}
+            <div className="hidden lg:block">
+               <h2 className="text-xs font-black uppercase tracking-[0.5em] text-gray-400">Hotel Shotabdi Abashik</h2>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Admin Edit Web Toggle */}
+            {(isAdmin || isOwner) && (
+              <button 
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`flex items-center gap-3 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${isEditMode ? 'bg-amber-100 text-amber-600 animate-pulse shadow-lg' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              >
+                <Edit3 size={16} /> {isEditMode ? 'Editing Live' : 'Edit Web'}
+              </button>
+            )}
+
             <button 
               onClick={toggleLang}
               className="p-2.5 bg-gray-50 hover:bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-hotel-primary transition-all flex items-center gap-2 group"
             >
               <Languages size={18} className="group-hover:rotate-12 transition-transform" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">{lang === 'en' ? 'Bangla' : 'English'}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">{lang === 'en' ? 'বাংলা' : 'English'}</span>
             </button>
             
             {user ? (
@@ -290,11 +317,38 @@ const AppContent = () => {
           </div>
         </header>
 
+        {/* Floating Save Changes Bar */}
+        {isEditMode && (
+          <div className="fixed bottom-32 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] flex items-center gap-10 animate-fade-in ring-1 ring-white/20">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-amber-500/20">
+                  <Globe size={24} className="animate-pulse" />
+                </div>
+                <div>
+                   <p className="text-[12px] font-black text-white uppercase tracking-widest">Global Live Editor</p>
+                   <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mt-0.5">Unsaved Changes Detected</p>
+                </div>
+             </div>
+             <div className="flex items-center gap-4">
+                <button onClick={() => setIsEditMode(false)} className="px-8 py-3.5 text-[10px] font-black text-white/40 uppercase tracking-widest hover:text-white transition-colors">Discard</button>
+                <button 
+                  onClick={saveConfig}
+                  disabled={isSaving}
+                  className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/30 hover:brightness-110 active:scale-95 transition-all flex items-center gap-3"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} 
+                  Publish Site
+                </button>
+             </div>
+          </div>
+        )}
+
         <div className="flex-1">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={(f) => uploadToR2(f, 'hero')} /><ExclusiveOffers offers={siteConfig.offers} onClaim={(o) => setActiveDiscount(o.discountPercent || 0)} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} /></>} />
+            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={(f) => uploadToR2(f, 'hero')} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} onClaim={(o) => setActiveDiscount(o.discountPercent || 0)} /><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} /></>} />
+            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />} />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />} />
             <Route path="/helpdex" element={<HelpDex profile={profile} />} />
