@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { 
   History, Calendar, Info, ShieldCheck, Download, 
   Eye, Loader2, ArrowRight, X, User, Phone, IdCard, Database, ClipboardCheck,
-  CheckCircle2, Printer
+  CheckCircle2, Printer, MapPin, Clock, Tag, Shield
 } from 'lucide-react';
 import { db, auth, ref, onValue } from '../services/firebase';
 import { Booking, UserProfile } from '../types';
@@ -31,7 +31,6 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
     const unsub = onValue(bookingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = Object.values(snapshot.val()) as Booking[];
-        // Filter stays specifically for the logged in user, sorted by most recent
         const userStays = data
           .filter(b => b.userId === user.uid)
           .sort((a, b) => b.createdAt - a.createdAt);
@@ -49,15 +48,22 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
     window.print();
   };
 
+  const formatTime = (ts?: number) => {
+    if (!ts) return "N/A";
+    return new Date(ts).toLocaleString('en-US', { 
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+    });
+  };
+
   const renderBookingDetails = () => {
     if (!selectedBooking) return null;
     
     const content = (
       <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden print:bg-white print:p-0">
-         <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:max-h-none print:shadow-none print:border-none print:rounded-none">
+         <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:block print:h-auto print:max-h-none print:shadow-none print:border-none print:rounded-none">
             
             {/* Header for Receipt */}
-            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:bg-white">
+            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:bg-white print:border-black/10">
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100 print:bg-black print:shadow-none">
                      <ClipboardCheck size={32} />
@@ -84,13 +90,19 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                   
                   {/* Summary Sidebar */}
-                  <div className="lg:col-span-4 space-y-8">
+                  <div className="lg:col-span-4 space-y-8 print:col-span-12 print:grid print:grid-cols-2 print:gap-8 print:space-y-0">
                     <section className="space-y-4">
                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Stay Details</h4>
                       <div className="space-y-4">
                          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Room Type</p>
                            <p className="text-base font-black text-gray-900">{selectedBooking.roomTitle}</p>
+                           {selectedBooking.roomNumber && (
+                             <div className="mt-3 pt-3 border-t border-gray-200">
+                               <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1">Assigned Room</p>
+                               <p className="text-xl font-black text-gray-900">Room {selectedBooking.roomNumber}</p>
+                             </div>
+                           )}
                          </div>
                          <div className="grid grid-cols-2 gap-4">
                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
@@ -105,27 +117,32 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                       </div>
                     </section>
 
-                    <section className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Payment Log</h4>
-                      <div className="bg-[#B22222]/5 p-6 rounded-3xl border border-[#B22222]/10 flex items-center justify-between print:bg-gray-100 print:border-black/10">
-                         <p className="text-[10px] font-black text-[#B22222] uppercase tracking-widest print:text-black">Grand Total</p>
-                         <p className="text-3xl font-serif font-black text-[#B22222] print:text-black">৳{selectedBooking.price}</p>
-                      </div>
-                    </section>
+                    <div className="space-y-8">
+                      <section className="space-y-4">
+                        <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Financial Info</h4>
+                        <div className="bg-[#B22222]/5 p-6 rounded-3xl border border-[#B22222]/10 flex items-center justify-between print:bg-gray-50 print:border-black/10">
+                           <p className="text-[10px] font-black text-[#B22222] uppercase tracking-widest print:text-black">Grand Total</p>
+                           <p className="text-3xl font-serif font-black text-[#B22222] print:text-black">৳{selectedBooking.price}</p>
+                        </div>
+                      </section>
 
-                    <section className="space-y-4">
-                       <div className={`p-6 rounded-3xl border flex items-center gap-4 ${selectedBooking.status === 'accepted' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-                          {selectedBooking.status === 'accepted' ? <CheckCircle2 size={24} /> : <ShieldCheck size={24} />}
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Registry Status</p>
-                            <p className="text-sm font-black uppercase tracking-tight">{selectedBooking.status}</p>
-                          </div>
-                       </div>
-                    </section>
+                      <section className="space-y-4">
+                        <div className={`p-6 rounded-3xl border flex items-center gap-4 ${selectedBooking.status === 'accepted' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
+                            {selectedBooking.status === 'accepted' ? <CheckCircle2 size={24} /> : <ShieldCheck size={24} />}
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Registry Status</p>
+                              <p className="text-sm font-black uppercase tracking-tight">{selectedBooking.status}</p>
+                              {selectedBooking.arrivedAt && (
+                                <p className="text-[8px] font-black uppercase mt-1 opacity-70">Entry: {formatTime(selectedBooking.arrivedAt)}</p>
+                              )}
+                            </div>
+                        </div>
+                      </section>
+                    </div>
                   </div>
 
                   {/* Identity Records */}
-                  <div className="lg:col-span-8 space-y-10">
+                  <div className="lg:col-span-8 space-y-10 print:col-span-12">
                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Guest Identity Submissions</h4>
                      
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-1">
@@ -158,7 +175,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                         ))}
                      </div>
 
-                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:border-black/20 print:bg-white print:rounded-2xl">
+                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:border-black/20 print:bg-white print:rounded-2xl print:page-break-inside-avoid">
                         <div>
                            <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Official Registry Seal</h5>
                            <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed">Verified by Hotel Shotabdi Abashik Registry Portal. Authenticated Digital Record for Resident Identity.</p>
@@ -231,7 +248,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
              >
                 <div className="flex justify-between items-start mb-6">
                    <div className="p-4 bg-gray-50 rounded-2xl text-hotel-primary group-hover:bg-hotel-primary group-hover:text-white transition-colors">
-                      <Calendar size={24} />
+                      {booking.status === 'accepted' ? <ShieldCheck size={24} /> : <Calendar size={24} />}
                    </div>
                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl ${
                      booking.status === 'pending' ? 'bg-amber-100 text-amber-600' :
@@ -239,7 +256,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                      booking.status === 'rejected' ? 'bg-red-100 text-red-600' :
                      'bg-gray-100 text-gray-400'
                    }`}>
-                     {booking.status}
+                     {booking.status === 'accepted' ? 'Verified Entry' : booking.status}
                    </span>
                 </div>
                 
@@ -247,9 +264,12 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">{booking.checkIn} — {booking.checkOut}</p>
                 
                 <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
-                   <p className="text-xl font-serif font-black text-gray-900">৳{booking.price}</p>
+                   <div>
+                     <p className="text-xl font-serif font-black text-gray-900">৳{booking.price}</p>
+                     {booking.roomNumber && <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Room {booking.roomNumber}</p>}
+                   </div>
                    <div className="flex items-center gap-2 text-hotel-primary font-black text-[10px] uppercase tracking-widest">
-                      View Submission <Eye size={14} />
+                      View Record <Eye size={14} />
                    </div>
                 </div>
              </div>

@@ -277,7 +277,7 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
-  // profile is only complete if legal name and nid image exist
+  // Profile is complete only if mandatory fields exist
   const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
 
   return (
@@ -291,7 +291,7 @@ const AppContent = () => {
           <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 animate-fade-in shadow-lg border-b border-amber-600/20">
              <AlertTriangle size={16} className="shrink-0 animate-bounce" />
              <p className="font-black text-[10px] md:text-[11px] uppercase tracking-widest">
-               Identity registry is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1 hover:text-white/80 transition-colors">Finish Onboarding</button> to enable full booking access.
+               Identity registry is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1 hover:text-white/80 transition-colors">Finish Onboarding</button> to unlock stay submissions.
              </p>
           </div>
         )}
@@ -322,7 +322,7 @@ const AppContent = () => {
               </div>
             </div>
             <div className="hidden lg:block">
-               <h2 className="text-xs font-black uppercase tracking-[0.5em] text-gray-400">Hotel Shotabdi Abashik</h2>
+               <h2 className="text-xs font-black uppercase tracking-[0.5em] text-gray-400">Hotel Shotabdi Abashik Registry</h2>
             </div>
           </div>
 

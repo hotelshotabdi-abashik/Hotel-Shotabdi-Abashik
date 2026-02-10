@@ -73,20 +73,23 @@
       body * { visibility: hidden; }
       #print-record, #print-record * { visibility: visible; }
       #print-record {
-        position: absolute;
+        position: fixed;
         left: 0;
         top: 0;
         width: 100%;
+        height: auto !important;
         max-height: none !important;
         overflow: visible !important;
         background: white !important;
         color: black !important;
         box-shadow: none !important;
         border: none !important;
+        display: block !important;
       }
       #print-record-scroll {
         overflow: visible !important;
         max-height: none !important;
+        display: block !important;
       }
       .print\:hidden { display: none !important; }
       @page {
