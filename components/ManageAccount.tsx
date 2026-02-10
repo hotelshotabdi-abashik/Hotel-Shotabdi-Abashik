@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History } from 'lucide-react';
+import { X, Save, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History, Clock } from 'lucide-react';
 import { db, ref, set, checkUsernameUnique } from '../services/firebase';
 import { UserProfile } from '../types';
 
@@ -14,29 +14,32 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [pendingDays, setPendingDays] = useState(0);
+  const [pendingMinutes, setPendingMinutes] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [nidPreview, setNidPreview] = useState(profile.nidImageUrl);
   
   const [form, setForm] = useState({ 
-    legalName: profile.legalName,
-    username: profile.username,
-    phone: profile.phone,
-    guardianPhone: profile.guardianPhone,
-    nidNumber: profile.nidNumber,
+    legalName: profile.legalName || '',
+    username: profile.username || '',
+    phone: profile.phone || '',
+    guardianPhone: profile.guardianPhone || '',
+    nidNumber: profile.nidNumber || '',
   });
 
   useEffect(() => {
     const lastUpdate = profile.lastUpdated || profile.createdAt || 0;
     const now = Date.now();
-    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    // CHANGED: 30 minutes lock instead of 30 days
+    const thirtyMinutesMs = 30 * 60 * 1000;
     const diff = now - lastUpdate;
     
-    if (diff < thirtyDaysMs) {
-      const remainingMs = thirtyDaysMs - diff;
-      const days = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-      setPendingDays(days);
+    if (diff < thirtyMinutesMs) {
+      const remainingMs = thirtyMinutesMs - diff;
+      const mins = Math.ceil(remainingMs / (1000 * 60));
+      setPendingMinutes(mins);
       setIsLocked(true);
+    } else {
+      setIsLocked(false);
     }
   }, [profile]);
 
@@ -65,7 +68,8 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
         ...form,
         username: normalizedUsername,
         nidImageUrl: nidPreview,
-        lastUpdated: timestamp
+        lastUpdated: timestamp,
+        isComplete: !!(form.legalName && form.phone && form.nidNumber && nidPreview)
       };
 
       await set(ref(db, `profiles/${profile.uid}`), finalProfile);
@@ -78,7 +82,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
       setTimeout(() => {
         onUpdate();
         onClose();
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -86,8 +90,8 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
     }
   };
 
-  const formattedDate = (ts: number) => new Date(ts).toLocaleDateString('en-US', { 
-    month: 'long', day: 'numeric', year: 'numeric' 
+  const formattedTime = (ts: number) => new Date(ts).toLocaleTimeString('en-US', { 
+    hour: '2-digit', minute: '2-digit'
   });
 
   return (
@@ -108,8 +112,10 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
                 </p>
                 <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
                 <div className="flex items-center gap-1">
-                  <ShieldCheck size={10} className="text-green-500" />
-                  <span className="text-[9px] text-green-600 font-black uppercase tracking-widest">Verified</span>
+                  <ShieldCheck size={10} className={profile.isComplete ? "text-green-500" : "text-gray-300"} />
+                  <span className={`text-[9px] font-black uppercase tracking-widest ${profile.isComplete ? "text-green-600" : "text-gray-400"}`}>
+                    {profile.isComplete ? 'Verified' : 'Incomplete'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -123,13 +129,13 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
           {isLocked && (
             <div className="p-6 bg-hotel-primary/5 rounded-[2.5rem] border border-hotel-primary/10 flex items-start gap-5 group animate-pulse-slow">
               <div className="bg-hotel-primary text-white p-3.5 rounded-2xl shrink-0 shadow-lg shadow-red-100">
-                <Calendar size={22} />
+                <Clock size={22} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-hotel-primary uppercase tracking-[0.2em] mb-1">Account Locked</p>
+                <p className="text-[10px] font-black text-hotel-primary uppercase tracking-[0.2em] mb-1">Vault Registry Locked</p>
                 <p className="text-xs text-gray-600 font-medium leading-relaxed">
-                  To protect your identity, data is frozen for 30 days after an update. <br />
-                  Next modification available in <span className="text-hotel-primary font-black underline decoration-2">{pendingDays} days</span>.
+                  Identity updates are restricted for 30 minutes after each submission to maintain record integrity. <br />
+                  Registry re-opens in <span className="text-hotel-primary font-black underline decoration-2">{pendingMinutes} minutes</span>.
                 </p>
               </div>
             </div>
@@ -208,7 +214,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
                     />
                   </div>
                   {!isLocked && (
-                    <div className="relative border-2 border-dashed border-gray-100 rounded-2xl p-4 bg-gray-50/50 hover:bg-white hover:border-hotel-primary/30 transition-all cursor-pointer overflow-hidden">
+                    <div className="relative border-2 border-dashed border-gray-100 rounded-2xl p-4 bg-gray-50/50 hover:bg-white hover:border-hotel-primary/30 transition-all cursor-pointer overflow-hidden text-center">
                       <input type="file" accept="image/*" onChange={(e) => {
                          const file = e.target.files?.[0];
                          if (file) {
@@ -217,15 +223,22 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
                            reader.readAsDataURL(file);
                          }
                       }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                      <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        <Camera size={16} className="text-hotel-primary" /> Replace Document
+                      <div className="flex items-center justify-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <Camera size={16} className="text-hotel-primary" /> Replace Identity Scan
                       </div>
                     </div>
                   )}
                 </div>
 
                 <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-black/5 aspect-video bg-gray-100 group">
-                  <img src={nidPreview} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="NID Document" />
+                  {nidPreview ? (
+                    <img src={nidPreview} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="NID Document" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
+                       <IdCard size={32} />
+                       <p className="text-[9px] font-black uppercase tracking-widest">Missing Document</p>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
               </div>
@@ -244,14 +257,14 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
               }`}
             >
               {loading ? <Loader2 className="animate-spin" size={18} /> : success ? <CheckCircle2 size={20} /> : <Save size={18} />}
-              {success ? 'Vault Updated' : 'Authorize Update'}
+              {success ? 'Registry Updated' : 'Commit Changes'}
             </button>
           ) : (
             <div className="text-center py-2">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
-                <ShieldCheck size={14} className="text-hotel-primary" /> Secure Profile Registry
+                <ShieldCheck size={14} className="text-hotel-primary" /> Synchronized Stay Identity
               </p>
-              <p className="text-[9px] text-gray-300 font-bold mt-1">LOCKED UNTIL {formattedDate((profile.lastUpdated || profile.createdAt) + (30 * 24 * 60 * 60 * 1000))}</p>
+              <p className="text-[9px] text-gray-300 font-bold mt-1">LOCK RELEASES AT {formattedTime((profile.lastUpdated || profile.createdAt) + (30 * 60 * 1000))}</p>
             </div>
           )}
         </div>

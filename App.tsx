@@ -21,6 +21,7 @@ import MyStays from './components/MyStays';
 import { 
   auth, 
   onAuthStateChanged, 
+  signOut,
   syncUserProfile,
   OWNER_EMAIL,
   db,
@@ -30,7 +31,7 @@ import {
   get
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2 } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -90,6 +91,7 @@ const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
   const [isLogoUpdating, setIsLogoUpdating] = useState(false);
@@ -173,7 +175,12 @@ const AppContent = () => {
   };
 
   const loadProfile = useCallback(async (u: any) => {
-    if (!u) return;
+    if (!u) {
+      setProfile(null);
+      setIsAdmin(false);
+      setIsOwner(false);
+      return;
+    }
     try {
       const data = await syncUserProfile(u);
       setProfile(data);
@@ -186,9 +193,24 @@ const AppContent = () => {
       setUser(currentUser);
       setIsAuthLoading(false);
       if (currentUser) loadProfile(currentUser);
+      else {
+        setProfile(null);
+        setIsAdmin(false);
+        setIsOwner(false);
+      }
     });
     return () => unsubscribe();
   }, [loadProfile]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsProfileMenuOpen(false);
+      navigate('/');
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
 
   const handleLogoClick = () => {
     setIsLogoSpinning(true);
@@ -243,6 +265,7 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
+  const isProfileIncomplete = user && profile && !profile.isComplete;
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
@@ -250,6 +273,16 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} logoUrl={currentLogo} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
+        {/* Profile Incomplete Warning */}
+        {isProfileIncomplete && (
+          <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 animate-fade-in shadow-lg">
+             <AlertTriangle size={16} className="shrink-0 animate-bounce" />
+             <p className="font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+               Your registry identity is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1">Complete Registry Now</button> to unlock full features.
+             </p>
+          </div>
+        )}
+
         {(siteConfig.announcement || isEditMode) && (
           <div className="bg-hotel-primary text-white py-2.5 px-6 text-center z-[65] relative flex items-center justify-center gap-3 overflow-hidden">
             <Megaphone size={14} className="shrink-0 animate-pulse hidden md:block" />
@@ -359,9 +392,42 @@ const AppContent = () => {
                     </>
                   )}
                 </div>
-                <button onClick={() => setIsManageAccountOpen(true)} className="w-9 h-9 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
-                  <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="User" />
-                </button>
+                
+                {/* Profile Actions Menu */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
+                    className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100 transition-transform active:scale-90"
+                  >
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="User" />
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[100] md:hidden" onClick={() => setIsProfileMenuOpen(false)}></div>
+                      <div className="absolute right-0 top-full mt-4 w-56 bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                         <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+                            <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{profile?.legalName || user.displayName || 'Guest'}</p>
+                            <p className="text-[9px] text-gray-400 truncate uppercase tracking-widest font-bold mt-0.5">{user.email}</p>
+                         </div>
+                         <div className="p-2 space-y-1">
+                            <button 
+                              onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase tracking-widest"
+                            >
+                              <UserIcon size={16} /> Manage Account
+                            </button>
+                            <button 
+                              onClick={handleLogout}
+                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest"
+                            >
+                              <LogOut size={16} /> Log Out
+                            </button>
+                         </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
               <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-3 bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all">
@@ -440,8 +506,24 @@ const AppContent = () => {
         </footer>
 
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        
+        {/* Correct Conditional Profile Onboarding */}
+        {user && profile && !profile.isComplete && !isManageAccountOpen && (
+          <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
+        )}
+
         {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
-        {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={activeDiscount} onClose={() => setSelectedRoomToBook(null)} onImageUpload={(f) => uploadToR2(f, 'nid')} />}
+        
+        {selectedRoomToBook && profile && (
+          <BookingModal 
+            room={selectedRoomToBook} 
+            profile={profile} 
+            activeDiscount={activeDiscount} 
+            onClose={() => setSelectedRoomToBook(null)} 
+            onImageUpload={(f) => uploadToR2(f, 'nid')} 
+          />
+        )}
+        
         <MobileBottomNav user={user} isAdmin={isAdmin} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
       </main>
     </div>
