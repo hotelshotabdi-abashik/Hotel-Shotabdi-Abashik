@@ -104,7 +104,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
           <div className="mt-6 p-4 bg-amber-50/80 backdrop-blur rounded-2xl border border-amber-100/50 flex items-start gap-4 text-left">
             <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <p className="text-[10px] text-amber-800 font-bold uppercase tracking-widest leading-relaxed">
-              Caution: Identity data is locked for 30 days after submission. Double-check all digits.
+              Caution: Identity data is locked for 30 minutes after submission. Double-check all digits.
             </p>
           </div>
         </div>

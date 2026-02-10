@@ -6,7 +6,7 @@ import {
   Camera, IdCard, Info, AlertTriangle, ArrowRight, UserPlus,
   Clock, User
 } from 'lucide-react';
-import { db, ref, set } from '../services/firebase';
+import { db, ref, set, get, onValue } from '../services/firebase';
 import { Room, UserProfile, GuestInfo, Booking } from '../types';
 
 interface Props {
@@ -22,6 +22,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
   const [step, setStep] = useState(1);
   const [totalGuests, setTotalGuests] = useState(room.id.includes('single') ? 1 : 2);
   const [uploadingGuestIndex, setUploadingGuestIndex] = useState<number | null>(null);
+  const [hasExistingPending, setHasExistingPending] = useState(false);
 
   const [dates, setDates] = useState({
     checkIn: new Date().toISOString().split('T')[0],
@@ -41,6 +42,19 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
     ];
   });
 
+  // Check for existing pending bookings on mount
+  useEffect(() => {
+    const bookingsRef = ref(db, 'bookings');
+    const unsub = onValue(bookingsRef, (snap) => {
+      if (snap.exists()) {
+        const allBookings = Object.values(snap.val()) as Booking[];
+        const pending = allBookings.some(b => b.userId === profile.uid && b.status === 'pending');
+        setHasExistingPending(pending);
+      }
+    });
+    return () => unsub();
+  }, [profile.uid]);
+
   useEffect(() => {
     setGuests(prev => {
       const current = [...prev];
@@ -55,7 +69,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
     });
   }, [totalGuests]);
 
-  // Use the manually entered discountPrice directly
   const finalPrice = room.discountPrice || room.price || "Price on Request";
 
   const handleGuestChange = (idx: number, field: keyof GuestInfo, val: string) => {
@@ -80,6 +93,11 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
   };
 
   const submitBooking = async () => {
+    if (hasExistingPending) {
+      alert("Policy Restriction: You already have a pending booking request. Our registry allows only one active request at a time.");
+      return;
+    }
+
     setLoading(true);
     try {
       const bookingId = `book_${Date.now()}`;
@@ -112,10 +130,12 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
 
   const isStep1Valid = dates.checkIn && dates.checkOut;
   const isStep2Valid = guests.every((g, idx) => {
-    if (idx < 2) {
+    if (idx < 2 && totalGuests >= 2) {
       return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
+    } else if (idx === 0) {
+       return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
     }
-    return g.legalName.trim().length > 2 && g.age;
+    return g.legalName.trim().length > 2;
   });
 
   const modalContent = (
@@ -138,6 +158,18 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 bg-white">
+           {hasExistingPending && (
+             <div className="mb-10 p-6 bg-red-50 border border-red-100 rounded-[2rem] flex items-start gap-5 animate-pulse">
+                <ShieldCheck className="text-hotel-primary shrink-0" size={24} />
+                <div>
+                   <p className="text-[11px] font-black text-hotel-primary uppercase tracking-widest mb-1">Pending Request Active</p>
+                   <p className="text-xs text-red-600 font-medium leading-relaxed">
+                     Our policy permits only one pending booking at a time per resident. Please wait for our Registry Admin to process your existing request.
+                   </p>
+                </div>
+             </div>
+           )}
+
            <div className="flex items-center justify-center gap-4 mb-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 1 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>1</div>
               <div className="w-12 h-[2px] bg-gray-100"></div>
@@ -287,7 +319,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
            ) : (
              <button 
                 onClick={submitBooking}
-                disabled={loading || !isStep2Valid}
+                disabled={loading || !isStep2Valid || hasExistingPending}
                 className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
              >
                 {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Book Now</>}

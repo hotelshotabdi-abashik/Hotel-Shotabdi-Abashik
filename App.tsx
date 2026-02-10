@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
@@ -88,6 +88,7 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
 
 const AppContent = () => {
   const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -124,6 +125,17 @@ const AppContent = () => {
     logoUrl: LOGO_ICON_URL,
     lastUpdated: 0
   });
+
+  // Handle clicks outside of dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const configRef = ref(db, 'site-config');
@@ -273,12 +285,12 @@ const AppContent = () => {
       <Sidebar isAdmin={isAdmin || isOwner} logoUrl={currentLogo} />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
-        {/* Profile Incomplete Warning */}
+        {/* Profile Incomplete Warning Banner */}
         {isProfileIncomplete && (
-          <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 animate-fade-in shadow-lg">
+          <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 animate-fade-in shadow-lg border-b border-amber-600/20">
              <AlertTriangle size={16} className="shrink-0 animate-bounce" />
              <p className="font-black text-[10px] md:text-[11px] uppercase tracking-widest">
-               Your registry identity is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1">Complete Registry Now</button> to unlock full features.
+               Identity registry is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1 hover:text-white/80 transition-colors">Finish Onboarding</button> to enable room bookings.
              </p>
           </div>
         )}
@@ -394,7 +406,7 @@ const AppContent = () => {
                 </div>
                 
                 {/* Profile Actions Menu */}
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                   <button 
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
                     className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100 transition-transform active:scale-90"
@@ -403,29 +415,26 @@ const AppContent = () => {
                   </button>
 
                   {isProfileMenuOpen && (
-                    <>
-                      <div className="fixed inset-0 z-[100] md:hidden" onClick={() => setIsProfileMenuOpen(false)}></div>
-                      <div className="absolute right-0 top-full mt-4 w-56 bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
-                         <div className="p-4 border-b border-gray-50 bg-gray-50/50">
-                            <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{profile?.legalName || user.displayName || 'Guest'}</p>
-                            <p className="text-[9px] text-gray-400 truncate uppercase tracking-widest font-bold mt-0.5">{user.email}</p>
-                         </div>
-                         <div className="p-2 space-y-1">
-                            <button 
-                              onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase tracking-widest"
-                            >
-                              <UserIcon size={16} /> Manage Account
-                            </button>
-                            <button 
-                              onClick={handleLogout}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest"
-                            >
-                              <LogOut size={16} /> Log Out
-                            </button>
-                         </div>
-                      </div>
-                    </>
+                    <div className="absolute right-0 top-full mt-4 w-56 bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                       <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+                          <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{profile?.legalName || user.displayName || 'Guest'}</p>
+                          <p className="text-[9px] text-gray-400 truncate uppercase tracking-widest font-bold mt-0.5">{user.email}</p>
+                       </div>
+                       <div className="p-2 space-y-1">
+                          <button 
+                            onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase tracking-widest"
+                          >
+                            <UserIcon size={16} /> Manage Account
+                          </button>
+                          <button 
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest"
+                          >
+                            <LogOut size={16} /> Log Out
+                          </button>
+                       </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -507,7 +516,7 @@ const AppContent = () => {
 
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         
-        {/* Correct Conditional Profile Onboarding */}
+        {/* Profile Onboarding Trigger for Incomplete Profiles */}
         {user && profile && !profile.isComplete && !isManageAccountOpen && (
           <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
         )}
