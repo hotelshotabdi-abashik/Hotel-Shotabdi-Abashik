@@ -277,7 +277,8 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
-  const isProfileIncomplete = user && profile && !profile.isComplete;
+  // profile is only complete if legal name and nid image exist
+  const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
@@ -290,7 +291,7 @@ const AppContent = () => {
           <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 animate-fade-in shadow-lg border-b border-amber-600/20">
              <AlertTriangle size={16} className="shrink-0 animate-bounce" />
              <p className="font-black text-[10px] md:text-[11px] uppercase tracking-widest">
-               Identity registry is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1 hover:text-white/80 transition-colors">Finish Onboarding</button> to enable room bookings.
+               Identity registry is incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline decoration-2 underline-offset-4 ml-1 hover:text-white/80 transition-colors">Finish Onboarding</button> to enable full booking access.
              </p>
           </div>
         )}
@@ -415,23 +416,24 @@ const AppContent = () => {
                   </button>
 
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 top-full mt-4 w-56 bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
-                       <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+                    <div className="absolute right-0 top-full mt-4 w-60 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                       <div className="p-5 border-b border-gray-50 bg-gray-50/50">
                           <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{profile?.legalName || user.displayName || 'Guest'}</p>
                           <p className="text-[9px] text-gray-400 truncate uppercase tracking-widest font-bold mt-0.5">{user.email}</p>
                        </div>
                        <div className="p-2 space-y-1">
                           <button 
                             onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase tracking-widest"
+                            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase tracking-widest"
                           >
-                            <UserIcon size={16} /> Manage Account
+                            <UserIcon size={18} /> Manage Account
                           </button>
+                          <div className="h-px bg-gray-100 mx-4"></div>
                           <button 
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest"
+                            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest"
                           >
-                            <LogOut size={16} /> Log Out
+                            <LogOut size={18} /> Log Out
                           </button>
                        </div>
                     </div>
@@ -481,7 +483,7 @@ const AppContent = () => {
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />} />
             <Route path="/helpdex" element={<HelpDex profile={profile} />} />
             <Route path="/mystays" element={<MyStays profile={profile} />} />
-            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center">Unauthorized</div>} />
+            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized Registry Access</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>
@@ -497,7 +499,7 @@ const AppContent = () => {
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.1em] mt-0.5">Abashik Hub</p>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-500 max-w-xs leading-relaxed">Verified residential perfection at the heart of Sylhet. Official Hotel Shotabdi Abashik.</p>
+              <p className="text-[11px] text-gray-500 max-w-xs leading-relaxed">Verified residential perfection at the heart of Sylhet. Official Hotel Shotabdi Abashik Registry.</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-12 text-[11px] font-bold uppercase tracking-widest text-gray-400">
                <address className="not-italic space-y-4">

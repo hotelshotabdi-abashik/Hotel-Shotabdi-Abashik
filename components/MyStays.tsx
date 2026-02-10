@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-// Added Link import from react-router-dom
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { 
   History, Calendar, Info, ShieldCheck, Download, 
-  Eye, Loader2, ArrowRight, X, User, Phone, IdCard, Database, ClipboardCheck
+  Eye, Loader2, ArrowRight, X, User, Phone, IdCard, Database, ClipboardCheck,
+  CheckCircle2, Printer
 } from 'lucide-react';
 import { db, auth, ref, onValue } from '../services/firebase';
 import { Booking, UserProfile } from '../types';
@@ -31,6 +31,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
     const unsub = onValue(bookingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = Object.values(snapshot.val()) as Booking[];
+        // Filter stays specifically for the logged in user, sorted by most recent
         const userStays = data
           .filter(b => b.userId === user.uid)
           .sort((a, b) => b.createdAt - a.createdAt);
@@ -44,13 +45,6 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
     return () => unsub();
   }, []);
 
-  const formatTime = (ts?: number) => {
-    if (!ts) return "N/A";
-    return new Date(ts).toLocaleString('en-US', { 
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-    });
-  };
-
   const handlePrint = () => {
     window.print();
   };
@@ -59,11 +53,11 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
     if (!selectedBooking) return null;
     
     const content = (
-      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden">
-         <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative">
+      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden print:bg-white print:p-0">
+         <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:max-h-none print:shadow-none print:border-none print:rounded-none">
             
             {/* Header for Receipt */}
-            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:bg-white">
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100 print:bg-black print:shadow-none">
                      <ClipboardCheck size={32} />
@@ -76,8 +70,9 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                   </div>
                </div>
                <div className="flex items-center gap-4 print:hidden">
-                 <button onClick={handlePrint} className="p-4 bg-white rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all shadow-sm border border-gray-100 active:scale-95">
-                   <Download size={24}/>
+                 <button onClick={handlePrint} className="p-4 bg-white rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all shadow-sm border border-gray-100 active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase tracking-widest">
+                   <Download size={20}/>
+                   <span className="hidden md:inline">Download Record</span>
                  </button>
                  <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
                    <X size={24}/>
@@ -85,7 +80,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar">
+            <div id="print-record-scroll" className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible">
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                   
                   {/* Summary Sidebar */}
@@ -118,12 +113,12 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                       </div>
                     </section>
 
-                    <section className="space-y-4 print:hidden">
+                    <section className="space-y-4">
                        <div className={`p-6 rounded-3xl border flex items-center gap-4 ${selectedBooking.status === 'accepted' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-                          <ShieldCheck size={24} />
+                          {selectedBooking.status === 'accepted' ? <CheckCircle2 size={24} /> : <ShieldCheck size={24} />}
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Registry Status</p>
-                            <p className="text-sm font-black uppercase">{selectedBooking.status}</p>
+                            <p className="text-sm font-black uppercase tracking-tight">{selectedBooking.status}</p>
                           </div>
                        </div>
                     </section>
@@ -133,10 +128,10 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                   <div className="lg:col-span-8 space-y-10">
                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Guest Identity Submissions</h4>
                      
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-1">
                         {selectedBooking.guests.map((guest, idx) => (
-                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col border-l-4 border-l-hotel-primary/20 print:border print:border-black/10">
-                             <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center gap-4">
+                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col border-l-4 border-l-hotel-primary/20 print:border print:border-black/10 print:rounded-2xl print:page-break-inside-avoid">
+                             <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center gap-4 print:bg-white">
                                 <User size={20} className="text-hotel-primary" />
                                 <div>
                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guest {idx + 1}</p>
@@ -154,7 +149,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                                    <div className="mt-4 pt-4 border-t border-gray-50 flex flex-col items-center">
                                       <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-2">Verified ID Copy</p>
                                       <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
+                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all print:grayscale-0 print:opacity-100" />
                                       </div>
                                    </div>
                                 )}
@@ -163,10 +158,10 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                         ))}
                      </div>
 
-                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:border-black/20">
+                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:border-black/20 print:bg-white print:rounded-2xl">
                         <div>
                            <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Official Registry Seal</h5>
-                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed">Verified by Hotel Shotabdi Abashik Registry Portal. Authenticated Digital Record.</p>
+                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed">Verified by Hotel Shotabdi Abashik Registry Portal. Authenticated Digital Record for Resident Identity.</p>
                         </div>
                         <div className="flex gap-10 shrink-0">
                            <div className="text-center">
@@ -213,9 +208,17 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
 
   return (
     <div className="p-6 md:p-12 max-w-7xl mx-auto pb-32 lg:pb-12 animate-fade-in relative z-10 print:hidden">
-      <div className="mb-12">
-         <h1 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter">My Stay History</h1>
-         <p className="text-gray-400 text-xs md:text-lg mt-2 font-light">Access your verified identity submissions and reservation history.</p>
+      <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+         <div>
+            <h1 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter">My Stay History</h1>
+            <p className="text-gray-400 text-xs md:text-lg mt-2 font-light">Access your verified identity submissions and reservation history.</p>
+         </div>
+         {bookings.length > 0 && (
+           <div className="px-6 py-3 bg-hotel-primary/5 rounded-2xl border border-hotel-primary/10 flex items-center gap-3">
+              <ShieldCheck size={20} className="text-hotel-primary" />
+              <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest">{bookings.length} Records Synchronized</p>
+           </div>
+         )}
       </div>
 
       {bookings.length > 0 ? (
@@ -233,6 +236,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl ${
                      booking.status === 'pending' ? 'bg-amber-100 text-amber-600' :
                      booking.status === 'accepted' ? 'bg-green-100 text-green-600' :
+                     booking.status === 'rejected' ? 'bg-red-100 text-red-600' :
                      'bg-gray-100 text-gray-400'
                    }`}>
                      {booking.status}
