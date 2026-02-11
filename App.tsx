@@ -18,6 +18,8 @@ import AdminDashboard from './components/AdminDashboard';
 import HelpDesk from './components/HelpDex';
 import MyStays from './components/MyStays';
 import Footer from './components/Footer';
+import PublicProfile from './components/PublicProfile';
+import SchemaOrg from './components/SchemaOrg';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -41,22 +43,24 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
     window.scrollTo(0, 0);
     
     let title = 'Hotel Shotabdi Abashik | Best Luxury Stay in Sylhet';
-    let desc = 'Book your stay at Hotel Shotabdi Abashik, the premier luxury residential hotel in Sylhet.';
+    let desc = 'Book your stay at Hotel Shotabdi Abashik, the premier luxury residential hotel in Sylhet. Best rated for families and tourists.';
     
     const metaConfig: Record<string, { title: string; desc: string }> = {
-      '/': { title: 'Hotel Shotabdi Abashik | Premium Residential Stay', desc: 'Experience Elite hospitality at Hotel Shotabdi Abashik.' },
-      '/offers': { title: 'Exclusive Deals | Shotabdi Abashik Luxury Offers', desc: 'Discover seasonal 25% discounts.' },
-      '/rooms': { title: 'Luxury Rooms & Suites | Hotel Shotabdi Abashik', desc: 'Explore AC rooms and Suites.' },
-      '/restaurants': { title: 'Dining Near Hotel Shotabdi Abashik', desc: 'Find the best restaurants near Hotel Shotabdi.' },
-      '/guide': { title: 'Sylhet Tourist Guide | Hotel Shotabdi', desc: 'Explore Sylhet with Hotel Shotabdi.' },
-      '/helpdesk': { title: 'Registry Help Desk | Hotel Shotabdi Abashik', desc: 'Direct resident support.' },
-      '/mystays': { title: 'My Stays | Hotel Shotabdi Abashik', desc: 'Access your stay history.' }
+      '/': { title: 'Hotel Shotabdi Abashik | Best Hotel in Sylhet | Luxury Residential Stay', desc: 'Experience Elite hospitality at Hotel Shotabdi Abashik. The #1 luxury hotel in Sylhet near Keane Bridge. Book rooms online for 25% OFF.' },
+      '/offers': { title: 'Exclusive Deals | Sylhet Hotel Offers | Shotabdi Abashik', desc: 'Discover seasonal 25% discounts on luxury rooms in Sylhet. Limited time residential benefits.' },
+      '/rooms': { title: 'Luxury Rooms & Suites | Best Sylhet Accommodation | Hotel Shotabdi', desc: 'Explore premium AC rooms and Family Suites in Sylhet. Direct booking rates for verified residents.' },
+      '/restaurants': { title: 'Dining Near Hotel Shotabdi | Best Restaurants in Sylhet', desc: 'Find the top traditional Bengali and Continental restaurants near Hotel Shotabdi in Sylhet.' },
+      '/guide': { title: 'Sylhet Tourist Guide | Places to visit near Hotel Shotabdi', desc: 'Explore Sylhet attractions like Shah Jalal Dargah and tea gardens. Your local guide from Hotel Shotabdi.' },
+      '/helpdesk': { title: 'Registry Help Desk | Support for Sylhet Residents', desc: 'Direct support for Hotel Shotabdi residents. Sync your identity registry.' },
+      '/mystays': { title: 'My Stays | Hotel Shotabdi Abashik Stay History', desc: 'Access your verified stay history and digital receipts for your Sylhet hotel visits.' }
     };
 
     const current = metaConfig[pathname] || metaConfig['/'];
-    document.title = current.title;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute('content', current.desc);
+    if (!pathname.startsWith('/u/')) {
+       document.title = current.title;
+       const metaDesc = document.querySelector('meta[name="description"]');
+       if (metaDesc) metaDesc.setAttribute('content', current.desc);
+    }
   }, [pathname, siteConfig]);
   
   return null;
@@ -89,7 +93,7 @@ const AppContent = () => {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
       title: "Experience Luxury",
-      subtitle: "Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking",
+      subtitle: "Provides 24-hour front desk and room services, along with high-speed free Wi-Fi and free parking in the heart of Sylhet.",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       buttonText: "Book Now",
       locationLabel: "Sylhet HQ District"
@@ -263,6 +267,7 @@ const AppContent = () => {
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full overflow-x-hidden">
       <RouteMetadata siteConfig={siteConfig} />
+      <SchemaOrg />
       
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
         {/* Left: Branding */}
@@ -481,6 +486,7 @@ const AppContent = () => {
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} />} />
             <Route path="/mystays" element={<MyStays profile={profile} />} />
+            <Route path="/u/:username" element={<PublicProfile />} />
             <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
