@@ -5,7 +5,7 @@ import {
   Users, User, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield
+  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2
 } from 'lucide-react';
 import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
@@ -19,10 +19,10 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [acceptingBookingId, setAcceptingBookingId] = useState<string | null>(null);
-  const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
   const [roomNumberInput, setRoomNumberInput] = useState('');
   const [rejectionReason, setRejectionReason] = useState('Registry verification failed');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Manager Role State
   const [managerGateUid, setManagerGateUid] = useState<string | null>(null);
@@ -73,6 +73,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleBookingAction = async (booking: Booking, status: 'accepted' | 'rejected', meta?: string) => {
+    setActionLoading(true);
     try {
       const updates: any = {
         status,
@@ -100,10 +101,15 @@ const AdminDashboard: React.FC = () => {
         booking_id: booking.id
       });
 
-      setAcceptingBookingId(null);
-      setRejectingBookingId(null);
-      if (selectedBooking?.id === booking.id) setSelectedBooking({ ...selectedBooking, ...updates });
-    } catch (err) { console.error(err); }
+      setSelectedBooking(null);
+      setRoomNumberInput('');
+      setRejectionReason('Registry verification failed');
+    } catch (err) { 
+      console.error(err);
+      alert("Action failed. Check connection.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const filteredBookings = bookings.filter(b => 
@@ -151,10 +157,17 @@ const AdminDashboard: React.FC = () => {
               <div>
                 <h3 className="text-base font-black text-gray-900">{booking.userName}</h3>
                 <p className="text-[9px] font-black text-[#B22222] uppercase tracking-widest">{booking.roomTitle}</p>
+                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{booking.checkIn} to {booking.checkOut}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-               <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl ${booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>{booking.status}</span>
+               <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl ${
+                 booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
+                 booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                 'bg-red-50 text-red-600'
+               }`}>
+                 {booking.status}
+               </span>
                <Eye size={20} className="text-gray-300 group-hover:text-hotel-primary" />
             </div>
           </div>
@@ -192,6 +205,182 @@ const AdminDashboard: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Booking Details Modal */}
+      {selectedBooking && createPortal(
+        <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 animate-fade-in">
+          <div className="bg-white w-full max-w-5xl rounded-none md:rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative">
+            
+            <div className="px-6 md:px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+               <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100">
+                     <ClipboardCheck size={24} />
+                  </div>
+                  <div>
+                     <h2 className="text-xl md:text-2xl font-serif font-black text-gray-900 tracking-tighter leading-none uppercase">Submission Audit</h2>
+                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+                       <Database size={12} /> ID: {selectedBooking.id}
+                     </p>
+                  </div>
+               </div>
+               <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
+                 <X size={24}/>
+               </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 space-y-10">
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-1 space-y-6">
+                     <section className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
+                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Building2 size={12} className="text-hotel-primary" /> Stay Request</h4>
+                        <div className="space-y-4">
+                           <div>
+                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Room Category</p>
+                              <p className="text-lg font-black text-gray-900">{selectedBooking.roomTitle}</p>
+                           </div>
+                           <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Check In</p>
+                                 <p className="text-xs font-black text-gray-800">{selectedBooking.checkIn}</p>
+                              </div>
+                              <div>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Check Out</p>
+                                 <p className="text-xs font-black text-gray-800">{selectedBooking.checkOut}</p>
+                              </div>
+                           </div>
+                           <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
+                              <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest">Total Price</p>
+                              <p className="text-xl font-sans font-black text-gray-900 tracking-tighter">৳{selectedBooking.price}</p>
+                           </div>
+                        </div>
+                     </section>
+
+                     <section className="bg-white p-6 rounded-[2rem] border border-gray-100">
+                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><UserCheck size={12} className="text-hotel-primary" /> Submitter Info</h4>
+                        <div className="space-y-3">
+                           <div className="flex items-center gap-3">
+                              <Mail size={14} className="text-gray-400" />
+                              <span className="text-xs font-bold text-gray-600">{selectedBooking.userEmail}</span>
+                           </div>
+                           <p className="text-[10px] text-gray-400 font-medium italic">Applied on {new Date(selectedBooking.createdAt).toLocaleString()}</p>
+                        </div>
+                     </section>
+
+                     {selectedBooking.status === 'pending' && (
+                       <div className="p-6 bg-amber-50 rounded-[2rem] border border-amber-100 space-y-4">
+                          <h4 className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Action Required</h4>
+                          <div className="space-y-4">
+                             <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-amber-600 uppercase tracking-widest ml-1">Assign Room No</label>
+                                <input 
+                                  placeholder="e.g. 302"
+                                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-black outline-none focus:border-hotel-primary"
+                                  value={roomNumberInput}
+                                  onChange={e => setRoomNumberInput(e.target.value)}
+                                />
+                             </div>
+                             <button 
+                               onClick={() => handleBookingAction(selectedBooking, 'accepted', roomNumberInput)}
+                               disabled={!roomNumberInput || actionLoading}
+                               className="w-full bg-green-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                             >
+                               {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <><CheckCircle2 size={16} /> Verify & Accept</>}
+                             </button>
+                             <div className="h-[1px] bg-amber-200"></div>
+                             <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-amber-600 uppercase tracking-widest ml-1">Rejection Reason</label>
+                                <textarea 
+                                  placeholder="Reason..."
+                                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-xs font-bold outline-none resize-none h-20"
+                                  value={rejectionReason}
+                                  onChange={e => setRejectionReason(e.target.value)}
+                                />
+                             </div>
+                             <button 
+                               onClick={() => handleBookingAction(selectedBooking, 'rejected', rejectionReason)}
+                               disabled={actionLoading}
+                               className="w-full border border-red-200 text-red-600 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all"
+                             >
+                               Reject Submission
+                             </button>
+                          </div>
+                       </div>
+                     )}
+                  </div>
+
+                  <div className="lg:col-span-2 space-y-8">
+                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                        <Users size={16} className="text-hotel-primary" /> Submitted Guest Identities ({selectedBooking.totalGuests})
+                     </h4>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {selectedBooking.guests.map((guest, idx) => (
+                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:border-hotel-primary/30 transition-all">
+                             <div className="p-6 bg-gray-50 border-b border-gray-100 flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-hotel-primary shadow-sm">
+                                   <User size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guest {idx + 1}</p>
+                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase">{guest.legalName}</h5>
+                                </div>
+                             </div>
+                             <div className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                   <div className="flex items-center gap-2 text-[11px] font-black text-gray-600">
+                                      <Phone size={14} className="text-hotel-primary" /> {guest.phone || 'No Phone'}
+                                   </div>
+                                   <div className="flex items-center gap-2 text-[11px] font-black text-gray-600">
+                                      <Calendar size={14} className="text-hotel-primary" /> Age: {guest.age || 'N/A'}
+                                   </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                   <IdCard size={14} className="text-hotel-primary" /> NID: {guest.nidNumber || 'UNSUBMITTED'}
+                                </div>
+                                {guest.nidImageUrl ? (
+                                   <div className="mt-4">
+                                      <div 
+                                        onClick={() => setLightboxUrl(guest.nidImageUrl)}
+                                        className="w-full aspect-video rounded-[1.5rem] overflow-hidden shadow-md border-2 border-white bg-gray-100 relative group cursor-zoom-in"
+                                      >
+                                         <img src={guest.nidImageUrl} className="w-full h-full object-contain" />
+                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                            <Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={24} />
+                                         </div>
+                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[8px] font-black uppercase shadow-sm">Digital Document</div>
+                                      </div>
+                                   </div>
+                                ) : (
+                                   <div className="p-8 border-2 border-dashed border-gray-100 rounded-[1.5rem] text-center opacity-40">
+                                      <AlertTriangle className="mx-auto mb-2 text-gray-300" size={24} />
+                                      <p className="text-[9px] font-black uppercase">Document Waived</p>
+                                   </div>
+                                )}
+                             </div>
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex justify-center shrink-0">
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Hotel Shotabdi Residential • Registry Hub</p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div className="fixed inset-0 z-[10001] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxUrl(null)}>
+          <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4 transition-colors">
+            <X size={32} />
+          </button>
+          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Document Full View" />
+        </div>
+      )}
 
       {/* Role Gate Modal */}
       {managerGateUid && (
