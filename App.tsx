@@ -294,8 +294,8 @@ const AppContent = () => {
                 />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-sm font-serif font-black text-gray-900 tracking-wider uppercase leading-none">Hotel Shotabdi</h1>
-                <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">Abashik</p>
+                <h1 className="text-sm font-serif font-black text-gray-900 tracking-wider uppercase leading-none notranslate">Hotel Shotabdi</h1>
+                <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5 notranslate">Abashik</p>
               </div>
             </Link>
           </div>

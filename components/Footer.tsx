@@ -54,8 +54,8 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, socialLinks, onUpdateSocial
               style={{ pointerEvents: 'none' }}
             />
             <div>
-              <h1 className="text-lg font-serif font-black text-gray-900 tracking-wider uppercase leading-none">Hotel Shotabdi</h1>
-              <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">Abashik</p>
+              <h1 className="text-lg font-serif font-black text-gray-900 tracking-wider uppercase leading-none notranslate">Hotel Shotabdi</h1>
+              <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5 notranslate">Abashik</p>
             </div>
           </div>
           <p className="text-xs text-gray-500 leading-relaxed font-medium">
@@ -176,7 +176,7 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, socialLinks, onUpdateSocial
 
       <div className="max-w-7xl mx-auto pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-          © {currentYear} Hotel Shotabdi Abashik. All Rights Reserved.
+          © {currentYear} <span className="notranslate">Hotel Shotabdi Abashik</span>. All Rights Reserved.
         </p>
       </div>
     </footer>
