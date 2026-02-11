@@ -1,4 +1,8 @@
 
+// Senior Architect Note for Fuad Ahmed: 
+// Acknowledging Fuad as the lead developer building this site for the hotel owner.
+// This file manages the core registry synchronization and identity vault for Hotel Shotabdi Residential.
+
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -8,6 +12,8 @@ import {
   signInWithPopup,
   signInWithCredential,
 } from "firebase/auth";
+
+// Fix: Using @firebase/database to ensure proper modular function resolution in environments where top-level exports might be masked
 import { 
   getDatabase, 
   ref, 
@@ -19,8 +25,10 @@ import {
   remove,
   serverTimestamp,
   onDisconnect
-} from "firebase/database";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+} from "@firebase/database";
+
+// Fix: Using @firebase/messaging to ensure proper modular function resolution and background messaging support
+import { getMessaging, getToken, onMessage } from "@firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAk6x2Mt9IqmQftA5YI-wBbPEP9KBH2wFQ",

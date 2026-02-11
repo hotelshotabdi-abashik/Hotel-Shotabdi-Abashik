@@ -1,52 +1,55 @@
-
 {
   "rules": {
-    ".read": true,
+    ".read": "auth != null",
+    ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
 
     "site-config": {
       ".read": true,
       ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
     },
 
-    "logs": {
+    "bookings": {
+      ".indexOn": ["userId", "status"],
       ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
-    },
-
-    "usernames": {
-      ".read": true,
-      "$username": {
-        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-        ".validate": "newData.val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
-      }
-    },
-
-    "profiles": {
-      ".read": "auth != null",
-      "$uid": {
-        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-        ".validate": "newData.hasChildren(['username', 'email'])",
-        "fcmToken": {
-          ".validate": "newData.isString()"
-        }
+      "$bookingId": {
+        ".read": "data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+        ".write": "(!data.exists() && newData.child('userId').val() === auth.uid) || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
       }
     },
 
     "roles": {
-      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'admin' || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
+      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-        ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        ".write": "root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
       }
     },
 
-    "bookings": {
-      ".indexOn": ["userId", "status"],
-      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'admin' || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-      "$bookingId": {
-        ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'admin' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-        ".write": "auth != null && ( (!data.exists() && (newData.child('userId').val() === auth.uid || auth.token.email === 'hotelshotabdiabashik@gmail.com')) || (data.exists() && ( (data.child('userId').val() === auth.uid && data.child('hasEdited').val() === false) || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com' )) )"
+    "profiles": {
+      "$uid": {
+        ".read": "auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+        ".write": "auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
       }
+    },
+
+    "help_dex": {
+      "active_chats": {
+        ".read": "root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+        "$uid": {
+          ".read": "auth.uid === $uid",
+          ".write": "auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+        }
+      },
+      "messages": {
+        "$uid": {
+          ".read": "auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+          ".write": "auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
+        }
+      }
+    },
+
+    "logs": {
+      ".read": "root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'",
+      ".write": "root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'"
     }
   }
 }
