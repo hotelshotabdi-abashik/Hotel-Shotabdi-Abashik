@@ -390,7 +390,7 @@ const AdminDashboard: React.FC = () => {
                       <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
                    </div>
                    <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                      {logs.slice(0, 100).map((log) => (
+                      {logs.slice().reverse().slice(0, 100).map((log) => (
                         <div key={log.id} className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 flex gap-5 items-start">
                            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
                               {log.action.includes('BOOKING') ? <ClipboardCheck size={18} className="text-green-600" /> : log.action.includes('ROLE') ? <Shield size={18} className="text-blue-600" /> : <RefreshCw size={18} className="text-amber-600" />}

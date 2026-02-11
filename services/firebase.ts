@@ -51,36 +51,33 @@ export const trackPresence = (uid: string) => {
   onDisconnect(statusRef).set(false);
 };
 
-export const requestNotificationToken = async () => {
-  if (!messaging) return null;
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      return await getToken(messaging, { vapidKey: VAPID_KEY });
-    }
-    return null;
-  } catch (error) {
-    console.error("FCM Token Error:", error);
-    return null;
-  }
+// Fix: Added checkUsernameUnique to verify if a handle is available or owned by the current user
+export const checkUsernameUnique = async (username: string, uid: string) => {
+  const usernameRef = ref(db, `usernames/${username.toLowerCase()}`);
+  const snapshot = await get(usernameRef);
+  if (!snapshot.exists()) return true;
+  return snapshot.val() === uid;
 };
 
-export const checkUsernameUnique = async (username: string, currentUid: string) => {
-  try {
-    const normalized = username.toLowerCase().trim();
-    const usernameRef = ref(db, `usernames/${normalized}`);
-    const snapshot = await get(usernameRef);
-    if (snapshot.exists()) {
-      return snapshot.val() === currentUid;
+// Fix: Added deleteUserProfile to allow administrative account removal while cleaning up registry handles
+export const deleteUserProfile = async (uid: string) => {
+  const profileRef = ref(db, `profiles/${uid}`);
+  const snap = await get(profileRef);
+  if (snap.exists()) {
+    const data = snap.val();
+    if (data.username) {
+      await remove(ref(db, `usernames/${data.username.toLowerCase()}`));
     }
-    return true;
-  } catch (e) {
-    return true;
   }
+  await remove(profileRef);
+  await remove(ref(db, `roles/${uid}`));
+  await remove(ref(db, `notifications/${uid}`));
+  await remove(ref(db, `help_dex/messages/${uid}`));
+  await remove(ref(db, `help_dex/active_chats/${uid}`));
 };
 
 /**
- * Creates an audit log for administrative actions.
+ * Registry Audit Log: Tracks critical administrative actions.
  */
 export const createAdminLog = async (action: string, details: string) => {
   const user = auth.currentUser;
@@ -136,17 +133,6 @@ export const syncUserProfile = async (user: any) => {
   } catch (e) {
     return null;
   }
-};
-
-export const deleteUserProfile = async (uid: string, username?: string) => {
-  const updates: any = {};
-  updates[`profiles/${uid}`] = null;
-  if (username) {
-    updates[`usernames/${username.toLowerCase().trim()}`] = null;
-  }
-  updates[`notifications/${uid}`] = null;
-  updates[`roles/${uid}`] = null;
-  return update(ref(db), updates);
 };
 
 export const createNotification = async (userId: string, notification: any) => {
