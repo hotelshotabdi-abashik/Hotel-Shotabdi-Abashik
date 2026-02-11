@@ -110,8 +110,13 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
       const unsub = onValue(profilesRef, (snapshot) => {
         if (snapshot.exists()) {
           const allProfiles = Object.values(snapshot.val()) as UserProfile[];
+          // Search for any active Admin/Owner/Manager who is online
+          const activeStaff = allProfiles.find(p => (p.role === 'owner' || p.role === 'manager') && p.onlineStatus === true);
           const ownerProfile = allProfiles.find(p => p.email === OWNER_EMAIL);
-          if (ownerProfile) {
+          
+          if (activeStaff) {
+             setActiveUserPresence({ online: true, lastLogin: Date.now() });
+          } else if (ownerProfile) {
             setActiveUserPresence({
               online: ownerProfile.onlineStatus === true,
               lastLogin: ownerProfile.lastLogin || 0
@@ -311,13 +316,16 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
                    <div className="flex items-center gap-1.5 overflow-hidden">
                       {activeUserPresence?.online ? (
                         <div className="flex items-center gap-1.5">
-                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shrink-0"></div>
-                           <span className="text-[8px] md:text-[10px] font-black text-green-600 tracking-widest uppercase whitespace-nowrap">Active Now</span>
+                           <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shrink-0 border-2 border-white"></div>
+                           <span className="text-[8px] md:text-[10px] font-black text-green-600 tracking-widest uppercase whitespace-nowrap">Online Now</span>
                         </div>
                       ) : (
-                        <span className="text-[8px] md:text-[10px] font-black text-gray-400 tracking-widest uppercase truncate">
-                          Last seen: {formatRelativeTime(activeUserPresence?.lastLogin || 0)}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                           <div className="w-2.5 h-2.5 bg-gray-300 rounded-full shrink-0 border-2 border-white"></div>
+                           <span className="text-[8px] md:text-[10px] font-black text-gray-400 tracking-widest uppercase truncate">
+                             Last seen: {formatRelativeTime(activeUserPresence?.lastLogin || 0)}
+                           </span>
+                        </div>
                       )}
                    </div>
                 </div>

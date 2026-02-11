@@ -30,7 +30,8 @@ import {
   ref,
   onValue,
   update,
-  get
+  get,
+  createAdminLog
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
 import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard, Upload, Info } from 'lucide-react';
@@ -220,6 +221,7 @@ const AppContent = () => {
     setIsSaving(true);
     try {
       await update(ref(db), { 'site-config': { ...siteConfig, lastUpdated: Date.now() } });
+      await createAdminLog('WEBSITE_UPDATE', 'Global configuration and layout modified via Live Edit.');
       setIsEditMode(false);
       alert("Website Updated Live!");
     } catch (error) { alert("Update Failed."); } finally { setIsSaving(false); }
@@ -363,7 +365,7 @@ const AppContent = () => {
 
         {/* Right: Tools & Profile */}
         <div className="flex items-center gap-2 md:gap-4">
-          {(user?.email === OWNER_EMAIL) && (
+          {isAdmin && (
             <button 
               onClick={() => setIsEditMode(!isEditMode)}
               className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
@@ -479,11 +481,11 @@ const AppContent = () => {
 
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} /><ExclusiveOffers offers={siteConfig.offers} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} /><NearbyRestaurants restaurants={siteConfig.restaurants} /><TouristGuide touristGuides={siteConfig.touristGuides} /></>} />
-            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} />} />
+            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} /></>} />
+            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} />} />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />

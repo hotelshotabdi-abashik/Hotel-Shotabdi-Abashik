@@ -79,6 +79,24 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
   }
 };
 
+/**
+ * Creates an audit log for administrative actions.
+ */
+export const createAdminLog = async (action: string, details: string) => {
+  const user = auth.currentUser;
+  if (!user) return;
+  
+  const logRef = push(ref(db, 'logs'));
+  return set(logRef, {
+    id: logRef.key,
+    actorId: user.uid,
+    actorName: user.displayName || user.email,
+    action,
+    details,
+    timestamp: Date.now()
+  });
+};
+
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
   const userRef = ref(db, `profiles/${user.uid}`);

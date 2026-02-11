@@ -5,11 +5,20 @@ import {
   Users, User, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2, UserCog, MoreHorizontal
+  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2, UserCog, MoreHorizontal, Activity, BarChart3, TrendingUp, History
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL, auth } from '../services/firebase';
+import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL, auth, createAdminLog } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking } from '../types';
+
+interface AuditLog {
+  id: string;
+  actorId: string;
+  actorName: string;
+  action: string;
+  details: string;
+  timestamp: number;
+}
 
 const AdminDashboard: React.FC = () => {
   const currentUser = auth.currentUser;
@@ -18,6 +27,7 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   
@@ -26,6 +36,12 @@ const AdminDashboard: React.FC = () => {
   const [rejectionReason, setRejectionReason] = useState('Registry verification failed');
   const [actionLoading, setActionLoading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Data filtering states
+  const [dateRange, setDateRange] = useState({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
 
   // Manager Role State
   const [managerGateUid, setManagerGateUid] = useState<string | null>(null);
@@ -36,11 +52,11 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const profilesRef = ref(db, 'profiles');
     const bookingsRef = ref(db, 'bookings');
+    const logsRef = ref(db, 'logs');
 
     const uUnsub = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) setUsers(Object.values(snapshot.val()));
       else setUsers([]);
-      setLoading(false);
     });
 
     const bUnsub = onValue(bookingsRef, (snapshot) => {
@@ -52,7 +68,17 @@ const AdminDashboard: React.FC = () => {
       }
     });
 
-    return () => { uUnsub(); bUnsub(); };
+    const lUnsub = onValue(logsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = Object.values(snapshot.val()) as AuditLog[];
+        setLogs(data.sort((a, b) => b.timestamp - a.timestamp));
+      } else {
+        setLogs([]);
+      }
+      setLoading(false);
+    });
+
+    return () => { uUnsub(); bUnsub(); lUnsub(); };
   }, []);
 
   const triggerRoleNotification = async (uid: string, newRole: string) => {
@@ -62,14 +88,12 @@ const AdminDashboard: React.FC = () => {
     const roleName = newRole.toUpperCase();
     const message = `Your account access level has been updated to: ${roleName}. This change is effective immediately for the Hotel Shotabdi Residential Hub.`;
 
-    // 1. Internal Notification
     await createNotification(uid, {
       title: 'Registry Access Updated',
       message: message,
       type: 'system'
     });
 
-    // 2. EmailJS Notification
     sendGuestEmail({
       to_name: targetUser.legalName || 'Resident',
       to_email: targetUser.email,
@@ -87,11 +111,13 @@ const AdminDashboard: React.FC = () => {
     
     setRoleUpdatingUid(uid);
     try {
+      const targetUser = users.find(u => u.uid === uid);
       await update(ref(db), {
         [`roles/${uid}`]: newRole,
         [`profiles/${uid}/role`]: newRole
       });
       
+      await createAdminLog('ROLE_CHANGE', `Changed role for ${targetUser?.legalName || uid} to ${newRole.toUpperCase()}`);
       await triggerRoleNotification(uid, newRole);
       
     } catch (err) {
@@ -109,11 +135,13 @@ const AdminDashboard: React.FC = () => {
     if (!managerGateUid) return;
 
     try {
+      const targetUser = users.find(u => u.uid === managerGateUid);
       await update(ref(db), {
         [`roles/${managerGateUid}`]: 'manager',
         [`profiles/${managerGateUid}/role`]: 'manager'
       });
       
+      await createAdminLog('MANAGER_AUTHORIZED', `Security Gate cleared for ${targetUser?.legalName || managerGateUid}. New Manager assigned.`);
       await triggerRoleNotification(managerGateUid, 'manager');
       
       alert("Role Authorized: User is now a Manager.");
@@ -135,6 +163,7 @@ const AdminDashboard: React.FC = () => {
       };
 
       await update(ref(db, `bookings/${booking.id}`), updates);
+      await createAdminLog(status === 'accepted' ? 'BOOKING_ACCEPTED' : 'BOOKING_REJECTED', `${status === 'accepted' ? 'Verified stay' : 'Rejected stay'} for ${booking.userName}. Room: ${booking.roomTitle}. ID: ${booking.id}`);
 
       const message = status === 'accepted' 
         ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}. Please proceed to the hotel for check-in.` 
@@ -176,6 +205,18 @@ const AdminDashboard: React.FC = () => {
     u.legalName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Data Filtering Logic
+  const analyticsBookings = bookings.filter(b => {
+    const timestamp = b.createdAt;
+    const start = new Date(dateRange.start).getTime();
+    const end = new Date(dateRange.end).getTime() + 86400000;
+    return timestamp >= start && timestamp <= end;
+  });
+
+  const acceptedCount = analyticsBookings.filter(b => b.status === 'accepted').length;
+  const rejectedCount = analyticsBookings.filter(b => b.status === 'rejected').length;
+  const pendingCount = analyticsBookings.filter(b => b.status === 'pending').length;
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -291,6 +332,95 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         ))}
+
+        {activeTab === 'data' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
+             <div className="lg:col-span-4 space-y-6">
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                   <div>
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Stay Statistics</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Accepted</p>
+                            <p className="text-2xl font-sans font-black text-green-600 leading-none">{acceptedCount}</p>
+                         </div>
+                         <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rejected</p>
+                            <p className="text-2xl font-sans font-black text-red-600 leading-none">{rejectedCount}</p>
+                         </div>
+                      </div>
+                      <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                         <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest mb-1">Pending Sync</p>
+                         <p className="text-2xl font-sans font-black text-amber-700 leading-none">{pendingCount}</p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-2 flex items-center gap-3"><Calendar size={16} className="text-hotel-primary"/> Range Filter</h4>
+                      <div className="space-y-4">
+                         <div className="space-y-1">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Start Date</label>
+                            <input type="date" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:border-hotel-primary" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} />
+                         </div>
+                         <div className="space-y-1">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">End Date</label>
+                            <input type="date" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:border-hotel-primary" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} />
+                         </div>
+                         <button 
+                           onClick={() => setDateRange({
+                             start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                             end: new Date().toISOString().split('T')[0]
+                           })}
+                           className="w-full py-3 text-[9px] font-black uppercase text-hotel-primary hover:bg-red-50 rounded-xl transition-all"
+                         >
+                           Reset to Last 30 Days
+                         </button>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+             <div className="lg:col-span-8">
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
+                   <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                         <Activity size={18} className="text-hotel-primary" />
+                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs & Actions</h4>
+                      </div>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
+                   </div>
+                   <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
+                      {logs.slice(0, 100).map((log) => (
+                        <div key={log.id} className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 flex gap-5 items-start">
+                           <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                              {log.action.includes('BOOKING') ? <ClipboardCheck size={18} className="text-green-600" /> : log.action.includes('ROLE') ? <Shield size={18} className="text-blue-600" /> : <RefreshCw size={18} className="text-amber-600" />}
+                           </div>
+                           <div className="min-w-0 flex-1">
+                              <div className="flex justify-between items-start mb-1">
+                                 <h5 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter truncate">{log.action.replace('_', ' ')}</h5>
+                                 <span className="text-[8px] font-bold text-gray-400 whitespace-nowrap ml-2">{new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                              </div>
+                              <p className="text-[12px] text-gray-600 leading-relaxed font-medium mb-2">{log.details}</p>
+                              <div className="flex items-center gap-2">
+                                 <div className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden">
+                                    <img src={`https://ui-avatars.com/api/?name=${log.actorName}`} className="w-full h-full object-cover" />
+                                 </div>
+                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Actor: {log.actorName}</span>
+                              </div>
+                           </div>
+                        </div>
+                      ))}
+                      {logs.length === 0 && (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50 p-20">
+                           <History size={48} className="mb-4" />
+                           <p className="text-[10px] font-black uppercase">No registry actions recorded yet</p>
+                        </div>
+                      )}
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
       </div>
 
       {/* Booking Details Modal - Restoring all guest info */}
