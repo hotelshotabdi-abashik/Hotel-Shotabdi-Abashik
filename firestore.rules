@@ -1,0 +1,90 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HELPER FUNCTIONS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role;
+    }
+
+    function isOwner() {
+      return request.auth.token.email == 'hotelshotabdiabashik@gmail.com' || 
+             (isSignedIn() && getRole() == 'owner');
+    }
+
+    function isManager() {
+      return isSignedIn() && getRole() == 'manager';
+    }
+
+    function isAdmin() {
+      return isOwner() || isManager();
+    }
+
+    // --- COLLECTION RULES ---
+
+    // Site Configuration: Global settings, hero text, and room data
+    match /site-config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Audit Logs: Permanent record of administrative actions
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // Audit logs are immutable
+    }
+
+    // User Profiles: Resident identity information
+    match /profiles/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isAdmin() || (request.auth.uid == uid);
+      allow delete: if isOwner();
+    }
+
+    // Roles: Permission levels
+    match /roles/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isOwner(); // Only Master Admin can promote/demote
+    }
+
+    // Usernames: Unique handle registry
+    match /usernames/{username} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && (request.resource.data.uid == request.auth.uid || isOwner());
+      allow delete: if isAdmin();
+    }
+
+    // Bookings: Stay requests and verified records
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (
+        isSignedIn() && 
+        resource.data.userId == request.auth.uid && 
+        resource.data.hasEdited == false &&
+        request.resource.data.status == resource.data.status // Guests cannot change status
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Notifications: Vault alerts
+    match /notifications/{uid}/userNotifications/{notifId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid; // To mark as read
+      allow create, delete: if isAdmin();
+    }
+
+    // Help Desk: Chat synchronization
+    match /help_dex/{document=**} {
+      allow read, write: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+  }
+}
