@@ -139,7 +139,7 @@ export interface ChatMessage {
   text: string;
 }
 
-export interface HelpDexMessage {
+export interface HelpDeskMessage {
   id: string;
   senderId: string;
   senderName: string;

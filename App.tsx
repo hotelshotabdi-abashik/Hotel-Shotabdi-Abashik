@@ -16,7 +16,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
 import AdminDashboard from './components/AdminDashboard';
-import HelpDex from './components/HelpDex';
+import HelpDesk from './components/HelpDex';
 import MyStays from './components/MyStays';
 import { 
   auth, 
@@ -52,7 +52,7 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
       '/rooms': { title: 'Luxury Rooms & Suites | Hotel Shotabdi Abashik', desc: 'Explore AC rooms and Suites.' },
       '/restaurants': { title: 'Dining Near Hotel Shotabdi Abashik', desc: 'Find the best restaurants near Hotel Shotabdi.' },
       '/guide': { title: 'Sylhet Tourist Guide | Hotel Shotabdi', desc: 'Explore Sylhet with Hotel Shotabdi.' },
-      '/helpdex': { title: 'Registry Help Dex | Hotel Shotabdi Abashik', desc: 'Direct resident support.' },
+      '/helpdesk': { title: 'Registry Help Desk | Hotel Shotabdi Abashik', desc: 'Direct resident support.' },
       '/mystays': { title: 'My Stays | Hotel Shotabdi Abashik', desc: 'Access your stay history.' }
     };
 
@@ -250,9 +250,11 @@ const AppContent = () => {
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} />} />
-            <Route path="/helpdex" element={<HelpDex profile={profile} />} />
+            <Route path="/helpdesk" element={<HelpDesk profile={profile} />} />
             <Route path="/mystays" element={<MyStays profile={profile} />} />
             <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized</div>} />
+            <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+            <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>
         </div>
 

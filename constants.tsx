@@ -129,5 +129,5 @@ export const NAV_ITEMS = [
   { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
   { id: 'guide', path: '/guide', label: 'Tourist Guide', icon: <Map size={20} /> },
   { id: 'mystays', path: '/mystays', label: 'My Stays', icon: <History size={20} /> },
-  { id: 'helpdex', path: '/helpdex', label: 'Help Dex', icon: <MessageSquare size={20} /> },
+  { id: 'helpdesk', path: '/helpdesk', label: 'Help Desk', icon: <MessageSquare size={20} /> },
 ];

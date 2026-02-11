@@ -10,20 +10,20 @@ import {
   createNotification, OWNER_EMAIL, get 
 } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
-import { HelpDexMessage, ChatSession, UserProfile } from '../types';
+import { HelpDeskMessage, ChatSession, UserProfile } from '../types';
 import { LOGO_ICON_URL } from '../constants';
 
-interface HelpDexProps {
+interface HelpDeskProps {
   profile: UserProfile | null;
 }
 
-const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
+const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
   const user = auth.currentUser;
   const isOwner = user?.email === OWNER_EMAIL;
   const isManager = profile?.role === 'manager';
   const isAdmin = isOwner || isManager;
   
-  const [messages, setMessages] = useState<HelpDexMessage[]>([]);
+  const [messages, setMessages] = useState<HelpDeskMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeUserId, setActiveUserId] = useState<string | null>(isAdmin ? null : user?.uid || null);
   const [input, setInput] = useState('');
@@ -80,12 +80,12 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
     const unsub = onValue(msgsRef, (snapshot) => {
       if (snapshot.exists()) {
         const rawData = snapshot.val();
-        const data = Object.values(rawData) as HelpDexMessage[];
+        const data = Object.values(rawData) as HelpDeskMessage[];
         setMessages(data.sort((a, b) => a.timestamp - b.timestamp));
         
         const updates: any = {};
         Object.keys(rawData).forEach(key => {
-          const msg = rawData[key] as HelpDexMessage;
+          const msg = rawData[key] as HelpDeskMessage;
           if (msg.senderId !== user?.uid && msg.status !== 'seen') {
             updates[`help_dex/messages/${activeUserId}/${key}/status`] = 'seen';
           }
@@ -115,7 +115,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
       const roleLabel = isOwner ? 'Owner' : isManager ? 'Manager' : 'Guest';
       const senderName = `${roleLabel}: ${profile?.legalName || user.displayName || 'Staff'}`;
       
-      const newMessage: HelpDexMessage = {
+      const newMessage: HelpDeskMessage = {
         id: String(msgRef.key!),
         senderId: String(user.uid),
         senderName: senderName,
@@ -155,7 +155,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
                to_email: guestData.email,
                subject: "New Registry Message - Action Required",
                message: `Our ${roleLabel} has replied to your inquiry: "${text}". Please log in to the portal to view full details.`,
-               booking_id: "HELP-DEX"
+               booking_id: "HELP-DESK"
              });
           }
         }
@@ -168,7 +168,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
       }
 
       await createNotification(isAdmin ? activeUserId : OWNER_EMAIL, {
-        title: isAdmin ? 'Message from Registry' : 'Help Dex Inquiry',
+        title: isAdmin ? 'Message from Registry' : 'Help Desk Inquiry',
         message: text,
         type: 'chat_message'
       });
@@ -195,7 +195,7 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
           <div className="p-8 pb-6 bg-white sticky top-0 z-10">
              <div className="flex items-center justify-between mb-8">
                 <div>
-                   <h2 className="text-2xl font-black text-gray-900 tracking-tight">Help Dex</h2>
+                   <h2 className="text-2xl font-black text-gray-900 tracking-tight">Help Desk</h2>
                    <p className="text-[10px] text-hotel-primary font-black uppercase tracking-widest mt-1">Managed Registry Hub</p>
                 </div>
                 <div className={`w-12 h-12 ${isOwner ? 'bg-hotel-primary' : 'bg-blue-600'} rounded-2xl flex items-center justify-center text-white shadow-xl`}>
@@ -307,4 +307,4 @@ const HelpDex: React.FC<HelpDexProps> = ({ profile }) => {
   );
 };
 
-export default HelpDex;
+export default HelpDesk;
