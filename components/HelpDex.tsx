@@ -11,13 +11,13 @@ import {
 } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { HelpDeskMessage, ChatSession, UserProfile } from '../types';
-import { LOGO_ICON_URL } from '../constants';
 
 interface HelpDeskProps {
   profile: UserProfile | null;
+  logoUrl?: string;
 }
 
-const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
+const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
   const user = auth.currentUser;
   const isOwner = user?.email === OWNER_EMAIL;
   const isManager = profile?.role === 'manager';
@@ -284,7 +284,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
         {!activeUserId ? (
            <div className="text-center animate-fade-in">
               <div className="w-28 h-28 flex items-center justify-center mx-auto mb-10 p-5 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50">
-                <img src={LOGO_ICON_URL} className="w-full h-full object-contain" />
+                <img src={logoUrl} className="w-full h-full object-contain" />
               </div>
               <h3 className="text-3xl font-serif font-black text-gray-900 tracking-tight">Vault Authorized</h3>
               <p className="text-sm text-gray-400 mt-4 max-w-sm mx-auto">Select a user to begin synchronization.</p>
@@ -294,10 +294,10 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
             <div className="h-20 md:h-24 px-4 md:px-12 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-xl shrink-0 sticky top-0 z-30">
               <div className="flex items-center gap-4 md:gap-5 min-w-0 flex-1">
                 {isAdmin && <button onClick={() => setActiveUserId(null)} className="md:hidden p-2 -ml-2 text-gray-400"><ChevronLeft size={24} /></button>}
-                <div className="w-10 h-10 md:w-14 md:h-14 rounded-[1.2rem] overflow-hidden border-2 md:border-4 border-white shadow-lg shrink-0 relative bg-gray-50 flex items-center justify-center p-1 md:p-2">
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-[1.2rem] overflow-hidden border-2 md:border-4 border-white shadow-lg shrink-0 relative bg-gray-50 flex items-center justify-center p-3 md:p-4 transition-all">
                   <img 
-                    src={!isAdmin ? LOGO_ICON_URL : (sessions.find(s=>s.userId===activeUserId)?.userPhoto || `https://ui-avatars.com/api/?name=${sessions.find(s=>s.userId===activeUserId)?.userName}`)} 
-                    className={`w-full h-full ${!isAdmin ? 'object-contain' : 'object-cover'}`} 
+                    src={!isAdmin ? logoUrl : (sessions.find(s=>s.userId===activeUserId)?.userPhoto || `https://ui-avatars.com/api/?name=${sessions.find(s=>s.userId===activeUserId)?.userName}`)} 
+                    className={`w-full h-full transition-transform duration-500 ${!isAdmin ? 'object-contain scale-90' : 'object-cover'}`} 
                     alt="Chat Profile"
                   />
                   {activeUserPresence?.online && (

@@ -2,10 +2,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Facebook, Instagram, ChevronRight, Globe, Edit3 } from 'lucide-react';
-import { LOGO_ICON_URL } from '../constants';
 
 interface FooterProps {
   isEditMode?: boolean;
+  logoUrl?: string;
   socialLinks?: {
     facebook: string;
     instagram: string;
@@ -14,7 +14,7 @@ interface FooterProps {
   onUpdateSocial?: (links: { facebook: string; instagram: string; website: string }) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ isEditMode, socialLinks, onUpdateSocial }) => {
+const Footer: React.FC<FooterProps> = ({ isEditMode, logoUrl, socialLinks, onUpdateSocial }) => {
   const currentYear = new Date().getFullYear();
 
   const scrollToTop = () => {
@@ -47,7 +47,7 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, socialLinks, onUpdateSocial
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <img 
-              src={LOGO_ICON_URL} 
+              src={logoUrl} 
               className="w-12 h-12 object-contain" 
               alt="Hotel Shotabdi Abashik Logo"
               draggable="false"

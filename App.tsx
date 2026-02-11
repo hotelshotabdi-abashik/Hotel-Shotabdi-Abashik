@@ -484,8 +484,8 @@ const AppContent = () => {
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} />} />
-            <Route path="/helpdesk" element={<HelpDesk profile={profile} />} />
-            <Route path="/mystays" element={<MyStays profile={profile} />} />
+            <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
+            <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
             <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
@@ -495,6 +495,7 @@ const AppContent = () => {
 
         <Footer 
           isEditMode={isEditMode} 
+          logoUrl={currentLogo}
           socialLinks={siteConfig.socialLinks} 
           onUpdateSocial={(links) => setSiteConfig(prev => ({ ...prev, socialLinks: links }))}
         />

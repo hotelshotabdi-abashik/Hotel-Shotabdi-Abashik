@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShieldCheck, MapPin, Calendar, Star, Hotel, ArrowRight, Loader2 } from 'lucide-react';
-import { db, ref, get, onValue } from '../services/firebase';
+import { db, ref, get } from '../services/firebase';
 import { UserProfile } from '../types';
 import { LOGO_ICON_URL } from '../constants';
 
@@ -10,8 +10,15 @@ const PublicProfile: React.FC = () => {
   const { username } = useParams();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [globalLogo, setGlobalLogo] = useState(LOGO_ICON_URL);
 
   useEffect(() => {
+    // Fetch Global Logo
+    const configRef = ref(db, 'site-config/logoUrl');
+    get(configRef).then(snap => {
+      if (snap.exists()) setGlobalLogo(snap.val());
+    });
+
     if (!username) return;
     
     const usernamesRef = ref(db, `usernames/${username.toLowerCase()}`);
@@ -50,7 +57,7 @@ const PublicProfile: React.FC = () => {
       <div className="max-w-4xl mx-auto bg-white rounded-[3rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in">
         <div className="bg-hotel-primary p-12 text-white text-center relative">
           <div className="absolute top-8 left-8">
-            <img src={LOGO_ICON_URL} className="w-10 h-10 object-contain brightness-0 invert opacity-20" />
+            <img src={globalLogo} className="w-10 h-10 object-contain brightness-0 invert opacity-20" />
           </div>
           <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white/20 shadow-2xl mx-auto mb-6">
              <img src={profile.photoURL} className="w-full h-full object-cover" alt={`${profile.legalName} Resident`} />

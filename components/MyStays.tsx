@@ -9,13 +9,13 @@ import {
 } from 'lucide-react';
 import { db, auth, ref, onValue } from '../services/firebase';
 import { Booking, UserProfile } from '../types';
-import { LOGO_ICON_URL } from '../constants';
 
 interface MyStaysProps {
   profile: UserProfile | null;
+  logoUrl?: string;
 }
 
-const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
+const MyStays: React.FC<MyStaysProps> = ({ profile, logoUrl }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -164,7 +164,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                         <div className="flex gap-10 shrink-0 print:gap-8">
                            <div className="text-center">
                               <div className="w-24 h-12 border-b border-gray-900 mb-2 flex items-center justify-center print:w-20 print:h-8">
-                                 <img src={LOGO_ICON_URL} className="w-8 h-8 object-contain opacity-20" />
+                                 <img src={logoUrl} className="w-8 h-8 object-contain opacity-20" />
                               </div>
                               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Official Seal</p>
                            </div>
