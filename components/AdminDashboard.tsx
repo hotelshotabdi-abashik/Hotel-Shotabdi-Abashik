@@ -55,9 +55,33 @@ const AdminDashboard: React.FC = () => {
     return () => { uUnsub(); bUnsub(); };
   }, []);
 
+  const triggerRoleNotification = async (uid: string, newRole: string) => {
+    const targetUser = users.find(u => u.uid === uid);
+    if (!targetUser) return;
+
+    const roleName = newRole.toUpperCase();
+    const message = `Your account access level has been updated to: ${roleName}. This change is effective immediately for the Hotel Shotabdi Residential Hub.`;
+
+    // 1. Internal Notification
+    await createNotification(uid, {
+      title: 'Registry Access Updated',
+      message: message,
+      type: 'system'
+    });
+
+    // 2. EmailJS Notification
+    sendGuestEmail({
+      to_name: targetUser.legalName || 'Resident',
+      to_email: targetUser.email,
+      subject: `Registry Status: Account Role Updated to ${roleName}`,
+      message: message,
+      booking_id: "ROLE-AUTH"
+    });
+  };
+
   const handleUpdateRole = async (uid: string, newRole: 'guest' | 'staff' | 'manager') => {
     if (!isOwner && newRole === 'manager') {
-       alert("Only the Owner can authorize new Managers.");
+       alert("Access Denied: Only the Owner can authorize Managers.");
        return;
     }
     
@@ -68,14 +92,10 @@ const AdminDashboard: React.FC = () => {
         [`profiles/${uid}/role`]: newRole
       });
       
-      await createNotification(uid, {
-        title: 'Registry Access Updated',
-        message: `Your account role has been updated to ${newRole.toUpperCase()}.`,
-        type: 'system'
-      });
+      await triggerRoleNotification(uid, newRole);
       
     } catch (err) {
-      alert("Role update failed.");
+      alert("Role update failed. Connection error.");
     } finally {
       setRoleUpdatingUid(null);
     }
@@ -93,6 +113,9 @@ const AdminDashboard: React.FC = () => {
         [`roles/${managerGateUid}`]: 'manager',
         [`profiles/${managerGateUid}/role`]: 'manager'
       });
+      
+      await triggerRoleNotification(managerGateUid, 'manager');
+      
       alert("Role Authorized: User is now a Manager.");
       setManagerGateUid(null);
       setManagerPassword('');
@@ -114,8 +137,8 @@ const AdminDashboard: React.FC = () => {
       await update(ref(db, `bookings/${booking.id}`), updates);
 
       const message = status === 'accepted' 
-        ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}.` 
-        : `Booking rejected: ${meta}. Please update your registry info.`;
+        ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}. Please proceed to the hotel for check-in.` 
+        : `Booking rejected: ${meta}. Please check your registry details and resubmit if necessary.`;
 
       await createNotification(booking.userId, {
         title: `Stay ${status === 'accepted' ? 'Confirmed' : 'Rejected'}`,
@@ -126,7 +149,7 @@ const AdminDashboard: React.FC = () => {
       sendGuestEmail({
         to_name: booking.userName,
         to_email: booking.userEmail,
-        subject: status === 'accepted' ? "Stay Verified - Hotel Shotabdi" : "Registry Update Required",
+        subject: status === 'accepted' ? "Stay Verified - Hotel Shotabdi Residential" : "Registry Update Required",
         message: message,
         booking_id: booking.id
       });
@@ -136,7 +159,7 @@ const AdminDashboard: React.FC = () => {
       setRejectionReason('Registry verification failed');
     } catch (err) { 
       console.error(err);
-      alert("Action failed. Check connection.");
+      alert("Action failed. Check database connection.");
     } finally {
       setActionLoading(false);
     }
@@ -144,12 +167,14 @@ const AdminDashboard: React.FC = () => {
 
   const filteredBookings = bookings.filter(b => 
     b.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.userEmail?.toLowerCase().includes(searchQuery.toLowerCase())
+    b.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.id?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredUsers = users.filter(u => 
     u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.legalName?.toLowerCase().includes(searchQuery.toLowerCase())
+    u.legalName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) return (
@@ -213,7 +238,7 @@ const AdminDashboard: React.FC = () => {
                 <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-black text-gray-900 truncate">{user.legalName || 'New User'}</h3>
+                <h3 className="text-base font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>
                 <div className="flex items-center gap-2 mt-0.5">
                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${
                      user.role === 'owner' ? 'bg-hotel-primary text-white border-hotel-primary' :
@@ -266,7 +291,7 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Booking Details Modal */}
+      {/* Booking Details Modal - Restoring all guest info */}
       {selectedBooking && createPortal(
         <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 animate-fade-in">
           <div className="bg-white w-full max-w-5xl rounded-none md:rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative">
@@ -279,7 +304,7 @@ const AdminDashboard: React.FC = () => {
                   <div>
                      <h2 className="text-xl md:text-2xl font-serif font-black text-gray-900 tracking-tighter leading-none uppercase">Submission Audit</h2>
                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                       <Database size={12} /> ID: {selectedBooking.id}
+                       <Database size={12} /> Registry ID: {selectedBooking.id}
                      </p>
                   </div>
                </div>
@@ -328,7 +353,7 @@ const AdminDashboard: React.FC = () => {
 
                      {selectedBooking.status === 'pending' && (
                        <div className="p-6 bg-amber-50 rounded-[2rem] border border-amber-100 space-y-4">
-                          <h4 className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Action Required</h4>
+                          <h4 className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Registry Action</h4>
                           <div className="space-y-4">
                              <div className="space-y-1.5">
                                 <label className="text-[9px] font-black text-amber-600 uppercase tracking-widest ml-1">Assign Room No</label>
