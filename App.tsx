@@ -68,6 +68,7 @@ const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
 const AppContent = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -107,8 +108,12 @@ const AppContent = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setIsProfileMenuOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
+        setIsNotificationsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -123,6 +128,43 @@ const AppContent = () => {
     });
     return () => unsubscribe();
   }, [isSaving]);
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+    const notificationsRef = ref(db, `notifications/${user.uid}`);
+    const unsub = onValue(notificationsRef, (snap) => {
+      if (snap.exists()) {
+        const list = Object.values(snap.val()) as AppNotification[];
+        setNotifications(list.sort((a, b) => b.createdAt - a.createdAt));
+      } else {
+        setNotifications([]);
+      }
+    });
+    return () => unsub();
+  }, [user]);
+
+  const handleMarkAsRead = async (id: string) => {
+    if (!user) return;
+    try {
+      await update(ref(db, `notifications/${user.uid}/${id}`), { read: true });
+    } catch (err) { console.error(err); }
+  };
+
+  const handleMarkAllRead = async () => {
+    if (!user || notifications.length === 0) return;
+    try {
+      const updates: any = {};
+      notifications.forEach(n => {
+        if (!n.read) updates[`notifications/${user.uid}/${n.id}/read`] = true;
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+      }
+    } catch (err) { console.error(err); }
+  };
 
   const loadProfile = useCallback(async (u: any) => {
     if (!u) {
@@ -156,6 +198,7 @@ const AppContent = () => {
     try {
       await signOut(auth);
       setIsProfileMenuOpen(false);
+      setIsNotificationsOpen(false);
       navigate('/');
     } catch (err) { console.error("Logout failed", err); }
   };
@@ -177,6 +220,7 @@ const AppContent = () => {
   );
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
+  const unreadCount = notifications.filter(n => !n.read).length;
   const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
 
   return (
@@ -210,30 +254,92 @@ const AppContent = () => {
             )}
             
             {user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button 
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
-                  className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100"
-                >
-                  <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" />
-                </button>
+              <div className="flex items-center gap-2 md:gap-4">
+                {/* Notifications Restoration */}
+                <div className="relative" ref={notificationRef}>
+                  <button 
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} 
+                    className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
+                  >
+                    <Bell size={24} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2 w-5 h-5 bg-hotel-primary text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
 
-                {isProfileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-4 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
-                     <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                        <p className="text-[11px] font-black text-gray-900 truncate uppercase">{profile?.legalName || user.displayName || 'Guest'}</p>
-                        <p className="text-[9px] text-gray-400 truncate uppercase font-bold mt-0.5">{profile?.role || 'Guest'}</p>
-                     </div>
-                     <div className="p-2 space-y-1">
-                        <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase">
-                          <UserIcon size={18} /> Manage Account
-                        </button>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase">
-                          <LogOut size={18} /> Log Out
-                        </button>
-                     </div>
-                  </div>
-                )}
+                  {isNotificationsOpen && (
+                    <div className="absolute right-0 top-full mt-4 w-80 md:w-96 bg-white rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                      <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                         <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Registry Vault</h3>
+                         {unreadCount > 0 && (
+                           <button onClick={handleMarkAllRead} className="text-[10px] font-black text-hotel-primary hover:underline uppercase tracking-widest flex items-center gap-1.5">
+                             <CheckCheck size={14} /> Clear All
+                           </button>
+                         )}
+                      </div>
+                      <div className="max-h-[400px] overflow-y-auto no-scrollbar">
+                         {notifications.length > 0 ? (
+                           notifications.map((notif) => (
+                             <div 
+                               key={notif.id} 
+                               onClick={() => handleMarkAsRead(notif.id)}
+                               className={`p-5 border-b border-gray-50 last:border-0 flex gap-4 transition-colors cursor-pointer group ${!notif.read ? 'bg-hotel-primary/[0.02]' : 'hover:bg-gray-50'}`}
+                             >
+                               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${!notif.read ? 'bg-hotel-primary/10 text-hotel-primary border-hotel-primary/10' : 'bg-gray-100 text-gray-400 border-gray-100'}`}>
+                                  {notif.type === 'booking_update' ? <Calendar size={18} /> : notif.type === 'chat_message' ? <MessageSquare size={18} /> : <Shield size={18} />}
+                               </div>
+                               <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-start mb-1">
+                                    <h4 className={`text-[12px] leading-tight truncate ${!notif.read ? 'font-black text-gray-900' : 'font-bold text-gray-500'}`}>{notif.title}</h4>
+                                    {!notif.read && <div className="w-2 h-2 bg-hotel-primary rounded-full shrink-0 mt-1"></div>}
+                                  </div>
+                                  <p className={`text-[11px] leading-relaxed mb-1 ${!notif.read ? 'font-semibold text-gray-600' : 'text-gray-400'}`}>{notif.message}</p>
+                                  <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">
+                                    {new Date(notif.createdAt).toLocaleDateString()}
+                                  </span>
+                               </div>
+                             </div>
+                           ))
+                         ) : (
+                           <div className="p-16 text-center">
+                             <div className="w-16 h-16 bg-gray-50 rounded-[2rem] flex items-center justify-center text-gray-300 mx-auto mb-4">
+                               <Bell size={24} />
+                             </div>
+                             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">No Alerts in Vault</p>
+                           </div>
+                         )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative" ref={dropdownRef}>
+                  <button 
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
+                    className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100"
+                  >
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" />
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 top-full mt-4 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                       <div className="p-5 border-b border-gray-50 bg-gray-50/50">
+                          <p className="text-[11px] font-black text-gray-900 truncate uppercase">{profile?.legalName || user.displayName || 'Guest'}</p>
+                          <p className="text-[9px] text-gray-400 truncate uppercase font-bold mt-0.5">{profile?.role || 'Guest'}</p>
+                       </div>
+                       <div className="p-2 space-y-1">
+                          <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase">
+                            <UserIcon size={18} /> Manage Account
+                          </button>
+                          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase">
+                            <LogOut size={18} /> Log Out
+                          </button>
+                       </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-xl">
