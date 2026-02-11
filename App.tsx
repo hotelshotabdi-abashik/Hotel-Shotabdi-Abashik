@@ -189,20 +189,29 @@ const AppContent = () => {
     try {
       const data = await syncUserProfile(u);
       setProfile(data);
-      // Senior Architect Update for Fuad: 
-      // Managers now have Admin Panel access and Live Editing permissions.
-      if (u.email === OWNER_EMAIL || data?.role === 'manager' || data?.role === 'owner') {
+      
+      // Permission Mapping: Owner and Manager both unlock isAdmin features
+      const isUserOwner = u.email === OWNER_EMAIL || data?.role === 'owner';
+      const isUserManager = data?.role === 'manager';
+      
+      if (isUserOwner || isUserManager) {
         setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
       }
-    } catch (error) { console.warn("Profile Sync Issue"); }
+    } catch (error) { 
+      console.warn("Profile Sync Issue", error);
+      setIsAdmin(false);
+    }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setIsAuthLoading(false);
-      if (currentUser) loadProfile(currentUser);
-      else {
+      if (currentUser) {
+        loadProfile(currentUser);
+      } else {
         setProfile(null);
         setIsAdmin(false);
       }
@@ -215,11 +224,14 @@ const AppContent = () => {
       await signOut(auth);
       setIsProfileMenuOpen(false);
       setIsNotificationsOpen(false);
+      setIsAdmin(false);
+      setProfile(null);
       navigate('/');
     } catch (err) { console.error("Logout failed", err); }
   };
 
   const saveConfig = async () => {
+    if (!isAdmin) return;
     setIsSaving(true);
     try {
       await update(ref(db), { 'site-config': { ...siteConfig, lastUpdated: Date.now() } });
@@ -268,7 +280,6 @@ const AppContent = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
   const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
   
-  // Fuad's Dynamic Title Logic
   const getDisplayNameWithRole = () => {
     const name = profile?.legalName || user?.displayName || 'Resident';
     if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return `Owner: ${name}`;
@@ -282,7 +293,6 @@ const AppContent = () => {
       <SchemaOrg />
       
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
-        {/* Left: Branding */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 group relative">
             <Link 
@@ -326,7 +336,6 @@ const AppContent = () => {
           </div>
         </div>
 
-        {/* Center: Desktop Navigation */}
         <nav className="hidden lg:flex items-center bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
@@ -373,7 +382,6 @@ const AppContent = () => {
           )}
         </nav>
 
-        {/* Right: Tools & Profile */}
         <div className="flex items-center gap-2 md:gap-4">
           {isAdmin && (
             <button 
@@ -526,7 +534,7 @@ const AppContent = () => {
           onUpdateSocial={(links) => setSiteConfig(prev => ({ ...prev, socialLinks: links }))}
         />
 
-        {isEditMode && (
+        {isEditMode && isAdmin && (
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] flex items-center gap-10 shadow-2xl border border-white/10">
              <button onClick={saveConfig} className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:brightness-110 active:scale-95 transition-all">
                <Save size={16} /> Publish Changes
