@@ -8,6 +8,7 @@ import {
   MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck
 } from 'lucide-react';
 import { db, ref, onValue, update, createNotification, deleteUserProfile, get } from '../services/firebase';
+import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking } from '../types';
 import { LOGO_ICON_URL } from '../constants';
 
@@ -62,10 +63,20 @@ const AdminDashboard: React.FC = () => {
         ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}.` 
         : `Booking rejected: ${meta}. Please update your registry info.`;
 
+      // In-app notification
       await createNotification(booking.userId, {
         title,
         message,
         type: 'booking_update'
+      });
+
+      // Email Notification
+      sendGuestEmail({
+        to_name: booking.userName,
+        to_email: booking.userEmail,
+        subject: status === 'accepted' ? "Stay Verified - Hotel Shotabdi" : "Registry Update Required",
+        message: message,
+        booking_id: booking.id
       });
 
       setAcceptingBookingId(null);

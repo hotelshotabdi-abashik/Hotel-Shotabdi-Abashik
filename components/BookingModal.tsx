@@ -8,6 +8,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { db, ref, set, get, onValue } from '../services/firebase';
+import { sendGuestEmail } from '../services/emailService';
 import { Room, UserProfile, GuestInfo, Booking } from '../types';
 
 interface Props {
@@ -126,6 +127,16 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
       };
 
       await set(ref(db, `bookings/${bookingId}`), bookingData);
+      
+      // Auto Email to Guest
+      sendGuestEmail({
+        to_name: profile.legalName,
+        to_email: profile.email,
+        subject: "Stay Request Logged - Hotel Shotabdi",
+        message: `Your booking request for ${room.title} has been successfully submitted to our registry. Our Admin will verify your identity within 30 minutes.`,
+        booking_id: bookingId
+      });
+
       setSuccess(true);
     } catch (err) {
       alert("System registry error. Try again.");
