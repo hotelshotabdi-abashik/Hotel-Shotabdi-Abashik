@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { 
   Users, User, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
-  Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
+  Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
   MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2, UserCog, MoreHorizontal, Activity, BarChart3, TrendingUp, History
 } from 'lucide-react';
 import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL, auth, createAdminLog } from '../services/firebase';
@@ -37,13 +37,11 @@ const AdminDashboard: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-  // Data filtering states
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
 
-  // Manager Role State
   const [managerGateUid, setManagerGateUid] = useState<string | null>(null);
   const [managerPassword, setManagerPassword] = useState('');
   const [gateError, setGateError] = useState('');
@@ -206,7 +204,6 @@ const AdminDashboard: React.FC = () => {
     u.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Data Filtering Logic
   const analyticsBookings = bookings.filter(b => {
     const timestamp = b.createdAt;
     const start = new Date(dateRange.start).getTime();
@@ -218,6 +215,8 @@ const AdminDashboard: React.FC = () => {
   const rejectedCount = analyticsBookings.filter(b => b.status === 'rejected').length;
   const pendingCount = analyticsBookings.filter(b => b.status === 'pending').length;
 
+  const currentAdminRole = isOwner ? 'Owner' : 'Manager';
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <Loader2 className="animate-spin text-hotel-primary mb-4" size={40} />
@@ -228,9 +227,19 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-32 lg:pb-10 animate-fade-in relative z-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-        <div>
-          <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
-          <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">Authenticated Management Access</p>
+        <div className="flex items-center gap-4">
+          <div className={`p-4 rounded-[1.5rem] shadow-xl ${isOwner ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
+             {isOwner ? <Key size={32} /> : <Shield size={32} />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
+              <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${isOwner ? 'bg-hotel-primary/10 text-hotel-primary' : 'bg-blue-50 text-blue-600'}`}>
+                {currentAdminRole}
+              </span>
+            </div>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Authorized: {currentUser?.displayName || currentUser?.email}</p>
+          </div>
         </div>
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
           {['bookings', 'users', 'data'].map((tab) => (
@@ -338,7 +347,7 @@ const AdminDashboard: React.FC = () => {
              <div className="lg:col-span-4 space-y-6">
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
                    <div>
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Stay Statistics</h4>
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Statistics</h4>
                       <div className="grid grid-cols-2 gap-4">
                          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Accepted</p>
@@ -385,7 +394,7 @@ const AdminDashboard: React.FC = () => {
                    <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                       <div className="flex items-center gap-3">
                          <Activity size={18} className="text-hotel-primary" />
-                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs & Actions</h4>
+                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs</h4>
                       </div>
                       <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
                    </div>
@@ -423,7 +432,6 @@ const AdminDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Booking Details Modal - Restoring all guest info */}
       {selectedBooking && createPortal(
         <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 animate-fade-in">
           <div className="bg-white w-full max-w-5xl rounded-none md:rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative">
@@ -604,7 +612,6 @@ const AdminDashboard: React.FC = () => {
         document.body
       )}
 
-      {/* Lightbox */}
       {lightboxUrl && (
         <div className="fixed inset-0 z-[10001] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4 transition-colors">
@@ -614,7 +621,6 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Role Gate Modal */}
       {managerGateUid && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
            <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 text-center animate-fade-in">

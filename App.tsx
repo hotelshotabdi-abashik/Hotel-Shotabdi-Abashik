@@ -34,7 +34,7 @@ import {
   createAdminLog
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard, Upload, Info } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard, Upload, Info, ShieldCheck, Key } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
@@ -189,7 +189,9 @@ const AppContent = () => {
     try {
       const data = await syncUserProfile(u);
       setProfile(data);
-      if (u.email === OWNER_EMAIL || data?.role === 'manager') {
+      // Senior Architect Update for Fuad: 
+      // Managers now have Admin Panel access and Live Editing permissions.
+      if (u.email === OWNER_EMAIL || data?.role === 'manager' || data?.role === 'owner') {
         setIsAdmin(true);
       }
     } catch (error) { console.warn("Profile Sync Issue"); }
@@ -265,6 +267,14 @@ const AppContent = () => {
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
   const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
+  
+  // Fuad's Dynamic Title Logic
+  const getDisplayNameWithRole = () => {
+    const name = profile?.legalName || user?.displayName || 'Resident';
+    if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return `Owner: ${name}`;
+    if (profile?.role === 'manager') return `Manager: ${name}`;
+    return name;
+  };
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full overflow-x-hidden">
@@ -370,7 +380,7 @@ const AppContent = () => {
               onClick={() => setIsEditMode(!isEditMode)}
               className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              <Edit3 size={14} /> {isEditMode ? 'Live Editing' : 'Edit'}
+              <Edit3 size={14} /> {isEditMode ? 'Live Editing' : 'Edit Web'}
             </button>
           )}
 
@@ -438,23 +448,37 @@ const AppContent = () => {
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
-                  className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100 active:scale-95 transition-transform"
+                  className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 active:scale-95 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}
                 >
                   <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" />
                 </button>
 
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-4 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
-                     <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                        <p className="text-[11px] font-black text-gray-900 truncate uppercase">{profile?.legalName || user.displayName || 'Guest'}</p>
-                        <p className="text-[9px] text-gray-400 truncate uppercase font-bold mt-0.5">{profile?.role || 'Guest'}</p>
+                  <div className="absolute right-0 top-full mt-4 w-72 bg-white rounded-[2rem] shadow-[0_30px_70px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                     <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+                        <div className="flex items-center gap-2 mb-1">
+                          {isAdmin && (
+                            <div className={`p-1 rounded-md ${profile?.role === 'owner' || user?.email === OWNER_EMAIL ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
+                              {profile?.role === 'owner' || user?.email === OWNER_EMAIL ? <Key size={10}/> : <Shield size={10}/>}
+                            </div>
+                          )}
+                          <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">
+                            {getDisplayNameWithRole()}
+                          </p>
+                        </div>
+                        <p className="text-[9px] text-gray-400 truncate uppercase font-bold tracking-widest opacity-70">{user.email}</p>
                      </div>
                      <div className="p-2 space-y-1">
-                        <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase text-left">
-                          <UserIcon size={18} /> Manage Account
+                        <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase text-left">
+                          <UserIcon size={18} className="shrink-0" /> Manage Identity
                         </button>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase text-left">
-                          <LogOut size={18} /> Log Out
+                        {isAdmin && (
+                          <Link to="/admin" onClick={() => setIsProfileMenuOpen(false)} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-amber-600 hover:bg-amber-50 transition-all uppercase text-left">
+                            <LayoutDashboard size={18} className="shrink-0" /> Admin Console
+                          </Link>
+                        )}
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase text-left">
+                          <LogOut size={18} className="shrink-0" /> De-authorize
                         </button>
                      </div>
                   </div>
@@ -489,7 +513,7 @@ const AppContent = () => {
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
-            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized</div>} />
+            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized Access</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>
@@ -505,7 +529,7 @@ const AppContent = () => {
         {isEditMode && (
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] flex items-center gap-10 shadow-2xl border border-white/10">
              <button onClick={saveConfig} className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:brightness-110 active:scale-95 transition-all">
-               <Save size={16} /> Publish Site
+               <Save size={16} /> Publish Changes
              </button>
           </div>
         )}
@@ -514,7 +538,7 @@ const AppContent = () => {
         {user && profile && !profile.isComplete && !isManageAccountOpen && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
         {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
         {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={activeDiscount} onClose={() => setSelectedRoomToBook(null)} onImageUpload={async(f)=>""} />}
-        <MobileBottomNav user={user} isAdmin={isAdmin} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
+        <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
       </main>
     </div>
   );

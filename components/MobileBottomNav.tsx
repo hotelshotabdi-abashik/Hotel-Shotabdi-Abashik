@@ -2,24 +2,33 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Bed, Map, Utensils, User, LogIn, Tag, LayoutDashboard } from 'lucide-react';
+import { UserProfile } from '../types';
+import { OWNER_EMAIL } from '../services/firebase';
 
 interface MobileBottomNavProps {
   user: any;
+  profile: UserProfile | null;
   isAdmin: boolean;
   openAuth: () => void;
   toggleProfile: () => void;
 }
 
-const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAuth, toggleProfile }) => {
+const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmin, openAuth, toggleProfile }) => {
   const location = useLocation();
 
   const navItems = [
     { id: 'home', path: '/', label: 'Home', icon: <Home size={20} /> },
     { id: 'offers', path: '/offers', label: 'Offers', icon: <Tag size={20} /> },
     { id: 'rooms', path: '/rooms', label: 'Rooms', icon: <Bed size={20} /> },
-    { id: 'restaurants', path: '/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
+    { id: 'restaurants', path: '/restaurants', label: 'Dining', icon: <Utensils size={20} /> },
     { id: 'guide', path: '/guide', label: 'Guide', icon: <Map size={20} /> },
   ];
+
+  const getRoleLabel = () => {
+    if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return 'Owner';
+    if (profile?.role === 'manager') return 'Manager';
+    return 'Me';
+  };
 
   return (
     <nav className="lg:hidden fixed bottom-4 left-0 right-0 px-4 z-[70] transition-all duration-500 animate-fade-in">
@@ -62,7 +71,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
               <LayoutDashboard size={20} />
             </div>
             <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
-              Admin
+              {getRoleLabel()}
             </span>
           </Link>
         ) : (
@@ -73,7 +82,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
             }`}
           >
             {user ? (
-              <div className="w-6 h-6 rounded-lg overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
+              <div className={`w-6 h-6 rounded-lg overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
                  <img 
                     src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
                     alt="Profile" 
