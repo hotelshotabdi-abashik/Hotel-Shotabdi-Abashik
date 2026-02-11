@@ -14,7 +14,7 @@ interface EmailParams {
 }
 
 /**
- * Sends a branded email notification to a guest.
+ * Sends a branded email notification to a guest or admin.
  * Color Palette: Red (#E53935) and White (#FFFFFF)
  */
 export const sendGuestEmail = async (params: EmailParams) => {
@@ -39,4 +39,17 @@ export const sendGuestEmail = async (params: EmailParams) => {
     console.error('Email failed to send:', error);
     return false;
   }
+};
+
+/**
+ * Specifically notifies the owner of a new booking request.
+ */
+export const notifyOwnerOfBooking = async (bookingDetails: any) => {
+  return sendGuestEmail({
+    to_name: "Fuad Ahmed",
+    to_email: "hotelshotabdiabashik@gmail.com",
+    subject: "NEW BOOKING REQUEST",
+    message: `A new booking has been logged. Guest: ${bookingDetails.userName}. Room: ${bookingDetails.roomTitle}. Dates: ${bookingDetails.checkIn} to ${bookingDetails.checkOut}. ID: ${bookingDetails.id}`,
+    booking_id: bookingDetails.id
+  });
 };

@@ -17,7 +17,8 @@ import {
   push,
   onValue,
   remove,
-  serverTimestamp 
+  serverTimestamp,
+  onDisconnect
 } from "firebase/database";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
@@ -38,11 +39,17 @@ export const db = getDatabase(app);
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
-// Updated with your provided key pair
 export const VAPID_KEY = "uQlADdOxjQ7QLMhQew2uYE-9LYVr9R9m73dzKlRVwSs";
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Track Online Status
+export const trackPresence = (uid: string) => {
+  const statusRef = ref(db, `profiles/${uid}/onlineStatus`);
+  set(statusRef, true);
+  onDisconnect(statusRef).set(false);
+};
 
 export const requestNotificationToken = async () => {
   if (!messaging) return null;
@@ -68,7 +75,6 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
     }
     return true;
   } catch (e) {
-    console.warn("Username uniqueness check bypassed.");
     return true;
   }
 };
@@ -76,36 +82,41 @@ export const checkUsernameUnique = async (username: string, currentUid: string) 
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
   const userRef = ref(db, `profiles/${user.uid}`);
+  const roleRef = ref(db, `roles/${user.uid}`);
   const now = Date.now();
   
-  const freshProfile = {
-    uid: user.uid,
-    email: user.email,
-    photoURL: user.photoURL,
-    createdAt: now,
-    lastLogin: now,
-    isComplete: false,
-    legalName: '',
-    username: '',
-    phone: '',
-    guardianPhone: '',
-    nidNumber: '',
-    nidImageUrl: '',
-    fcmToken: ''
-  };
-
   try {
-    const snapshot = await get(userRef);
-    if (!snapshot.exists()) {
+    const [profileSnap, roleSnap] = await Promise.all([get(userRef), get(roleRef)]);
+    const role = roleSnap.exists() ? roleSnap.val() : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
+    
+    trackPresence(user.uid);
+
+    if (!profileSnap.exists()) {
+      const freshProfile = {
+        uid: user.uid,
+        email: user.email,
+        photoURL: user.photoURL,
+        createdAt: now,
+        lastLogin: now,
+        isComplete: false,
+        legalName: '',
+        username: '',
+        phone: '',
+        guardianPhone: '',
+        nidNumber: '',
+        nidImageUrl: '',
+        role: role
+      };
+      await set(userRef, freshProfile);
+      if (user.email === OWNER_EMAIL) await set(roleRef, 'owner');
       return freshProfile;
     } else {
-      const currentData = snapshot.val();
-      update(userRef, { lastLogin: now }).catch(() => {});
-      return { ...currentData, lastLogin: now };
+      const data = profileSnap.val();
+      await update(userRef, { lastLogin: now, role: role });
+      return { ...data, lastLogin: now, role: role };
     }
   } catch (e) {
-    console.warn("Database access restricted.");
-    return freshProfile;
+    return null;
   }
 };
 
@@ -145,5 +156,6 @@ export {
   remove,
   onValue,
   serverTimestamp,
-  onMessage
+  onMessage,
+  onDisconnect
 };

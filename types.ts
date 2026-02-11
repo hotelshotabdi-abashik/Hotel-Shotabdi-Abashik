@@ -121,6 +121,8 @@ export interface UserProfile {
   isComplete: boolean;
   claims?: string[];
   fcmToken?: string;
+  role?: 'guest' | 'manager' | 'owner';
+  onlineStatus?: boolean;
 }
 
 export interface AppNotification {
@@ -144,7 +146,7 @@ export interface HelpDexMessage {
   senderPhoto: string;
   text: string;
   timestamp: number;
-  role: 'guest' | 'admin' | 'owner';
+  role: 'guest' | 'admin' | 'owner' | 'manager';
   status?: 'sent' | 'seen';
 }
 

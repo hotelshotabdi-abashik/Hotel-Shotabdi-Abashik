@@ -8,7 +8,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { db, ref, set, get, onValue } from '../services/firebase';
-import { sendGuestEmail } from '../services/emailService';
+import { sendGuestEmail, notifyOwnerOfBooking } from '../services/emailService';
 import { Room, UserProfile, GuestInfo, Booking } from '../types';
 
 interface Props {
@@ -93,7 +93,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
         const url = await onImageUpload(file);
         handleGuestChange(idx, 'nidImageUrl', url);
       } catch (err) {
-        alert("ID upload failed. Try a smaller image.");
+        alert("ID upload failed.");
       } finally {
         setUploadingGuestIndex(null);
       }
@@ -102,7 +102,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
 
   const submitBooking = async () => {
     if (hasExistingPending) {
-      alert("Policy Restriction: You already have a pending booking request. Our registry allows only one active request at a time.");
+      alert("Policy Restriction: You already have a pending booking request.");
       return;
     }
 
@@ -133,9 +133,12 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
         to_name: profile.legalName,
         to_email: profile.email,
         subject: "Stay Request Logged - Hotel Shotabdi",
-        message: `Your booking request for ${room.title} has been successfully submitted to our registry. Our Admin will verify your identity within 30 minutes.`,
+        message: `Your booking request for ${room.title} has been successfully submitted to our registry.`,
         booking_id: bookingId
       });
+
+      // Auto Alert to Owner Fuad Ahmed
+      notifyOwnerOfBooking(bookingData);
 
       setSuccess(true);
     } catch (err) {
@@ -147,12 +150,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
 
   const isStep1Valid = dates.checkIn && dates.checkOut;
   const isStep2Valid = guests.every((g, idx) => {
-    if (idx < 2 && totalGuests >= 2) {
-      return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
-    } else if (idx === 0) {
-       return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
-    }
-    return g.legalName.trim().length > 2;
+     if (idx === 0) return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
+     return g.legalName.trim().length > 2;
   });
 
   const modalContent = (
@@ -225,7 +224,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                     <div>
                        <p className="text-[11px] font-black text-hotel-primary uppercase tracking-widest mb-1">Pending Request Active</p>
                        <p className="text-xs text-red-600 font-medium leading-relaxed">
-                         Our policy permits only one pending booking at a time per resident. Please wait for our Registry Admin to process your existing request.
+                         Our policy permits only one pending booking at a time per resident.
                        </p>
                     </div>
                  </div>
@@ -251,12 +250,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                              <input type="date" value={dates.checkOut} onChange={e => setDates({...dates, checkOut: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary transition-all" />
                           </div>
                        </div>
-                       <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl flex gap-4">
-                          <Info size={18} className="text-blue-600 shrink-0" />
-                          <p className="text-[10px] text-blue-700 font-bold leading-relaxed uppercase tracking-wider">
-                             Standard check-in is 12:00 PM. Early check-in subject to registry clearance.
-                          </p>
-                       </div>
                     </div>
                     <div className="space-y-6">
                        <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3"><Users size={16} className="text-hotel-primary"/> Occupants</h4>
@@ -272,12 +265,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                              ))}
                           </select>
                        </div>
-                       <div className="p-6 bg-amber-50/50 border border-amber-100 rounded-3xl flex gap-4">
-                          <AlertTriangle size={18} className="text-amber-600 shrink-0" />
-                          <p className="text-[10px] text-amber-700 font-bold leading-relaxed uppercase tracking-wider">
-                             Max occupancy limit of {room.capacity} is strictly enforced.
-                          </p>
-                       </div>
                     </div>
                  </div>
                ) : (
@@ -287,9 +274,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                         <div className="flex items-center justify-between">
                             <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3">
                                {idx < 2 ? <ShieldCheck size={16} className="text-hotel-primary"/> : <UserPlus size={16} className="text-gray-400"/>}
-                               Guest {idx + 1} {idx === 0 ? '(Primary)' : idx === 1 ? '(Companion)' : '(Additional)'}
+                               Guest {idx + 1}
                             </h4>
-                            {idx === 0 && <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase tracking-widest">Verified Linked</span>}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -316,18 +302,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                                       onChange={e => handleGuestChange(idx, 'nidNumber', e.target.value.replace(/\D/g, ''))}
                                    />
                                 </div>
-                              ) : (
-                                <div className="space-y-1.5">
-                                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Age</label>
-                                   <input 
-                                      type="number"
-                                      placeholder="Guest Age" 
-                                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary" 
-                                      value={guest.age}
-                                      onChange={e => handleGuestChange(idx, 'age', e.target.value)}
-                                   />
-                                </div>
-                              )}
+                              ) : null}
                            </div>
 
                            {idx < 2 ? (
@@ -342,7 +317,6 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                                           <div className="w-24 h-16 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-gray-200">
                                              <img src={guest.nidImageUrl} className="w-full h-full object-cover" />
                                           </div>
-                                          <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Verified</p>
                                        </div>
                                     ) : (
                                        <div className="text-center">
@@ -355,7 +329,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                            ) : (
                               <div className="bg-gray-50/50 rounded-[2rem] border border-gray-100 p-8 flex flex-col items-center justify-center opacity-40">
                                  <UserIcon size={32} className="text-gray-300 mb-2" />
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Identity Waived<br/>for Additional Guests</p>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Identity Waived</p>
                               </div>
                            )}
                         </div>
@@ -373,7 +347,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                  <button 
                     onClick={() => setStep(2)} 
                     disabled={!isStep1Valid}
-                    className="flex-1 bg-gray-900 text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 transition-all active:scale-95"
+                    className="flex-1 bg-gray-900 text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 transition-all active:scale-95"
                  >
                     Verify Guests <ArrowRight size={18} />
                  </button>
@@ -381,7 +355,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                  <button 
                     onClick={submitBooking}
                     disabled={loading || !isStep2Valid || hasExistingPending}
-                    className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
+                    className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
                  >
                     {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Finalize Booking</>}
                  </button>
