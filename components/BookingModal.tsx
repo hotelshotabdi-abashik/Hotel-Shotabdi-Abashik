@@ -361,7 +361,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                       disabled={loading || !isStep2Valid || hasExistingPending}
                       className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
                    >
-                      {loading ? <Loader2 className="animate-spin" size={20}/> : <><><CheckCircle2 size={18}/> Finalize Booking</>}</>
+                      {loading ? <Loader2 className="animate-spin" size={20}/> : <React.Fragment><CheckCircle2 size={18}/> Finalize Booking</React.Fragment>}
                    </button>
                  )}
               </div>

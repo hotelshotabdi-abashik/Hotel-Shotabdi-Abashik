@@ -226,7 +226,9 @@ const AdminDashboard: React.FC = () => {
                }`}>
                  {booking.status}
                </span>
-               <Eye size={20} className="text-gray-300 group-hover:text-hotel-primary" />
+               <div className="p-3 bg-gray-50 rounded-xl text-gray-400 group-hover:text-hotel-primary transition-colors">
+                  <Eye size={20} />
+               </div>
             </div>
           </div>
         ))}
@@ -411,12 +413,27 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                              </div>
                              <div className="p-6 space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                   <div className="flex items-center gap-2 text-[11px] font-black text-gray-600">
-                                      <Phone size={14} className="text-hotel-primary" /> {guest.phone || 'No Phone'}
+                                <div className="grid grid-cols-1 gap-4">
+                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
+                                      <Phone size={14} className="text-hotel-primary" /> 
+                                      <div>
+                                         <p className="text-[8px] text-gray-400 uppercase">Primary</p>
+                                         <p>{guest.phone || 'N/A'}</p>
+                                      </div>
                                    </div>
-                                   <div className="flex items-center gap-2 text-[11px] font-black text-gray-600">
-                                      <Calendar size={14} className="text-hotel-primary" /> Age: {guest.age || 'N/A'}
+                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
+                                      <AlertTriangle size={14} className="text-amber-500" /> 
+                                      <div>
+                                         <p className="text-[8px] text-gray-400 uppercase">Guardian</p>
+                                         <p>{guest.guardianPhone || 'N/A'}</p>
+                                      </div>
+                                   </div>
+                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
+                                      <Calendar size={14} className="text-hotel-primary" /> 
+                                      <div>
+                                         <p className="text-[8px] text-gray-400 uppercase">Age</p>
+                                         <p>{guest.age || 'N/A'}</p>
+                                      </div>
                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100">

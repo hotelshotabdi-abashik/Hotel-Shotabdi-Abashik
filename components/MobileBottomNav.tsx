@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Bed, Map, Utensils, User, LogIn, Tag } from 'lucide-react';
+import { Home, Bed, Map, Utensils, User, LogIn, Tag, LayoutDashboard } from 'lucide-react';
 
 interface MobileBottomNavProps {
   user: any;
@@ -50,30 +50,46 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, isAdmin, openAu
         {/* Separator */}
         <div className="w-[1px] h-6 bg-gray-100 mx-1"></div>
 
-        {/* Dynamic Profile/Login Button */}
-        <button
-          onClick={user ? toggleProfile : openAuth}
-          className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
-            user ? (isAdmin ? 'text-amber-600' : 'text-hotel-primary') : 'text-hotel-primary'
-          }`}
-        >
-          {user ? (
-            <div className="w-6 h-6 rounded-lg overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
-               <img 
-                  src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
+        {/* Dynamic Admin/Profile/Login Button */}
+        {isAdmin ? (
+          <Link
+            to="/admin"
+            className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
+              location.pathname === '/admin' ? 'text-amber-600' : 'text-amber-500'
+            }`}
+          >
+            <div className={`p-1 rounded-xl transition-all duration-300 ${location.pathname === '/admin' ? 'bg-amber-50' : ''}`}>
+              <LayoutDashboard size={20} />
             </div>
-          ) : (
-            <div className="p-1">
-              <LogIn size={20} />
-            </div>
-          )}
-          <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
-            {user ? (isAdmin ? 'Admin' : 'Me') : 'Login'}
-          </span>
-        </button>
+            <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
+              Admin
+            </span>
+          </Link>
+        ) : (
+          <button
+            onClick={user ? toggleProfile : openAuth}
+            className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
+              user ? 'text-hotel-primary' : 'text-hotel-primary'
+            }`}
+          >
+            {user ? (
+              <div className="w-6 h-6 rounded-lg overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
+                 <img 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+              </div>
+            ) : (
+              <div className="p-1">
+                <LogIn size={20} />
+              </div>
+            )}
+            <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
+              {user ? 'Me' : 'Login'}
+            </span>
+          </button>
+        )}
       </div>
       
       {/* Spacer for bottom safe area insets */}
