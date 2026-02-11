@@ -17,6 +17,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import AdminDashboard from './components/AdminDashboard';
 import HelpDesk from './components/HelpDex';
 import MyStays from './components/MyStays';
+import Footer from './components/Footer';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -30,7 +31,7 @@ import {
   get
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard, Upload } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard, Upload, Info } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
@@ -99,7 +100,12 @@ const AppContent = () => {
     touristGuides: SYLHET_ATTRACTIONS,
     announcement: "25% OFF DISCOUNT",
     logoUrl: LOGO_ICON_URL,
-    lastUpdated: 0
+    lastUpdated: 0,
+    socialLinks: {
+      facebook: "https://facebook.com",
+      instagram: "https://instagram.com",
+      website: "https://hotelshotabdiabashik.com"
+    }
   });
 
   useEffect(() => {
@@ -119,7 +125,14 @@ const AppContent = () => {
   useEffect(() => {
     const configRef = ref(db, 'site-config');
     const unsubscribe = onValue(configRef, (snapshot) => {
-      if (snapshot.exists()) setSiteConfig(prev => !isSaving ? { ...prev, ...snapshot.val() } : prev);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setSiteConfig(prev => !isSaving ? { 
+          ...prev, 
+          ...data,
+          socialLinks: data.socialLinks || prev.socialLinks
+        } : prev);
+      }
       setIsConfigLoading(false);
     });
     return () => unsubscribe();
@@ -222,6 +235,13 @@ const AppContent = () => {
     reader.readAsDataURL(file);
   };
 
+  const scrollToAbout = () => {
+    const footer = document.getElementById('about');
+    if (footer) {
+      footer.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (isConfigLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
@@ -304,6 +324,13 @@ const AppContent = () => {
               </Link>
             );
           })}
+          <button
+            onClick={scrollToAbout}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 text-gray-400 hover:text-hotel-primary font-bold group"
+          >
+            <Info size={14} />
+            <span className="text-[10px] tracking-widest uppercase">About</span>
+          </button>
           {isAdmin && (
             <Link
               to="/admin"
@@ -449,6 +476,12 @@ const AppContent = () => {
             <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>
         </div>
+
+        <Footer 
+          isEditMode={isEditMode} 
+          socialLinks={siteConfig.socialLinks} 
+          onUpdateSocial={(links) => setSiteConfig(prev => ({ ...prev, socialLinks: links }))}
+        />
 
         {isEditMode && (
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] flex items-center gap-10 shadow-2xl border border-white/10">

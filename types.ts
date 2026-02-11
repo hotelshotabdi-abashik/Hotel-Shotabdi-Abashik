@@ -71,6 +71,11 @@ export interface SiteConfig {
   announcement: string;
   logoUrl?: string;
   lastUpdated: number;
+  socialLinks?: {
+    facebook: string;
+    instagram: string;
+    website: string;
+  };
 }
 
 export interface GuestInfo {
