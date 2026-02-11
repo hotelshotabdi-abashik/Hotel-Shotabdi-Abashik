@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  Users, User, Calendar, Search, CheckCircle2, XCircle, 
+  Users, User, Calendar, Search, CheckCircle2, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
-  Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2, UserCog, MoreHorizontal, Activity, BarChart3, TrendingUp, History
+  Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
+  MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL, auth, createAdminLog } from '../services/firebase';
+import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking } from '../types';
 
@@ -30,6 +30,7 @@ const AdminDashboard: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [roomNumberInput, setRoomNumberInput] = useState('');
@@ -52,10 +53,27 @@ const AdminDashboard: React.FC = () => {
     const bookingsRef = ref(db, 'bookings');
     const logsRef = ref(db, 'logs');
 
+    let loadedCount = 0;
+    const totalToLoad = 3;
+
+    const checkLoadingFinished = () => {
+      loadedCount++;
+      if (loadedCount >= totalToLoad) {
+        setLoading(false);
+      }
+    };
+
+    const handleLoadError = (err: Error) => {
+      console.error("Registry Sync Error:", err);
+      setLoadError("Some administrative data could not be synced. Check permissions.");
+      checkLoadingFinished();
+    };
+
     const uUnsub = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) setUsers(Object.values(snapshot.val()));
       else setUsers([]);
-    });
+      if (loadedCount < 1) checkLoadingFinished();
+    }, handleLoadError);
 
     const bUnsub = onValue(bookingsRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -64,7 +82,8 @@ const AdminDashboard: React.FC = () => {
       } else {
         setBookings([]);
       }
-    });
+      if (loadedCount < 2) checkLoadingFinished();
+    }, handleLoadError);
 
     const lUnsub = onValue(logsRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -73,8 +92,8 @@ const AdminDashboard: React.FC = () => {
       } else {
         setLogs([]);
       }
-      setLoading(false);
-    });
+      if (loadedCount < 3) checkLoadingFinished();
+    }, handleLoadError);
 
     return () => { uUnsub(); bUnsub(); lUnsub(); };
   }, []);
@@ -82,16 +101,13 @@ const AdminDashboard: React.FC = () => {
   const triggerRoleNotification = async (uid: string, newRole: string) => {
     const targetUser = users.find(u => u.uid === uid);
     if (!targetUser) return;
-
     const roleName = newRole.toUpperCase();
-    const message = `Your account access level has been updated to: ${roleName}. This change is effective immediately for the Hotel Shotabdi Residential Hub.`;
-
+    const message = `Your account access level has been updated to: ${roleName}.`;
     await createNotification(uid, {
       title: 'Registry Access Updated',
       message: message,
       type: 'system'
     });
-
     sendGuestEmail({
       to_name: targetUser.legalName || 'Resident',
       to_email: targetUser.email,
@@ -106,7 +122,6 @@ const AdminDashboard: React.FC = () => {
        alert("Access Denied: Only the Owner can authorize Managers.");
        return;
     }
-    
     setRoleUpdatingUid(uid);
     try {
       const targetUser = users.find(u => u.uid === uid);
@@ -114,10 +129,8 @@ const AdminDashboard: React.FC = () => {
         [`roles/${uid}`]: newRole,
         [`profiles/${uid}/role`]: newRole
       });
-      
       await createAdminLog('ROLE_CHANGE', `Changed role for ${targetUser?.legalName || uid} to ${newRole.toUpperCase()}`);
       await triggerRoleNotification(uid, newRole);
-      
     } catch (err) {
       alert("Role update failed. Connection error.");
     } finally {
@@ -131,17 +144,14 @@ const AdminDashboard: React.FC = () => {
       return;
     }
     if (!managerGateUid) return;
-
     try {
       const targetUser = users.find(u => u.uid === managerGateUid);
       await update(ref(db), {
         [`roles/${managerGateUid}`]: 'manager',
         [`profiles/${managerGateUid}/role`]: 'manager'
       });
-      
-      await createAdminLog('MANAGER_AUTHORIZED', `Security Gate cleared for ${targetUser?.legalName || managerGateUid}. New Manager assigned.`);
+      await createAdminLog('MANAGER_AUTHORIZED', `Security Gate cleared for ${targetUser?.legalName || managerGateUid}.`);
       await triggerRoleNotification(managerGateUid, 'manager');
-      
       alert("Role Authorized: User is now a Manager.");
       setManagerGateUid(null);
       setManagerPassword('');
@@ -159,20 +169,16 @@ const AdminDashboard: React.FC = () => {
         roomNumber: status === 'accepted' ? meta : null,
         rejectionReason: status === 'rejected' ? meta : null
       };
-
       await update(ref(db, `bookings/${booking.id}`), updates);
-      await createAdminLog(status === 'accepted' ? 'BOOKING_ACCEPTED' : 'BOOKING_REJECTED', `${status === 'accepted' ? 'Verified stay' : 'Rejected stay'} for ${booking.userName}. Room: ${booking.roomTitle}. ID: ${booking.id}`);
-
+      await createAdminLog(status === 'accepted' ? 'BOOKING_ACCEPTED' : 'BOOKING_REJECTED', `${status === 'accepted' ? 'Verified stay' : 'Rejected stay'} for ${booking.userName}. ID: ${booking.id}`);
       const message = status === 'accepted' 
-        ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}. Please proceed to the hotel for check-in.` 
-        : `Booking rejected: ${meta}. Please check your registry details and resubmit if necessary.`;
-
+        ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}.` 
+        : `Booking rejected: ${meta}.`;
       await createNotification(booking.userId, {
         title: `Stay ${status === 'accepted' ? 'Confirmed' : 'Rejected'}`,
         message,
         type: 'booking_update'
       });
-
       sendGuestEmail({
         to_name: booking.userName,
         to_email: booking.userEmail,
@@ -180,12 +186,10 @@ const AdminDashboard: React.FC = () => {
         message: message,
         booking_id: booking.id
       });
-
       setSelectedBooking(null);
       setRoomNumberInput('');
       setRejectionReason('Registry verification failed');
     } catch (err) { 
-      console.error(err);
       alert("Action failed. Check database connection.");
     } finally {
       setActionLoading(false);
@@ -221,6 +225,7 @@ const AdminDashboard: React.FC = () => {
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <Loader2 className="animate-spin text-hotel-primary mb-4" size={40} />
       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Master Data...</p>
+      {loadError && <p className="mt-4 text-[9px] text-red-500 font-bold uppercase tracking-widest">{loadError}</p>}
     </div>
   );
 
@@ -300,7 +305,6 @@ const AdminDashboard: React.FC = () => {
                    }`}>
                      {user.role || 'guest'}
                    </span>
-                   <span className="text-[9px] font-bold text-gray-400 truncate opacity-60">ID: {user.uid.slice(0, 8)}</span>
                 </div>
               </div>
             </div>
@@ -336,7 +340,6 @@ const AdminDashboard: React.FC = () => {
                     {user.role === 'manager' && !isOwner && <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5 pr-4"><Shield size={12}/> Manager</span>}
                  </div>
                )}
-               
                {roleUpdatingUid === user.uid && <Loader2 className="animate-spin text-hotel-primary" size={16} />}
             </div>
           </div>
@@ -363,29 +366,6 @@ const AdminDashboard: React.FC = () => {
                          <p className="text-2xl font-sans font-black text-amber-700 leading-none">{pendingCount}</p>
                       </div>
                    </div>
-
-                   <div className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-2 flex items-center gap-3"><Calendar size={16} className="text-hotel-primary"/> Range Filter</h4>
-                      <div className="space-y-4">
-                         <div className="space-y-1">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Start Date</label>
-                            <input type="date" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:border-hotel-primary" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} />
-                         </div>
-                         <div className="space-y-1">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">End Date</label>
-                            <input type="date" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs font-bold outline-none focus:border-hotel-primary" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} />
-                         </div>
-                         <button 
-                           onClick={() => setDateRange({
-                             start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                             end: new Date().toISOString().split('T')[0]
-                           })}
-                           className="w-full py-3 text-[9px] font-black uppercase text-hotel-primary hover:bg-red-50 rounded-xl transition-all"
-                         >
-                           Reset to Last 30 Days
-                         </button>
-                      </div>
-                   </div>
                 </div>
              </div>
 
@@ -399,9 +379,10 @@ const AdminDashboard: React.FC = () => {
                       <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
                    </div>
                    <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                      {logs.slice().reverse().slice(0, 100).map((log) => (
+                      {logs.map((log) => (
                         <div key={log.id} className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 flex gap-5 items-start">
                            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                              {/* Fix: Included missing RefreshCw icon from lucide-react */}
                               {log.action.includes('BOOKING') ? <ClipboardCheck size={18} className="text-green-600" /> : log.action.includes('ROLE') ? <Shield size={18} className="text-blue-600" /> : <RefreshCw size={18} className="text-amber-600" />}
                            </div>
                            <div className="min-w-0 flex-1">
@@ -410,21 +391,10 @@ const AdminDashboard: React.FC = () => {
                                  <span className="text-[8px] font-bold text-gray-400 whitespace-nowrap ml-2">{new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                               </div>
                               <p className="text-[12px] text-gray-600 leading-relaxed font-medium mb-2">{log.details}</p>
-                              <div className="flex items-center gap-2">
-                                 <div className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=${log.actorName}`} className="w-full h-full object-cover" />
-                                 </div>
-                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Actor: {log.actorName}</span>
-                              </div>
+                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Actor: {log.actorName}</p>
                            </div>
                         </div>
                       ))}
-                      {logs.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50 p-20">
-                           <History size={48} className="mb-4" />
-                           <p className="text-[10px] font-black uppercase">No registry actions recorded yet</p>
-                        </div>
-                      )}
                    </div>
                 </div>
              </div>
@@ -435,7 +405,6 @@ const AdminDashboard: React.FC = () => {
       {selectedBooking && createPortal(
         <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 animate-fade-in">
           <div className="bg-white w-full max-w-5xl rounded-none md:rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative">
-            
             <div className="px-6 md:px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
                <div className="flex items-center gap-5">
                   <div className="w-12 h-12 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100">
@@ -452,7 +421,6 @@ const AdminDashboard: React.FC = () => {
                  <X size={24}/>
                </button>
             </div>
-
             <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 space-y-10">
                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-1 space-y-6">
@@ -463,138 +431,48 @@ const AdminDashboard: React.FC = () => {
                               <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Room Category</p>
                               <p className="text-lg font-black text-gray-900">{selectedBooking.roomTitle}</p>
                            </div>
-                           <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Check In</p>
-                                 <p className="text-xs font-black text-gray-800">{selectedBooking.checkIn}</p>
-                              </div>
-                              <div>
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Check Out</p>
-                                 <p className="text-xs font-black text-gray-800">{selectedBooking.checkOut}</p>
-                              </div>
-                           </div>
                            <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
                               <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest">Total Price</p>
                               <p className="text-xl font-sans font-black text-gray-900 tracking-tighter">৳{selectedBooking.price}</p>
                            </div>
                         </div>
                      </section>
-
-                     <section className="bg-white p-6 rounded-[2rem] border border-gray-100">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><UserCheck size={12} className="text-hotel-primary" /> Submitter Info</h4>
-                        <div className="space-y-3">
-                           <div className="flex items-center gap-3">
-                              <Mail size={14} className="text-gray-400" />
-                              <span className="text-xs font-bold text-gray-600 truncate">{selectedBooking.userEmail}</span>
-                           </div>
-                           <p className="text-[10px] text-gray-400 font-medium italic">Applied on {new Date(selectedBooking.createdAt).toLocaleString()}</p>
-                        </div>
-                     </section>
-
                      {selectedBooking.status === 'pending' && (
                        <div className="p-6 bg-amber-50 rounded-[2rem] border border-amber-100 space-y-4">
                           <h4 className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Registry Action</h4>
                           <div className="space-y-4">
                              <div className="space-y-1.5">
                                 <label className="text-[9px] font-black text-amber-600 uppercase tracking-widest ml-1">Assign Room No</label>
-                                <input 
-                                  placeholder="e.g. 302"
-                                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-black outline-none focus:border-hotel-primary"
-                                  value={roomNumberInput}
-                                  onChange={e => setRoomNumberInput(e.target.value)}
-                                />
+                                <input placeholder="e.g. 302" className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-black outline-none focus:border-hotel-primary" value={roomNumberInput} onChange={e => setRoomNumberInput(e.target.value)} />
                              </div>
-                             <button 
-                               onClick={() => handleBookingAction(selectedBooking, 'accepted', roomNumberInput)}
-                               disabled={!roomNumberInput || actionLoading}
-                               className="w-full bg-green-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-                             >
+                             <button onClick={() => handleBookingAction(selectedBooking, 'accepted', roomNumberInput)} disabled={!roomNumberInput || actionLoading} className="w-full bg-green-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-100 flex items-center justify-center gap-2 transition-all active:scale-95">
                                {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <><CheckCircle2 size={16} /> Verify & Accept</>}
                              </button>
                              <div className="h-[1px] bg-amber-200"></div>
-                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-amber-600 uppercase tracking-widest ml-1">Rejection Reason</label>
-                                <textarea 
-                                  placeholder="Reason..."
-                                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-xs font-bold outline-none resize-none h-20"
-                                  value={rejectionReason}
-                                  onChange={e => setRejectionReason(e.target.value)}
-                                />
-                             </div>
-                             <button 
-                               onClick={() => handleBookingAction(selectedBooking, 'rejected', rejectionReason)}
-                               disabled={actionLoading}
-                               className="w-full border border-red-200 text-red-600 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all"
-                             >
-                               Reject Submission
-                             </button>
+                             <button onClick={() => handleBookingAction(selectedBooking, 'rejected', rejectionReason)} disabled={actionLoading} className="w-full border border-red-200 text-red-600 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all">Reject Submission</button>
                           </div>
                        </div>
                      )}
                   </div>
-
                   <div className="lg:col-span-2 space-y-8">
                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
                         <Users size={16} className="text-hotel-primary" /> Submitted Guest Identities ({selectedBooking.totalGuests})
                      </h4>
-                     
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {selectedBooking.guests.map((guest, idx) => (
-                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:border-hotel-primary/30 transition-all">
+                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                              <div className="p-6 bg-gray-50 border-b border-gray-100 flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-hotel-primary shadow-sm">
-                                   <User size={20} />
-                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-hotel-primary shadow-sm"><User size={20} /></div>
                                 <div className="min-w-0">
                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guest {idx + 1}</p>
                                    <h5 className="text-sm font-black text-gray-900 truncate uppercase">{guest.legalName}</h5>
                                 </div>
                              </div>
                              <div className="p-6 space-y-4">
-                                <div className="grid grid-cols-1 gap-4">
-                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
-                                      <Phone size={14} className="text-hotel-primary" /> 
-                                      <div>
-                                         <p className="text-[8px] text-gray-400 uppercase">Primary</p>
-                                         <p>{guest.phone || 'N/A'}</p>
-                                      </div>
-                                   </div>
-                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
-                                      <AlertTriangle size={14} className="text-amber-500" /> 
-                                      <div>
-                                         <p className="text-[8px] text-gray-400 uppercase">Guardian</p>
-                                         <p>{guest.guardianPhone || 'N/A'}</p>
-                                      </div>
-                                   </div>
-                                   <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
-                                      <Calendar size={14} className="text-hotel-primary" /> 
-                                      <div>
-                                         <p className="text-[8px] text-gray-400 uppercase">Age</p>
-                                         <p>{guest.age || 'N/A'}</p>
-                                      </div>
-                                   </div>
-                                </div>
-                                <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                   <IdCard size={14} className="text-hotel-primary" /> NID: {guest.nidNumber || 'UNSUBMITTED'}
-                                </div>
-                                {guest.nidImageUrl ? (
-                                   <div className="mt-4">
-                                      <div 
-                                        onClick={() => setLightboxUrl(guest.nidImageUrl)}
-                                        className="w-full aspect-video rounded-[1.5rem] overflow-hidden shadow-md border-2 border-white bg-gray-100 relative group cursor-zoom-in"
-                                      >
-                                         <img src={guest.nidImageUrl} className="w-full h-full object-contain" />
-                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                            <Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={24} />
-                                         </div>
-                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[8px] font-black uppercase shadow-sm">Digital Document</div>
-                                      </div>
-                                   </div>
-                                ) : (
-                                   <div className="p-8 border-2 border-dashed border-gray-100 rounded-[1.5rem] text-center opacity-40">
-                                      <AlertTriangle className="mx-auto mb-2 text-gray-300" size={24} />
-                                      <p className="text-[9px] font-black uppercase">Document Waived</p>
-                                   </div>
+                                <div className="flex items-center gap-3 text-[11px] font-black text-gray-600"><Phone size={14} className="text-hotel-primary" /> {guest.phone || 'N/A'}</div>
+                                <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100"><IdCard size={14} className="text-hotel-primary" /> NID: {guest.nidNumber || 'UNSUBMITTED'}</div>
+                                {guest.nidImageUrl && (
+                                   <div className="mt-4"><div onClick={() => setLightboxUrl(guest.nidImageUrl)} className="w-full aspect-video rounded-[1.5rem] overflow-hidden shadow-md border-2 border-white bg-gray-100 relative group cursor-zoom-in"><img src={guest.nidImageUrl} className="w-full h-full object-contain" /><div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center"><Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={24} /></div></div></div>
                                 )}
                              </div>
                           </div>
@@ -603,10 +481,6 @@ const AdminDashboard: React.FC = () => {
                   </div>
                </div>
             </div>
-
-            <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex justify-center shrink-0">
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Hotel Shotabdi Residential • Registry Hub</p>
-            </div>
           </div>
         </div>,
         document.body
@@ -614,9 +488,7 @@ const AdminDashboard: React.FC = () => {
 
       {lightboxUrl && (
         <div className="fixed inset-0 z-[10001] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxUrl(null)}>
-          <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4 transition-colors">
-            <X size={32} />
-          </button>
+          <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4 transition-colors"><X size={32} /></button>
           <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Document Full View" />
         </div>
       )}
@@ -624,20 +496,10 @@ const AdminDashboard: React.FC = () => {
       {managerGateUid && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
            <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 text-center animate-fade-in">
-              <div className="w-16 h-16 bg-hotel-primary/10 text-hotel-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-6">
-                <ShieldAlert size={32} />
-              </div>
+              <div className="w-16 h-16 bg-hotel-primary/10 text-hotel-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-6"><ShieldAlert size={32} /></div>
               <h2 className="text-2xl font-serif font-black mb-2">Security Gate</h2>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-8">Enter Master Admin Key</p>
-              <input 
-                type="password" 
-                autoFocus
-                placeholder="••••••••" 
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 px-6 font-black text-center text-lg outline-none mb-4 focus:border-hotel-primary"
-                value={managerPassword}
-                onChange={e => setManagerPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleMakeManager()}
-              />
+              <input type="password" autoFocus placeholder="••••••••" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 px-6 font-black text-center text-lg outline-none mb-4 focus:border-hotel-primary" value={managerPassword} onChange={e => setManagerPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleMakeManager()} />
               {gateError && <p className="text-[9px] text-hotel-primary font-black uppercase mb-4">{gateError}</p>}
               <div className="flex gap-4">
                  <button onClick={() => {setManagerGateUid(null); setManagerPassword('');}} className="flex-1 py-4 text-[9px] font-black uppercase text-gray-400">Cancel</button>
