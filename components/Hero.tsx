@@ -1,9 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, Bed, Utensils, Map as MapIcon, 
-  Calendar, Users, ChevronDown, Moon, ShieldCheck, Key
+  Calendar, Users, ChevronDown, Moon, ShieldCheck, Key,
+  Tag, MessageSquare, History, Sparkles
 } from 'lucide-react';
 import { HeroConfig } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -50,10 +51,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
   };
 
   const handleSearch = () => {
-    // Navigate to rooms with the specific category ID to trigger highlighting
     navigate(`/rooms?category=${selectedRoomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
-    
-    // Smooth scroll if already on the page or after navigation
     setTimeout(() => {
       const element = document.getElementById(selectedRoomId);
       if (element) {
@@ -76,12 +74,21 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
     { id: 'guide', label: 'Tourist Guide', icon: <MapIcon size={16} />, path: '/guide' }
   ];
 
+  const shortcuts = [
+    { id: 'rooms', label: 'Our Rooms', icon: <Bed size={18} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'offers', label: 'Offers', icon: <Tag size={18} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
+    { id: 'restaurants', label: 'Dining', icon: <Utensils size={18} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'guide', label: 'Guide', icon: <MapIcon size={18} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
+    { id: 'mystays', label: 'History', icon: <History size={18} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { id: 'helpdesk', label: 'Support', icon: <MessageSquare size={18} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  ];
+
   const selectedRoom = ROOMS_DATA.find(r => r.id === selectedRoomId);
   const checkInDisplay = formatDateLabel(checkIn);
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section className="relative min-h-[65vh] md:min-h-[85vh] flex flex-col items-center justify-center pt-6 md:pt-12 pb-16 md:pb-24 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
+    <section id="hero-section" className="relative min-h-[65vh] md:min-h-[95vh] flex flex-col items-center justify-center pt-6 md:pt-12 pb-16 md:pb-24 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
       {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">
         <img 
@@ -106,8 +113,11 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         {/* Simple Header Text */}
         <div className="mb-6 md:mb-10 text-center animate-fade-in max-w-3xl">
-          <h2 className="text-white text-2xl md:text-5xl font-serif font-black mb-2 md:mb-4 leading-tight tracking-tight px-4">
-             Premium Residential Services
+          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 backdrop-blur border border-white/10 text-white/60 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] mb-4 md:mb-6">
+            <Sparkles size={12} className="text-hotel-primary" /> Premier Residential Hub
+          </div>
+          <h2 className="text-white text-3xl md:text-6xl font-serif font-black mb-3 md:mb-5 leading-tight tracking-tight px-4">
+             Experience Elite Hospitality
           </h2>
           <p className="text-[10px] md:text-base text-white/60 font-medium leading-relaxed opacity-90 px-6 max-w-2xl mx-auto">
             {isEditMode ? (
@@ -121,9 +131,8 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
         </div>
 
         {/* The Refined Hotel Booking Widget */}
-        <div className="w-full max-w-6xl bg-white rounded-[1.2rem] md:rounded-[1.5rem] shadow-[0_40px_120px_rgba(0,0,0,0.6)] border border-white/10 overflow-visible animate-fade-in">
+        <div className="w-full max-w-6xl bg-white rounded-[1.2rem] md:rounded-[1.5rem] shadow-[0_40px_120px_rgba(0,0,0,0.6)] border border-white/10 overflow-visible animate-fade-in mb-8 md:mb-16">
           
-          {/* Top Tabs Bar - Minimized for better mobile density */}
           <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar scroll-smooth bg-gray-50/50 rounded-t-[1.2rem] md:rounded-t-[1.5rem]">
             {tabs.map((tab) => (
               <button
@@ -145,7 +154,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
           </div>
 
           <div className="p-4 md:p-10">
-            {/* Rates & Guests Info Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-10">
               <div className="flex items-center gap-2 bg-green-50/50 px-4 py-2.5 rounded-xl border border-green-100/50 text-[9px] md:text-xs font-black group shrink-0">
                 <ShieldCheck size={12} className="text-green-500" />
@@ -158,10 +166,8 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
               </div>
             </div>
 
-            {/* Main Functional Row - Balanced for density */}
             <div className="flex flex-col lg:flex-row gap-0.5 items-stretch bg-gray-100 rounded-xl md:rounded-[1.5rem] overflow-hidden border border-gray-100">
               
-              {/* Room Category Box */}
               <div className="relative flex-[1.2]">
                 <div 
                   onClick={() => setShowRoomDropdown(!showRoomDropdown)}
@@ -181,7 +187,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                   </div>
                 </div>
 
-                {/* Optimized Dropdown Menu */}
                 {showRoomDropdown && (
                   <div className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[250px] overflow-y-auto no-scrollbar">
                     {ROOMS_DATA.map((room) => (
@@ -204,7 +209,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                 )}
               </div>
 
-              {/* Check-in Date Picker */}
               <div 
                 onClick={() => checkInRef.current?.showPicker()}
                 className="relative flex-1 bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
@@ -228,7 +232,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                 </div>
               </div>
 
-              {/* Check-out Date Picker */}
               <div 
                 onClick={() => checkOutRef.current?.showPicker()}
                 className="relative flex-1 bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
@@ -252,7 +255,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                 </div>
               </div>
 
-              {/* High Contrast Action Button - Optimized for Desktop & Mobile */}
               <button 
                 onClick={handleSearch}
                 className="bg-hotel-primary hover:bg-[#B22222] text-white px-8 md:px-12 py-5 md:py-8 lg:py-0 rounded-b-lg lg:rounded-r-[1.5rem] lg:rounded-b-none flex items-center justify-center transition-all active:scale-[0.98] shadow-inner gap-3 shrink-0"
@@ -264,12 +266,34 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
           </div>
         </div>
 
+        {/* Section Shortcuts Grid - Added directly to Hero */}
+        <div className="w-full max-w-5xl px-4 md:px-0">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-6 animate-fade-in delay-200">
+            {shortcuts.map((item) => (
+              <Link
+                key={item.id}
+                to={item.path}
+                className="flex flex-col items-center group"
+              >
+                <div className={`w-12 h-12 md:w-16 md:h-16 ${item.bg} rounded-2xl md:rounded-3xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl shadow-black/5 mb-3 ring-1 ring-white/10 group-hover:ring-hotel-primary/20`}>
+                   <div className={`${item.color} group-hover:scale-110 transition-transform`}>
+                     {item.icon}
+                   </div>
+                </div>
+                <span className="text-[8px] md:text-[10px] font-black text-white/50 group-hover:text-hotel-primary uppercase tracking-[0.2em] transition-colors text-center">
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Minimized Scroll Indicator */}
-        <div className="mt-8 md:mt-12 flex flex-col items-center gap-2 animate-bounce">
+        <div className="mt-12 md:mt-20 flex flex-col items-center gap-2 animate-bounce">
             <div className="w-7 h-7 md:w-10 md:h-10 bg-white/5 backdrop-blur rounded-full flex items-center justify-center text-white/40 border border-white/10">
                 <ChevronDown size={18} />
             </div>
-            <span className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Tourist Guide</span>
+            <span className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Scroll Explore</span>
         </div>
       </div>
       

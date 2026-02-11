@@ -235,6 +235,13 @@ const AppContent = () => {
     reader.readAsDataURL(file);
   };
 
+  const scrollToHero = (e?: React.MouseEvent) => {
+    if (location.pathname === '/') {
+      e?.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const scrollToAbout = () => {
     const footer = document.getElementById('about');
     if (footer) {
@@ -263,11 +270,12 @@ const AppContent = () => {
           <div className="flex items-center gap-3 group relative">
             <Link 
               to="/" 
-              className="flex items-center gap-3 group"
-              onClick={() => {
+              onClick={(e) => {
+                scrollToHero(e);
                 setIsLogoSpinning(true);
                 setTimeout(() => setIsLogoSpinning(false), 2000);
               }}
+              className="flex items-center gap-3 group"
             >
               <div className="relative">
                 <img 
@@ -279,7 +287,7 @@ const AppContent = () => {
                 />
                 {isEditMode && (
                   <button 
-                    onClick={(e) => { e.preventDefault(); logoInputRef.current?.click(); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); logoInputRef.current?.click(); }}
                     className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
                   >
                     <Upload size={14} />
@@ -305,10 +313,12 @@ const AppContent = () => {
         <nav className="hidden lg:flex items-center bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
+            const isHome = item.id === 'home';
             return (
               <Link
                 key={item.id}
                 to={item.path}
+                onClick={isHome ? scrollToHero : undefined}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 relative group ${
                   isActive 
                     ? 'text-hotel-primary font-black' 
