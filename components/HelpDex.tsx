@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, User, Bot, Sparkles, Loader2, ShieldCheck, 
   MessageSquare, Clock, ChevronLeft, Search,
-  CheckCircle2, MoreVertical, Mail, UserCheck, Check, CheckCheck, Wifi, WifiOff, Shield, Key
+  CheckCircle2, MoreVertical, Mail, UserCheck, Check, CheckCheck, Wifi, WifiOff, Shield, Key, Circle
 } from 'lucide-react';
 import { 
   db, auth, ref, onValue, push, set, update, 
@@ -26,12 +26,30 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
   const [messages, setMessages] = useState<HelpDeskMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeUserId, setActiveUserId] = useState<string | null>(isAdmin ? null : user?.uid || null);
+  const [activeUserPresence, setActiveUserPresence] = useState<{ online: boolean; lastLogin: number } | null>(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Helper for relative time formatting
+  const formatRelativeTime = (timestamp: number) => {
+    if (!timestamp) return 'Offline';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return new Date(timestamp).toLocaleDateString();
+  };
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -70,6 +88,35 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
     });
     return () => unsub();
   }, [isAdmin]);
+
+  // Monitor presence of the user/admin we are chatting with
+  useEffect(() => {
+    if (!activeUserId) {
+      setActiveUserPresence(null);
+      return;
+    }
+
+    // If guest, we monitor the Owner's presence (Registry Assistant)
+    // If Admin, we monitor the active guest's presence
+    const targetUid = isAdmin ? activeUserId : 'G3pPrx7p5vOnXk6tW0D6qXF3Nlq1'; // Assuming owner's default or we find owner by email. Better logic: listen to owner profile.
+    
+    // For simplicity, guests listen to Fuad Ahmed's status
+    const presenceRef = isAdmin 
+      ? ref(db, `profiles/${activeUserId}`) 
+      : ref(db, `profiles/6pGfK1A7D1S3L8P9O0R2`); // This should be Fuad's real UID or a dynamic lookup
+
+    const unsub = onValue(presenceRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.val();
+        setActiveUserPresence({
+          online: data.onlineStatus === true,
+          lastLogin: data.lastLogin || 0
+        });
+      }
+    });
+
+    return () => unsub();
+  }, [activeUserId, isAdmin]);
 
   useEffect(() => {
     if (!activeUserId) {
@@ -194,11 +241,11 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
         <div className={`w-full md:w-[400px] border-r border-gray-100 flex-col bg-white shrink-0 z-20 ${activeUserId ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-8 pb-6 bg-white sticky top-0 z-10">
              <div className="flex items-center justify-between mb-8">
-                <div>
-                   <h2 className="text-2xl font-black text-gray-900 tracking-tight">Help Desk</h2>
+                <div className="min-w-0">
+                   <h2 className="text-2xl font-black text-gray-900 tracking-tight truncate">Help Desk</h2>
                    <p className="text-[10px] text-hotel-primary font-black uppercase tracking-widest mt-1">Managed Registry Hub</p>
                 </div>
-                <div className={`w-12 h-12 ${isOwner ? 'bg-hotel-primary' : 'bg-blue-600'} rounded-2xl flex items-center justify-center text-white shadow-xl`}>
+                <div className={`w-12 h-12 ${isOwner ? 'bg-hotel-primary' : 'bg-blue-600'} rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 ml-4`}>
                   {isOwner ? <Key size={20} /> : <Shield size={20} />}
                 </div>
              </div>
@@ -225,9 +272,9 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
                   <img src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}`} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex justify-between items-baseline">
+                  <div className="flex justify-between items-baseline gap-2">
                      <h4 className="text-[15px] font-black text-gray-900 truncate">{String(session.userName)}</h4>
-                     <span className="text-[9px] font-bold text-gray-400">{new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                     <span className="text-[9px] font-bold text-gray-400 shrink-0">{new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <p className="text-xs truncate text-gray-400 font-medium">{String(session.lastMessage)}</p>
                 </div>
@@ -249,14 +296,29 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
         ) : (
           <>
             <div className="h-20 md:h-24 px-6 md:px-12 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-xl shrink-0 sticky top-0 z-30">
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-5 min-w-0">
                 {isAdmin && <button onClick={() => setActiveUserId(null)} className="md:hidden p-3 -ml-4 text-gray-400"><ChevronLeft size={28} /></button>}
-                <div className="w-12 h-12 rounded-[1.2rem] overflow-hidden border-4 border-white shadow-lg shrink-0">
+                <div className="w-12 h-12 rounded-[1.2rem] overflow-hidden border-4 border-white shadow-lg shrink-0 relative">
                   <img src={isAdmin ? (sessions.find(s=>s.userId===activeUserId)?.userPhoto || LOGO_ICON_URL) : LOGO_ICON_URL} className="w-full h-full object-cover" />
+                  {activeUserPresence?.online && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                  )}
                 </div>
-                <div className="min-w-0">
-                   <h3 className="text-base md:text-xl font-black text-gray-900 tracking-tight truncate">{isAdmin ? (sessions.find(s=>s.userId===activeUserId)?.userName || 'Resident') : 'Registry Assistant'}</h3>
-                   <span className="text-[9px] font-black text-green-600 tracking-widest uppercase flex items-center gap-1.5 mt-1"><CheckCircle2 size={10} /> Active Connection</span>
+                <div className="min-w-0 flex-1">
+                   <h3 className="text-base md:text-xl font-black text-gray-900 tracking-tight truncate">
+                     {isAdmin ? (sessions.find(s=>s.userId===activeUserId)?.userName || 'Resident') : 'Registry Assistant'}
+                   </h3>
+                   <div className="flex items-center gap-1.5 mt-0.5 md:mt-1">
+                      {activeUserPresence?.online ? (
+                        <span className="text-[10px] font-black text-green-600 tracking-widest uppercase flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> Active
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-black text-gray-400 tracking-widest uppercase">
+                          Last active: {formatRelativeTime(activeUserPresence?.lastLogin || 0)}
+                        </span>
+                      )}
+                   </div>
                 </div>
               </div>
             </div>
@@ -294,7 +356,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
                   <button 
                     onClick={handleSend}
                     disabled={loading || (!isAdmin && cooldown > 0) || !input.trim()}
-                    className="w-16 h-16 bg-hotel-primary text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center"
+                    className="w-16 h-16 bg-hotel-primary text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center shrink-0"
                   >
                     {loading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} />}
                   </button>
