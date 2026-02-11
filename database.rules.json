@@ -1,3 +1,4 @@
+
 {
   "rules": {
     "site-config": {
@@ -8,8 +9,8 @@
       ".indexOn": ["userId", "status"],
       ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
       "$bookingId": {
-        ".read": "data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com'",
-        ".write": "auth != null && (data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        ".read": "data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager'",
+        ".write": "auth != null && (data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')"
       }
     },
     "roles": {
@@ -19,9 +20,10 @@
       }
     },
     "profiles": {
+      ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')",
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
-        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+        ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')"
       }
     },
     "help_dex": {
