@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
+import HomeShortcuts from './components/HomeShortcuts';
 import ExclusiveOffers from './components/ExclusiveOffers';
 import OfferPage from './components/OfferPage';
 import RoomGrid from './components/RoomGrid';
@@ -133,7 +134,6 @@ const AppContent = () => {
         setIsProfileMenuOpen(false);
       }
       if (activeFooterChoice) {
-         // Logic to close footer contact choice if clicking away
          const footerElement = document.getElementById('main-footer');
          if (footerElement && !footerElement.contains(event.target as Node)) {
             setActiveFooterChoice(null);
@@ -491,7 +491,7 @@ const AppContent = () => {
 
         <div className="flex-1">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={(f) => uploadToR2(f, 'hero')} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} onClaim={(o) => setActiveDiscount(o.discountPercent || 0)} /><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} /></>} />
+            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={(f) => uploadToR2(f, 'hero')} /><HomeShortcuts /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} onClaim={(o) => setActiveDiscount(o.discountPercent || 0)} /><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} /></>} />
             <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />} />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} />} />
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} />} />
