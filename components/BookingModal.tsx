@@ -33,8 +33,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
   });
 
   const contactNumbers = [
-    { value: "+880 1717-425702", clean: "+8801717425702" },
-    { value: "+880 1334-935566", clean: "+8801334935566" }
+    { value: "+880 1717-425702", clean: "8801717425702" },
+    { value: "+880 1334-935566", clean: "8801334935566" }
   ];
 
   const [guests, setGuests] = useState<GuestInfo[]>(() => {
@@ -92,7 +92,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
         const url = await onImageUpload(file);
         handleGuestChange(idx, 'nidImageUrl', url);
       } catch (err) {
-        alert("NID upload failed. Try a smaller image.");
+        alert("ID upload failed. Try a smaller image.");
       } finally {
         setUploadingGuestIndex(null);
       }
@@ -165,7 +165,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                    <div key={num.value} className="relative">
                       <button 
                         onClick={() => setActiveNumberChoice(activeNumberChoice === num.value ? null : num.value)}
-                        className={`w-full p-6 rounded-3xl border-2 transition-all flex items-center justify-between group active:scale-95 ${activeNumberChoice === num.value ? 'bg-hotel-primary border-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 border-gray-100 text-gray-900 hover:border-hotel-primary/30'}`}
+                        className={`w-full p-6 rounded-3xl border-2 transition-all flex items-center justify-between group active:scale-95 ${activeNumberChoice === num.value ? 'bg-hotel-primary border-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 border-gray-100 text-gray-900 hover:bg-white hover:border-hotel-primary/30'}`}
                       >
                          <div className="flex items-center gap-4">
                             <Phone size={24} className={activeNumberChoice === num.value ? 'text-white' : 'text-hotel-primary'} />
@@ -179,7 +179,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                            <a href={`tel:${num.clean}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
                               <PhoneCall size={18} /> Direct Call
                            </a>
-                           <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                           <a href={`https://wa.me/${num.clean}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
                               <MessageSquare size={18} /> WhatsApp
                            </a>
                         </div>
@@ -296,7 +296,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
 
                               {idx < 2 ? (
                                 <div className="space-y-1.5">
-                                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Digits</label>
+                                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">ID Number</label>
                                    <input 
                                       placeholder="NID Number" 
                                       className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
@@ -321,7 +321,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
 
                            {idx < 2 ? (
                               <div className="space-y-1.5">
-                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Registry Scan</label>
+                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">ID Registry Scan</label>
                                  <div className={`relative border-2 border-dashed rounded-[2rem] p-6 transition-all h-full min-h-[120px] flex items-center justify-center ${guest.nidImageUrl ? 'border-green-200 bg-green-50/10' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
                                     {idx !== 0 && (
                                        <input type="file" accept="image/*" onChange={e => handleNidUpload(idx, e)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
@@ -331,7 +331,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                                           <div className="w-24 h-16 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-gray-200">
                                              <img src={guest.nidImageUrl} className="w-full h-full object-cover" />
                                           </div>
-                                          <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Linked</p>
+                                          <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Verified</p>
                                        </div>
                                     ) : (
                                        <div className="text-center">
@@ -344,7 +344,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                            ) : (
                               <div className="bg-gray-50/50 rounded-[2rem] border border-gray-100 p-8 flex flex-col items-center justify-center opacity-40">
                                  <UserIcon size={32} className="text-gray-300 mb-2" />
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Full Identity Verification<br/>Waived for Addl. Guests</p>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center leading-relaxed">Identity Waived<br/>for Additional Guests</p>
                               </div>
                            )}
                         </div>
@@ -364,7 +364,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                     disabled={!isStep1Valid}
                     className="flex-1 bg-gray-900 text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 transition-all active:scale-95"
                  >
-                    Verify Identities <ArrowRight size={18} />
+                    Verify Guests <ArrowRight size={18} />
                  </button>
                ) : (
                  <button 
@@ -372,7 +372,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                     disabled={loading || !isStep2Valid || hasExistingPending}
                     className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
                  >
-                    {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Book Now</>}
+                    {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Finalize Booking</>}
                  </button>
                )}
             </div>

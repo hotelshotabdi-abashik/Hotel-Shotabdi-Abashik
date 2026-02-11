@@ -60,50 +60,46 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
     
     const content = (
       <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-4 animate-fade-in overflow-hidden print:bg-white print:p-0">
-         <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:block print:h-auto print:max-h-none print:shadow-none print:border-none print:rounded-none">
+         <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[92vh] border border-white/20 overflow-hidden relative print:block print:h-auto print:max-h-none print:shadow-none print:border-none print:rounded-none">
             
             {/* Header for Receipt */}
             <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:bg-white print:border-b-2 print:border-gray-200">
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100 print:bg-black print:w-12 print:h-12 print:shadow-none">
+                  <div className="w-14 h-14 md:w-16 md:h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100 print:bg-black print:w-12 print:h-12 print:shadow-none">
                      <Receipt size={32} />
                   </div>
                   <div>
-                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none uppercase print:text-xl">Stay Invoice</h2>
+                     <h2 className="text-xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none uppercase print:text-xl">Stay Invoice</h2>
                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2 print:mt-1 print:text-[8px]">
                        <Database size={12} className="print:hidden" /> Registry ID: {selectedBooking.id}
                      </p>
                   </div>
                </div>
                <div className="flex items-center gap-4 print:hidden">
-                 <button onClick={handlePrint} className="p-4 bg-white rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all shadow-sm border border-gray-100 active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase tracking-widest">
-                   <Download size={20}/>
-                   <span className="hidden md:inline">Download Record</span>
+                 <button onClick={handlePrint} className="p-3 md:p-4 bg-white rounded-2xl text-hotel-primary hover:bg-hotel-primary hover:text-white transition-all shadow-sm border border-gray-100 active:scale-95 flex items-center gap-2 font-black text-[9px] md:text-[10px] uppercase tracking-widest shrink-0">
+                   <Download size={18}/>
+                   <span className="hidden md:inline">Download</span>
                  </button>
-                 <button onClick={() => setSelectedBooking(null)} className="p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95">
+                 <button onClick={() => setSelectedBooking(null)} className="p-3 md:p-4 bg-white rounded-2xl text-gray-400 hover:text-hotel-primary transition-all shadow-sm border border-gray-100 active:scale-95 shrink-0">
                    <X size={24}/>
                  </button>
                </div>
-               <div className="hidden print:block text-right">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Generated On</p>
-                  <p className="text-[10px] font-black text-gray-900 uppercase">{new Date().toLocaleDateString()}</p>
-               </div>
             </div>
 
-            <div id="print-record-scroll" className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible print:p-6">
+            <div id="print-record-scroll" className="flex-1 overflow-y-auto p-6 md:p-12 no-scrollbar print:overflow-visible print:p-6 bg-white">
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:block">
                   
                   {/* Summary Sidebar */}
                   <div className="lg:col-span-4 space-y-8 print:w-full print:mb-8">
                     <section className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Resident Information</h4>
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Resident Info</h4>
                       <div className="space-y-4 print:grid print:grid-cols-2 print:gap-4 print:space-y-0">
                          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 print:bg-white print:border-gray-200">
-                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 print:text-[7px]">Reserved Category</p>
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 print:text-[7px]">Room Type</p>
                            <p className="text-base font-black text-gray-900 print:text-sm">{selectedBooking.roomTitle}</p>
                            {selectedBooking.roomNumber && (
                              <div className="mt-3 pt-3 border-t border-gray-200">
-                               <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1 print:text-black print:text-[7px]">Allocated Unit</p>
+                               <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1 print:text-black print:text-[7px]">Unit</p>
                                <p className="text-xl font-black text-gray-900 print:text-lg">Room {selectedBooking.roomNumber}</p>
                              </div>
                            )}
@@ -122,33 +118,28 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                     </section>
 
                     <section className="space-y-4 print:mt-6">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Financial Log</h4>
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Financials</h4>
                       <div className="bg-[#B22222]/5 p-6 rounded-3xl border border-[#B22222]/10 flex items-center justify-between print:bg-white print:border-2 print:border-black print:rounded-xl">
                          <div>
                            <p className="text-[10px] font-black text-[#B22222] uppercase tracking-widest print:text-black print:text-[8px]">Grand Total</p>
-                           <p className="hidden print:block text-[7px] text-gray-400 font-bold uppercase">Includes Taxes & Fees</p>
                          </div>
                          <p className="text-3xl font-serif font-black text-[#B22222] print:text-2xl print:text-black">৳{selectedBooking.price}</p>
                       </div>
                     </section>
                   </div>
 
-                  {/* Identity Records - NO IMAGES FOR PRINT */}
+                  {/* Identity Records */}
                   <div className="lg:col-span-8 space-y-10 print:w-full">
-                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Registered Occupants ({selectedBooking.totalGuests})</h4>
+                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Guests ({selectedBooking.totalGuests})</h4>
                      
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-1 print:gap-4">
                         {selectedBooking.guests.map((guest, idx) => (
                           <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col border-l-4 border-l-hotel-primary/20 print:border print:border-gray-200 print:rounded-xl print:border-l-0 print:bg-white print:page-break-inside-avoid">
                              <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center gap-4 print:bg-white print:p-4">
                                 <User size={20} className="text-hotel-primary print:text-black" />
-                                <div>
-                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 print:text-[7px]">Occupant {idx + 1}</p>
+                                <div className="min-w-0">
+                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 print:text-[7px]">Guest {idx + 1}</p>
                                    <h5 className="text-sm font-black text-gray-900 truncate uppercase print:text-xs">{guest.legalName}</h5>
-                                </div>
-                                <div className="ml-auto text-right print:block">
-                                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Verification Status</p>
-                                   <p className="text-[9px] font-black text-green-600 uppercase">Verified</p>
                                 </div>
                              </div>
                              <div className="p-6 space-y-4 print:p-4 print:space-y-2">
@@ -156,14 +147,12 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                                    <Phone size={14} className="text-hotel-primary print:text-black" /> {guest.phone || 'N/A'}
                                 </div>
                                 <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 print:text-[10px]">
-                                   <IdCard size={14} className="text-hotel-primary print:text-black" /> ID NO: {guest.nidNumber}
+                                   <IdCard size={14} className="text-hotel-primary print:text-black" /> ID: {guest.nidNumber}
                                 </div>
-                                {/* NID Image Hidden for Print */}
                                 {guest.nidImageUrl && (
                                    <div className="mt-4 pt-4 border-t border-gray-50 flex flex-col items-center print:hidden">
-                                      <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-2">Verified ID Copy</p>
                                       <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
+                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover opacity-80" />
                                       </div>
                                    </div>
                                 )}
@@ -174,13 +163,13 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
 
                      <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:mt-10 print:border-gray-300 print:p-6 print:rounded-xl print:bg-white">
                         <div>
-                           <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1 print:text-xs">Digital Authorization</h5>
-                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed print:text-[8px]">Authenticated by Hotel Shotabdi Abashik. This record is for residential verification and accounting purposes.</p>
+                           <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1 print:text-xs">Digital Auth</h5>
+                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed print:text-[8px]">Authenticated by Hotel Shotabdi. Residential record only.</p>
                         </div>
                         <div className="flex gap-10 shrink-0 print:gap-8">
                            <div className="text-center">
                               <div className="w-24 h-12 border-b border-gray-900 mb-2 flex items-center justify-center print:w-20 print:h-8">
-                                 <img src={LOGO_ICON_URL} className="w-10 h-10 object-contain opacity-20 print:w-6 print:h-6" />
+                                 <img src={LOGO_ICON_URL} className="w-8 h-8 object-contain opacity-20" />
                               </div>
                               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Official Seal</p>
                            </div>
@@ -190,13 +179,8 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                </div>
             </div>
 
-            <div className="p-10 bg-gray-50 border-t border-gray-100 flex justify-center print:hidden">
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">End of Stay Invoice Record</p>
-            </div>
-            
-            {/* Print Footer */}
-            <div className="hidden print:block p-8 border-t border-gray-200 mt-auto text-center">
-               <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Hotel Shotabdi Abashik • Sylhet, Bangladesh • Official Digital Receipt</p>
+            <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-center print:hidden">
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">End of Record</p>
             </div>
          </div>
       </div>
@@ -211,7 +195,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
           <History size={40} />
         </div>
         <h2 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Stay History Locked</h2>
-        <p className="text-sm text-gray-400 max-w-xs font-medium leading-relaxed">Please authorize your account to view your past stay records and digital identity vault.</p>
+        <p className="text-sm text-gray-400 max-w-xs font-medium leading-relaxed">Please authorize your account to view your past stay records.</p>
       </div>
     );
   }
@@ -235,7 +219,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
          {bookings.length > 0 && (
            <div className="px-6 py-3 bg-hotel-primary/5 rounded-2xl border border-hotel-primary/10 flex items-center gap-3">
               <ShieldCheck size={20} className="text-hotel-primary" />
-              <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest">{bookings.length} Records Synchronized</p>
+              <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest">{bookings.length} Records</p>
            </div>
          )}
       </div>
@@ -258,7 +242,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                      booking.status === 'rejected' ? 'bg-red-100 text-red-600' :
                      'bg-gray-100 text-gray-400'
                    }`}>
-                     {booking.status === 'accepted' ? 'Verified Entry' : booking.status}
+                     {booking.status === 'accepted' ? 'Verified' : booking.status}
                    </span>
                 </div>
                 
@@ -281,7 +265,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
         <div className="bg-gray-50 rounded-[3rem] p-20 text-center border border-gray-100 border-dashed">
            <History className="mx-auto mb-6 text-gray-300" size={64} />
            <h3 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Vault is Empty</h3>
-           <p className="text-sm text-gray-400 mb-10 max-w-sm mx-auto font-medium">You haven't submitted any stay requests yet. Explore our luxury rooms to begin your journey.</p>
+           <p className="text-sm text-gray-400 mb-10 max-w-sm mx-auto font-medium">You haven't submitted any stay requests yet.</p>
            <Link to="/rooms" className="inline-flex items-center gap-3 bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all">
               Browse Rooms <ArrowRight size={16} />
            </Link>

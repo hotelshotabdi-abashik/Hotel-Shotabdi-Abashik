@@ -127,13 +127,18 @@ const AppContent = () => {
     lastUpdated: 0
   });
 
-  // Handle clicks outside of dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
-      if (activeFooterChoice) setActiveFooterChoice(null);
+      if (activeFooterChoice) {
+         // Logic to close footer contact choice if clicking away
+         const footerElement = document.getElementById('main-footer');
+         if (footerElement && !footerElement.contains(event.target as Node)) {
+            setActiveFooterChoice(null);
+         }
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -282,8 +287,8 @@ const AppContent = () => {
   const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
 
   const contactNumbers = [
-    { value: "+880 1717-425702", clean: "+8801717425702" },
-    { value: "+880 1334-935566", clean: "+8801334935566" }
+    { value: "+880 1717-425702", clean: "8801717425702" },
+    { value: "+880 1334-935566", clean: "8801334935566" }
   ];
 
   return (
@@ -519,23 +524,23 @@ const AppContent = () => {
                    <div key={num.value} className="relative">
                       <button 
                         onClick={(e) => { e.stopPropagation(); setActiveFooterChoice(activeFooterChoice === num.value ? null : num.value); }}
-                        className={`block transition-colors ${activeFooterChoice === num.value ? 'text-hotel-primary' : 'hover:text-hotel-primary'}`}
+                        className={`block transition-colors font-bold ${activeFooterChoice === num.value ? 'text-hotel-primary' : 'hover:text-hotel-primary'}`}
                       >
                         {num.value}
                       </button>
                       {activeFooterChoice === num.value && (
-                        <div className="absolute left-0 bottom-full mb-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-[70] animate-fade-in flex flex-col gap-1">
+                        <div className="absolute left-0 bottom-full mb-3 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-[70] animate-fade-in flex flex-col gap-1 ring-1 ring-black/5">
                            <a href={`tel:${num.clean}`} className="flex items-center gap-2 p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
-                              <PhoneCall size={14} /> <span className="text-[9px] font-black uppercase">Call</span>
+                              <PhoneCall size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">Call</span>
                            </a>
-                           <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors">
-                              <MessageSquare size={14} /> <span className="text-[9px] font-black uppercase">WhatsApp</span>
+                           <a href={`https://wa.me/${num.clean}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors">
+                              <MessageSquare size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">WhatsApp</span>
                            </a>
                         </div>
                       )}
                    </div>
                  ))}
-                 <p className="normal-case">hotelshotabdiabashik@gmail.com</p>
+                 <p className="normal-case font-bold">hotelshotabdiabashik@gmail.com</p>
                </address>
                <nav className="space-y-4">
                  <p className="text-gray-900 font-black">Legal</p>

@@ -19,8 +19,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const contactNumbers = [
-    { label: "Line 1", value: "+880 1717-425702", clean: "+8801717425702" },
-    { label: "Line 2", value: "+880 1334-935566", clean: "+8801334935566" }
+    { label: "Registry 1", value: "+880 1717-425702", clean: "+8801717425702" },
+    { label: "Registry 2", value: "+880 1334-935566", clean: "+8801334935566" }
   ];
 
   useEffect(() => {
@@ -116,7 +116,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
       </div>
 
       <div className="p-6 pt-0 space-y-4">
-        {/* About Button */}
         <button 
           onClick={scrollToFooter}
           className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-gray-400 hover:bg-gray-50 hover:text-hotel-primary transition-all duration-300"
@@ -130,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
             <Phone size={14} className="text-gray-400 group-hover:text-hotel-primary transition-colors" />
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Live Desk</span>
           </div>
-          <div className="space-y-2 mb-5">
+          <div className="space-y-2 mb-2">
             {contactNumbers.map((num) => (
               <div key={num.value} className="relative">
                 <button 
@@ -142,12 +141,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
                 </button>
                 
                 {activeNumberChoice === num.value && (
-                  <div className="absolute left-full top-0 ml-4 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-[60] animate-fade-in origin-left">
+                  <div className="absolute left-full top-0 ml-4 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-[60] animate-fade-in origin-left ring-1 ring-black/5">
                      <a href={`tel:${num.clean}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 text-blue-600 transition-all">
                         <PhoneCall size={16} />
                         <span className="text-[10px] font-black uppercase tracking-widest">Direct Call</span>
                      </a>
-                     <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-green-600 transition-all">
+                     <a href={`https://wa.me/${num.clean.replace('+', '').replace(/\s/g, '').replace('-', '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-green-600 transition-all">
                         <MessageSquare size={16} />
                         <span className="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
                      </a>
@@ -156,7 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
               </div>
             ))}
           </div>
-          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center mt-2 opacity-60 italic">Click for direct contact</p>
+          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center mt-2 opacity-60 italic">Click for direct options</p>
         </div>
       </div>
     </aside>
