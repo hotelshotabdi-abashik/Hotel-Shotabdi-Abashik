@@ -206,7 +206,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                    </div>
                    <div>
                       <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight leading-none">Stay Reservation</h3>
-                      <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.2em] mt-1.5">{room.title} • ৳{finalPrice}/night</p>
+                      <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.2em] mt-1.5 font-sans">{room.title} • ৳{finalPrice}/night</p>
                    </div>
                 </div>
                 <button onClick={onClose} className="p-3 bg-white rounded-xl text-gray-400 hover:text-hotel-primary transition-all border border-gray-100 shadow-sm active:scale-95"><X size={20} /></button>
@@ -361,7 +361,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                       disabled={loading || !isStep2Valid || hasExistingPending}
                       className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
                    >
-                      {loading ? <Loader2 className="animate-spin" size={20}/> : <><CheckCircle2 size={18}/> Finalize Booking</>}
+                      {loading ? <Loader2 className="animate-spin" size={20}/> : <><><CheckCircle2 size={18}/> Finalize Booking</>}</>
                    </button>
                  )}
               </div>

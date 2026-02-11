@@ -91,31 +91,36 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
 
   // Monitor presence of the user/admin we are chatting with
   useEffect(() => {
-    if (!activeUserId) {
-      setActiveUserPresence(null);
-      return;
+    if (isAdmin && activeUserId) {
+      // Admin tracks the active guest
+      const presenceRef = ref(db, `profiles/${activeUserId}`);
+      const unsub = onValue(presenceRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.val();
+          setActiveUserPresence({
+            online: data.onlineStatus === true,
+            lastLogin: data.lastUpdated || data.lastLogin || 0
+          });
+        }
+      });
+      return () => unsub();
+    } else if (!isAdmin) {
+      // Guest tracks the owner (Registry Assistant)
+      const profilesRef = ref(db, 'profiles');
+      const unsub = onValue(profilesRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const allProfiles = Object.values(snapshot.val()) as UserProfile[];
+          const ownerProfile = allProfiles.find(p => p.email === OWNER_EMAIL);
+          if (ownerProfile) {
+            setActiveUserPresence({
+              online: ownerProfile.onlineStatus === true,
+              lastLogin: ownerProfile.lastLogin || 0
+            });
+          }
+        }
+      });
+      return () => unsub();
     }
-
-    // If guest, we monitor the Owner's presence (Registry Assistant)
-    // If Admin, we monitor the active guest's presence
-    const targetUid = isAdmin ? activeUserId : 'G3pPrx7p5vOnXk6tW0D6qXF3Nlq1'; // Assuming owner's default or we find owner by email. Better logic: listen to owner profile.
-    
-    // For simplicity, guests listen to Fuad Ahmed's status
-    const presenceRef = isAdmin 
-      ? ref(db, `profiles/${activeUserId}`) 
-      : ref(db, `profiles/6pGfK1A7D1S3L8P9O0R2`); // This should be Fuad's real UID or a dynamic lookup
-
-    const unsub = onValue(presenceRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.val();
-        setActiveUserPresence({
-          online: data.onlineStatus === true,
-          lastLogin: data.lastLogin || 0
-        });
-      }
-    });
-
-    return () => unsub();
   }, [activeUserId, isAdmin]);
 
   useEffect(() => {
@@ -191,7 +196,6 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
         });
         setCooldown(60); 
       } else {
-        // Smart Email Switch: If Manager replies and Guest is Offline
         const guestProfileRef = ref(db, `profiles/${activeUserId}`);
         const guestSnap = await get(guestProfileRef);
         if (guestSnap.exists()) {
@@ -227,14 +231,6 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
     String(s.userEmail || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!user) return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center p-10 text-center">
-      <MessageSquare size={40} className="text-gray-300 mb-6" />
-      <h2 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Access Assistance</h2>
-      <p className="text-sm text-gray-400 font-medium">Please authorize your account to connect.</p>
-    </div>
-  );
-
   return (
     <div className="max-w-[1600px] mx-auto h-[calc(100vh-72px)] md:h-[calc(100vh-88px)] flex overflow-hidden bg-white relative">
       {isAdmin && (
@@ -268,7 +264,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
                 onClick={() => setActiveUserId(session.userId)}
                 className={`w-full p-5 text-left transition-all flex gap-5 rounded-[2rem] border ${activeUserId === session.userId ? 'bg-hotel-primary/5 border-hotel-primary/10 shadow-sm' : 'hover:bg-gray-50 border-transparent'}`}
               >
-                <div className="w-16 h-16 rounded-[1.5rem] overflow-hidden shadow-xl border-4 border-white relative shrink-0">
+                <div className="w-16 h-16 rounded-[1.5rem] overflow-hidden shadow-xl border-4 border-white relative shrink-0 bg-gray-50">
                   <img src={session.userPhoto || `https://ui-avatars.com/api/?name=${session.userName}`} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -295,68 +291,93 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile }) => {
            </div>
         ) : (
           <>
-            <div className="h-20 md:h-24 px-6 md:px-12 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-xl shrink-0 sticky top-0 z-30">
-              <div className="flex items-center gap-5 min-w-0">
-                {isAdmin && <button onClick={() => setActiveUserId(null)} className="md:hidden p-3 -ml-4 text-gray-400"><ChevronLeft size={28} /></button>}
-                <div className="w-12 h-12 rounded-[1.2rem] overflow-hidden border-4 border-white shadow-lg shrink-0 relative">
-                  <img src={isAdmin ? (sessions.find(s=>s.userId===activeUserId)?.userPhoto || LOGO_ICON_URL) : LOGO_ICON_URL} className="w-full h-full object-cover" />
+            <div className="h-20 md:h-24 px-4 md:px-12 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-xl shrink-0 sticky top-0 z-30">
+              <div className="flex items-center gap-4 md:gap-5 min-w-0 flex-1">
+                {isAdmin && <button onClick={() => setActiveUserId(null)} className="md:hidden p-2 -ml-2 text-gray-400"><ChevronLeft size={24} /></button>}
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-[1.2rem] overflow-hidden border-2 md:border-4 border-white shadow-lg shrink-0 relative bg-gray-50 flex items-center justify-center p-1 md:p-2">
+                  <img 
+                    src={!isAdmin ? LOGO_ICON_URL : (sessions.find(s=>s.userId===activeUserId)?.userPhoto || `https://ui-avatars.com/api/?name=${sessions.find(s=>s.userId===activeUserId)?.userName}`)} 
+                    className={`w-full h-full ${!isAdmin ? 'object-contain' : 'object-cover'}`} 
+                    alt="Chat Profile"
+                  />
                   {activeUserPresence?.online && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                   <h3 className="text-base md:text-xl font-black text-gray-900 tracking-tight truncate">
+                   <h3 className="text-sm md:text-xl font-black text-gray-900 tracking-tight truncate leading-none mb-1">
                      {isAdmin ? (sessions.find(s=>s.userId===activeUserId)?.userName || 'Resident') : 'Registry Assistant'}
                    </h3>
-                   <div className="flex items-center gap-1.5 mt-0.5 md:mt-1">
+                   <div className="flex items-center gap-1.5 overflow-hidden">
                       {activeUserPresence?.online ? (
-                        <span className="text-[10px] font-black text-green-600 tracking-widest uppercase flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> Active
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shrink-0"></div>
+                           <span className="text-[8px] md:text-[10px] font-black text-green-600 tracking-widest uppercase whitespace-nowrap">Active Now</span>
+                        </div>
                       ) : (
-                        <span className="text-[10px] font-black text-gray-400 tracking-widest uppercase">
-                          Last active: {formatRelativeTime(activeUserPresence?.lastLogin || 0)}
+                        <span className="text-[8px] md:text-[10px] font-black text-gray-400 tracking-widest uppercase truncate">
+                          Last seen: {formatRelativeTime(activeUserPresence?.lastLogin || 0)}
                         </span>
                       )}
                    </div>
                 </div>
               </div>
+              <div className="flex items-center gap-2 shrink-0">
+                 <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+                    <Shield size={12} className="text-hotel-primary" />
+                    <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">Encrypted</span>
+                 </div>
+              </div>
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-10 md:px-16 space-y-6 no-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-10 md:px-16 space-y-6 no-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-[0.98]">
                {messages.map((msg, idx) => {
                  const isOwn = msg.senderId === user.uid;
                  return (
-                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[85%] md:max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                        {!isOwn && <span className="text-[10px] font-black text-hotel-primary uppercase tracking-widest mb-1.5 px-2">{msg.senderName}</span>}
-                        <div className={`p-4 md:p-5 px-6 text-[15px] leading-relaxed shadow-sm ${isOwn ? 'bg-hotel-primary text-white rounded-[2rem] rounded-tr-none shadow-lg shadow-red-50' : 'bg-gray-100 text-gray-800 rounded-[2rem] rounded-tl-none border border-gray-200/50'}`}>
+                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
+                      <div className={`max-w-[90%] md:max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+                        {!isOwn && <span className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1.5 px-2">{msg.senderName}</span>}
+                        <div className={`p-4 md:p-5 px-6 text-[14px] md:text-[15px] leading-relaxed shadow-sm ${isOwn ? 'bg-hotel-primary text-white rounded-[1.8rem] rounded-tr-none shadow-lg shadow-red-50' : 'bg-white text-gray-800 rounded-[1.8rem] rounded-tl-none border border-gray-100 shadow-sm'}`}>
                           {String(msg.text)}
                         </div>
-                        <span className="text-[9px] font-bold text-gray-300 uppercase mt-2 px-2">
-                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.status === 'seen' && isOwn ? 'Seen' : 'Delivered'}
-                        </span>
+                        <div className="flex items-center gap-2 mt-2 px-2">
+                           <span className="text-[8px] font-bold text-gray-300 uppercase">
+                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                           </span>
+                           {isOwn && (
+                             <span className="text-[8px] font-black uppercase text-hotel-primary/40 flex items-center gap-1">
+                               {msg.status === 'seen' ? <><CheckCheck size={10} /> Seen</> : <><Check size={10} /> Sent</>}
+                             </span>
+                           )}
+                        </div>
                       </div>
                    </div>
                  );
                })}
             </div>
 
-            <div className="p-6 md:p-10 bg-white border-t border-gray-100">
+            <div className="p-6 md:p-10 bg-white border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]">
                <div className="relative flex items-center gap-4">
-                  <input 
-                    type="text" 
-                    placeholder={!isAdmin && cooldown > 0 ? `Sync Delay: ${cooldown}s...` : "Command the registry..."}
-                    className="flex-1 bg-gray-50 border border-gray-100 rounded-[2rem] py-5 px-8 text-base font-semibold outline-none focus:bg-white focus:border-hotel-primary transition-all disabled:opacity-50"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    disabled={!isAdmin && cooldown > 0}
-                  />
+                  <div className="flex-1 relative">
+                    <input 
+                      type="text" 
+                      placeholder={!isAdmin && cooldown > 0 ? `Synchronization Delay: ${cooldown}s...` : "Command the registry..."}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-[2rem] py-5 px-8 text-sm md:text-base font-semibold outline-none focus:bg-white focus:border-hotel-primary transition-all disabled:opacity-50 pr-16"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                      disabled={!isAdmin && cooldown > 0}
+                    />
+                    {!isAdmin && cooldown > 0 && (
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-hotel-primary animate-pulse">
+                        {cooldown}s
+                      </div>
+                    )}
+                  </div>
                   <button 
                     onClick={handleSend}
                     disabled={loading || (!isAdmin && cooldown > 0) || !input.trim()}
-                    className="w-16 h-16 bg-hotel-primary text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center shrink-0"
+                    className="w-14 h-14 md:w-16 md:h-16 bg-hotel-primary text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center shrink-0"
                   >
                     {loading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} />}
                   </button>

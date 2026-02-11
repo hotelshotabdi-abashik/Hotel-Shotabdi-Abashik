@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star, Percent } from 'lucide-react';
@@ -204,7 +205,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                             <span className="text-[9px] font-bold text-gray-400">Regular ৳</span>
                             <input 
                               type="text"
-                              className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full" 
+                              className="text-[10px] font-bold text-gray-600 bg-transparent outline-none w-full font-sans" 
                               value={room.price || ""} 
                               placeholder="Original Price" 
                               onChange={(e) => updateRoom(room.id, 'price', e.target.value)} 
@@ -214,7 +215,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                             <span className="text-[9px] font-bold text-[#B22222]">Total ৳</span>
                             <input 
                               type="text"
-                              className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full" 
+                              className="text-[10px] font-bold text-[#B22222] bg-transparent outline-none w-full font-sans" 
                               value={room.discountPrice || ""} 
                               placeholder="Final Booking Price" 
                               onChange={(e) => updateRoom(room.id, 'discountPrice', e.target.value)} 
@@ -237,9 +238,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                           <span className="text-sm md:text-lg font-black text-gray-400 italic">Price on Request</span>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through">৳{room.price}</span>
+                            <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through font-sans">৳{room.price}</span>
                             <div className="flex items-baseline gap-0.5">
-                               <span className="text-xl md:text-4xl font-serif font-black text-[#B22222] tracking-tight">৳{room.discountPrice}</span>
+                               <span className="text-xl md:text-4xl font-sans font-black text-[#B22222] tracking-tighter">৳{room.discountPrice}</span>
                                <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
                             </div>
                           </div>

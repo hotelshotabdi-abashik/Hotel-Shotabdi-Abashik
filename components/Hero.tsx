@@ -113,9 +113,6 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         {/* Simple Header Text */}
         <div className="mb-6 md:mb-10 text-center animate-fade-in max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 backdrop-blur border border-white/10 text-white/60 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] mb-4 md:mb-6">
-            <Sparkles size={12} className="text-hotel-primary" /> Premier Residential Hub
-          </div>
           <h2 className="text-white text-3xl md:text-6xl font-serif font-black mb-3 md:mb-5 leading-tight tracking-tight px-4">
              Experience Elite Hospitality
           </h2>
@@ -202,7 +199,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
                           <p className="text-[11px] font-black text-gray-900">{room.title}</p>
                           <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{room.tag}</p>
                         </div>
-                        <p className="text-[10px] font-black text-hotel-primary">৳{room.discountPrice}</p>
+                        <p className="text-[10px] font-sans font-black text-hotel-primary">৳{room.discountPrice}</p>
                       </div>
                     ))}
                   </div>

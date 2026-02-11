@@ -113,7 +113,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                          <div>
                            <p className="text-[10px] font-black text-[#B22222] uppercase tracking-widest print:text-black print:text-[8px]">Grand Total</p>
                          </div>
-                         <p className="text-3xl font-serif font-black text-[#B22222] print:text-2xl print:text-black">৳{selectedBooking.price}</p>
+                         <p className="text-3xl font-sans font-black text-[#B22222] print:text-2xl print:text-black tracking-tighter">৳{selectedBooking.price}</p>
                       </div>
                     </section>
                   </div>
@@ -247,7 +247,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                   
                   <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
                     <div>
-                      <p className="text-xl font-serif font-black text-gray-900">৳{booking.price}</p>
+                      <p className="text-xl font-sans font-black text-gray-900 tracking-tighter">৳{booking.price}</p>
                       {booking.roomNumber && <p className="text-[9px] font-black text-green-600 uppercase tracking-widest">Room {booking.roomNumber}</p>}
                     </div>
                     <div className="flex items-center gap-2 text-hotel-primary font-black text-[10px] uppercase tracking-widest">
