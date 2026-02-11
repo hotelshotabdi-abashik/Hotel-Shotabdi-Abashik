@@ -31,7 +31,7 @@ import {
   get
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL } from './constants';
 
 const CMS_WORKER_URL = "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
@@ -96,6 +96,7 @@ const AppContent = () => {
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
   const [isLogoUpdating, setIsLogoUpdating] = useState(false);
+  const [activeFooterChoice, setActiveFooterChoice] = useState<string | null>(null);
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -132,10 +133,11 @@ const AppContent = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
+      if (activeFooterChoice) setActiveFooterChoice(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [activeFooterChoice]);
 
   useEffect(() => {
     const configRef = ref(db, 'site-config');
@@ -245,14 +247,14 @@ const AppContent = () => {
       try {
         const url = await uploadToR2(file, 'Logo');
         setSiteConfig(prev => ({ ...prev, logoUrl: url }));
-        alert("Branding Updated. Don't forget to Publish Site to save permanently.");
+        alert("Branding Updated temporarily. Click 'Publish Site' to save globally.");
       } catch (err) {
         alert("Logo update failed.");
       } finally {
         setIsLogoUpdating(false);
       }
     } else if (file) {
-      alert("Please upload a PNG or SVG for proper transparency.");
+      alert("Professional formats only: PNG or SVG.");
     }
   };
 
@@ -277,13 +279,22 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
-  // Profile is complete only if mandatory fields exist
   const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
+
+  const contactNumbers = [
+    { value: "+880 1717-425702", clean: "+8801717425702" },
+    { value: "+880 1334-935566", clean: "+8801334935566" }
+  ];
 
   return (
     <div className="flex min-h-screen bg-white font-sans selection:bg-hotel-primary/10 text-hotel-text w-full max-w-full overflow-x-hidden">
       <RouteMetadata siteConfig={siteConfig} />
-      <Sidebar isAdmin={isAdmin || isOwner} logoUrl={currentLogo} />
+      <Sidebar 
+        isAdmin={isAdmin || isOwner} 
+        logoUrl={currentLogo} 
+        isEditMode={isEditMode} 
+        onLogoChange={handleLogoChange}
+      />
       
       <main className="lg:ml-72 flex-1 relative pb-32 lg:pb-0 w-full flex flex-col">
         {/* Profile Incomplete Warning Banner */}
@@ -306,8 +317,8 @@ const AppContent = () => {
 
         <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 py-3 md:py-4 flex justify-between items-center h-[72px] md:h-[88px]">
           <div className="flex items-center gap-4">
-            <div className="lg:hidden flex items-center gap-3 md:gap-4 group cursor-pointer relative" onClick={handleLogoClick}>
-              <div className="relative">
+            <div className="lg:hidden flex items-center gap-3 md:gap-4 group cursor-pointer relative">
+              <div className="relative" onClick={handleLogoClick}>
                 <img src={currentLogo} className={`w-12 h-12 md:w-16 md:h-16 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Hotel Shotabdi Abashik" />
                 {isEditMode && (
                   <label className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
@@ -316,7 +327,7 @@ const AppContent = () => {
                   </label>
                 )}
               </div>
-              <div className="flex flex-col select-none leading-none -space-y-1">
+              <div className="flex flex-col select-none leading-none -space-y-1" onClick={handleLogoClick}>
                 <h1 className="text-lg md:text-xl font-serif font-black text-gray-900 tracking-tight">Hotel Shotabdi</h1>
                 <p className="text-[8px] md:text-[9px] text-hotel-primary font-black uppercase tracking-[0.4em]">Abashik</p>
               </div>
@@ -489,7 +500,7 @@ const AppContent = () => {
           </Routes>
         </div>
 
-        <footer id="main-footer" className="bg-white border-t border-gray-100 py-20 px-6 md:px-12">
+        <footer id="main-footer" className="bg-white border-t border-gray-100 py-20 px-6 md:px-12 relative overflow-hidden">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
@@ -503,9 +514,27 @@ const AppContent = () => {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-12 text-[11px] font-bold uppercase tracking-widest text-gray-400">
                <address className="not-italic space-y-4">
-                 <p className="text-gray-900 font-black">Contact</p>
-                 <a href="tel:+8801717425702" className="block hover:text-hotel-primary">+880 1717-425702</a>
-                 <a href="tel:+8801334935566" className="block hover:text-hotel-primary">+880 1334-935566</a>
+                 <p className="text-gray-900 font-black">Contact Registry</p>
+                 {contactNumbers.map((num) => (
+                   <div key={num.value} className="relative">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setActiveFooterChoice(activeFooterChoice === num.value ? null : num.value); }}
+                        className={`block transition-colors ${activeFooterChoice === num.value ? 'text-hotel-primary' : 'hover:text-hotel-primary'}`}
+                      >
+                        {num.value}
+                      </button>
+                      {activeFooterChoice === num.value && (
+                        <div className="absolute left-0 bottom-full mb-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-[70] animate-fade-in flex flex-col gap-1">
+                           <a href={`tel:${num.clean}`} className="flex items-center gap-2 p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+                              <PhoneCall size={14} /> <span className="text-[9px] font-black uppercase">Call</span>
+                           </a>
+                           <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors">
+                              <MessageSquare size={14} /> <span className="text-[9px] font-black uppercase">WhatsApp</span>
+                           </a>
+                        </div>
+                      )}
+                   </div>
+                 ))}
                  <p className="normal-case">hotelshotabdiabashik@gmail.com</p>
                </address>
                <nav className="space-y-4">
@@ -519,7 +548,6 @@ const AppContent = () => {
 
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         
-        {/* Profile Onboarding Trigger for Incomplete Profiles */}
         {user && profile && !profile.isComplete && !isManageAccountOpen && (
           <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />
         )}

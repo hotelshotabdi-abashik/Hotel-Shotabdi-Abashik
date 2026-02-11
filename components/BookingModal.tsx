@@ -151,47 +151,45 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
       <div className="relative bg-white w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-fade-in">
         
         {success ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-white overflow-y-auto no-scrollbar">
-             <div className="w-24 h-24 bg-green-500 rounded-[2.5rem] flex items-center justify-center text-white mb-8 shadow-2xl shadow-green-100 animate-bounce">
+          <div className="flex-1 flex flex-col items-center justify-center p-10 md:p-20 text-center bg-white overflow-y-auto no-scrollbar">
+             <div className="w-20 h-20 md:w-24 md:h-24 bg-green-500 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center text-white mb-8 shadow-2xl shadow-green-100 animate-bounce">
                 <CheckCircle2 size={48} />
              </div>
-             <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter mb-4 px-4">Booking Logged</h2>
-             <p className="text-gray-500 text-sm md:text-lg max-w-md mx-auto leading-relaxed mb-10 font-medium">
+             <h2 className="text-2xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter mb-4 px-4">Booking Logged</h2>
+             <p className="text-gray-500 text-xs md:text-lg max-w-md mx-auto leading-relaxed mb-10 font-medium italic">
                Your Booking submitted successfully, please contacts us for faster response.
              </p>
 
-             <div className="w-full max-w-sm space-y-4">
+             <div className="w-full max-w-md space-y-4">
                 {contactNumbers.map((num) => (
-                  <div key={num.value} className="relative group">
-                    <button 
-                      onClick={() => setActiveNumberChoice(activeNumberChoice === num.value ? null : num.value)}
-                      className={`w-full p-6 rounded-3xl border-2 flex items-center justify-between transition-all group active:scale-95 ${activeNumberChoice === num.value ? 'bg-hotel-primary border-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 border-gray-100 text-gray-900 hover:bg-white hover:border-hotel-primary/30'}`}
-                    >
-                       <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-2xl transition-colors ${activeNumberChoice === num.value ? 'bg-white/20' : 'bg-white shadow-sm text-hotel-primary'}`}>
-                             <Phone size={20} />
-                          </div>
-                          <span className="text-sm md:text-lg font-black tracking-tight">{num.value}</span>
-                       </div>
-                       <ChevronRight size={20} className={`transition-transform duration-300 ${activeNumberChoice === num.value ? 'rotate-90' : ''}`} />
-                    </button>
+                   <div key={num.value} className="relative">
+                      <button 
+                        onClick={() => setActiveNumberChoice(activeNumberChoice === num.value ? null : num.value)}
+                        className={`w-full p-6 rounded-3xl border-2 transition-all flex items-center justify-between group active:scale-95 ${activeNumberChoice === num.value ? 'bg-hotel-primary border-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 border-gray-100 text-gray-900 hover:border-hotel-primary/30'}`}
+                      >
+                         <div className="flex items-center gap-4">
+                            <Phone size={24} className={activeNumberChoice === num.value ? 'text-white' : 'text-hotel-primary'} />
+                            <span className="text-sm md:text-xl font-black tracking-tight">{num.value}</span>
+                         </div>
+                         <ChevronRight size={24} className={`transition-transform duration-300 ${activeNumberChoice === num.value ? 'rotate-90' : ''}`} />
+                      </button>
 
-                    {activeNumberChoice === num.value && (
-                       <div className="flex gap-4 mt-3 animate-fade-in">
-                          <a href={`tel:${num.clean}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                             <PhoneCall size={16} /> Direct Call
-                          </a>
-                          <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                             <MessageSquare size={16} /> WhatsApp
-                          </a>
-                       </div>
-                    )}
-                  </div>
+                      {activeNumberChoice === num.value && (
+                        <div className="flex gap-4 mt-4 animate-fade-in">
+                           <a href={`tel:${num.clean}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                              <PhoneCall size={18} /> Direct Call
+                           </a>
+                           <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                              <MessageSquare size={18} /> WhatsApp
+                           </a>
+                        </div>
+                      )}
+                   </div>
                 ))}
              </div>
 
-             <button onClick={onClose} className="mt-12 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-hotel-primary transition-colors">
-                Return to Hub Overview
+             <button onClick={onClose} className="mt-12 text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] hover:text-hotel-primary transition-colors">
+                Return to Overview
              </button>
           </div>
         ) : (
