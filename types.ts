@@ -126,7 +126,7 @@ export interface UserProfile {
   isComplete: boolean;
   claims?: string[];
   fcmToken?: string;
-  role?: 'guest' | 'manager' | 'owner';
+  role?: 'guest' | 'staff' | 'manager' | 'owner';
   onlineStatus?: boolean;
 }
 

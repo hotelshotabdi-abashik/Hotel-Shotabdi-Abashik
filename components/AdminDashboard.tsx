@@ -5,13 +5,16 @@ import {
   Users, User, Calendar, Search, CheckCircle2, XCircle, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Clock, Building2, Eye, Trash2, AlertTriangle, UserMinus, ShieldAlert,
-  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2
+  MapPin, UserCheck, LogOut, ArrowRight, Info, UserPlus, Database, Download, RefreshCw, Layers, Link2, Tag, FileText, Printer, ClipboardCheck, Key, Shield, X, Maximize2, UserCog, MoreHorizontal
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL } from '../services/firebase';
+import { db, ref, onValue, update, createNotification, deleteUserProfile, get, set, OWNER_EMAIL, auth } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking } from '../types';
 
 const AdminDashboard: React.FC = () => {
+  const currentUser = auth.currentUser;
+  const isOwner = currentUser?.email === OWNER_EMAIL;
+  
   const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -28,6 +31,7 @@ const AdminDashboard: React.FC = () => {
   const [managerGateUid, setManagerGateUid] = useState<string | null>(null);
   const [managerPassword, setManagerPassword] = useState('');
   const [gateError, setGateError] = useState('');
+  const [roleUpdatingUid, setRoleUpdatingUid] = useState<string | null>(null);
 
   useEffect(() => {
     const profilesRef = ref(db, 'profiles');
@@ -50,6 +54,32 @@ const AdminDashboard: React.FC = () => {
 
     return () => { uUnsub(); bUnsub(); };
   }, []);
+
+  const handleUpdateRole = async (uid: string, newRole: 'guest' | 'staff' | 'manager') => {
+    if (!isOwner && newRole === 'manager') {
+       alert("Only the Owner can authorize new Managers.");
+       return;
+    }
+    
+    setRoleUpdatingUid(uid);
+    try {
+      await update(ref(db), {
+        [`roles/${uid}`]: newRole,
+        [`profiles/${uid}/role`]: newRole
+      });
+      
+      await createNotification(uid, {
+        title: 'Registry Access Updated',
+        message: `Your account role has been updated to ${newRole.toUpperCase()}.`,
+        type: 'system'
+      });
+      
+    } catch (err) {
+      alert("Role update failed.");
+    } finally {
+      setRoleUpdatingUid(null);
+    }
+  };
 
   const handleMakeManager = async () => {
     if (managerPassword !== 'kahar02') {
@@ -132,7 +162,10 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-32 lg:pb-10 animate-fade-in relative z-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-        <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Management Panel</h1>
+        <div>
+          <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
+          <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">Authenticated Management Access</p>
+        </div>
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
           {['bookings', 'users', 'data'].map((tab) => (
             <button key={tab} onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} className={`px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white shadow-md text-[#B22222]' : 'text-gray-400 hover:text-gray-600'}`}>
@@ -174,33 +207,60 @@ const AdminDashboard: React.FC = () => {
         ))}
 
         {activeTab === 'users' && filteredUsers.map(user => (
-          <div key={user.uid} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between group">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
-                <img src={user.photoURL} className="w-full h-full object-cover" />
+          <div key={user.uid} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between group overflow-hidden">
+            <div className="flex items-center gap-5 min-w-0">
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg shrink-0">
+                <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} />
               </div>
-              <div>
-                <h3 className="text-base font-black text-gray-900">{user.legalName || 'New User'}</h3>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{user.email}</p>
+              <div className="min-w-0">
+                <h3 className="text-base font-black text-gray-900 truncate">{user.legalName || 'New User'}</h3>
+                <div className="flex items-center gap-2 mt-0.5">
+                   <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                     user.role === 'owner' ? 'bg-hotel-primary text-white border-hotel-primary' :
+                     user.role === 'manager' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                     user.role === 'staff' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                     'bg-gray-50 text-gray-500 border-gray-100'
+                   }`}>
+                     {user.role || 'guest'}
+                   </span>
+                   <span className="text-[9px] font-bold text-gray-400 truncate opacity-60">ID: {user.uid.slice(0, 8)}</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-               {user.role === 'manager' ? (
-                 <span className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
-                   <Shield size={14} /> Manager Authorized
-                 </span>
-               ) : user.role === 'owner' ? (
-                 <span className="bg-hotel-primary text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
-                   <Key size={14} /> Owner
-                 </span>
+
+            <div className="flex items-center gap-4">
+               {isOwner && user.role !== 'owner' ? (
+                 <div className="flex items-center bg-gray-50 p-1.5 rounded-xl border border-gray-100 gap-1">
+                    <button 
+                      onClick={() => handleUpdateRole(user.uid, 'guest')}
+                      disabled={roleUpdatingUid === user.uid}
+                      className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'guest' || !user.role ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      Guest
+                    </button>
+                    <button 
+                      onClick={() => handleUpdateRole(user.uid, 'staff')}
+                      disabled={roleUpdatingUid === user.uid}
+                      className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'staff' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      Staff
+                    </button>
+                    <button 
+                      onClick={() => setManagerGateUid(user.uid)}
+                      disabled={roleUpdatingUid === user.uid}
+                      className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'manager' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      Manager
+                    </button>
+                 </div>
                ) : (
-                 <button 
-                  onClick={() => setManagerGateUid(user.uid)}
-                  className="bg-gray-900 text-white px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-hotel-primary transition-all active:scale-95"
-                 >
-                   Make Manager
-                 </button>
+                 <div className="flex items-center gap-2">
+                    {user.role === 'owner' && <span className="text-[9px] font-black text-hotel-primary uppercase tracking-widest flex items-center gap-1.5 pr-4"><Key size={12}/> Owner</span>}
+                    {user.role === 'manager' && !isOwner && <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5 pr-4"><Shield size={12}/> Manager</span>}
+                 </div>
                )}
+               
+               {roleUpdatingUid === user.uid && <Loader2 className="animate-spin text-hotel-primary" size={16} />}
             </div>
           </div>
         ))}
@@ -260,7 +320,7 @@ const AdminDashboard: React.FC = () => {
                         <div className="space-y-3">
                            <div className="flex items-center gap-3">
                               <Mail size={14} className="text-gray-400" />
-                              <span className="text-xs font-bold text-gray-600">{selectedBooking.userEmail}</span>
+                              <span className="text-xs font-bold text-gray-600 truncate">{selectedBooking.userEmail}</span>
                            </div>
                            <p className="text-[10px] text-gray-400 font-medium italic">Applied on {new Date(selectedBooking.createdAt).toLocaleString()}</p>
                         </div>
