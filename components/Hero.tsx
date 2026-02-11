@@ -115,7 +115,7 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
         <div className="mb-6 md:mb-10 text-center animate-fade-in max-w-3xl">
           <div className="flex justify-center mb-6">
             <a 
-              href="https://share.google/EkzdwSiIlFoyFWvrR" 
+              href="https://maps.app.goo.gl/NonEKgvUTbKvvkxTA" 
               target="_blank" 
               rel="noopener noreferrer"
               className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-1 rounded-2xl flex items-center gap-3 transition-all hover:bg-white/10 hover:scale-105"
@@ -123,8 +123,8 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
               <div className="w-12 h-12 rounded-xl overflow-hidden bg-hotel-primary/20 relative">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="w-2 h-2 bg-hotel-primary rounded-full animate-ping"></div>
-                   <MapPin className="text-hotel-primary absolute" size={16} />
+                   <div className="w-2.5 h-2.5 bg-hotel-primary rounded-full animate-ping"></div>
+                   <MapIcon className="text-hotel-primary absolute" size={18} />
                 </div>
               </div>
               <div className="pr-4 text-left">
