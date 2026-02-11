@@ -30,7 +30,7 @@ import {
   get
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Restaurant, Attraction, Offer, Booking, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard } from 'lucide-react';
+import { LogIn, Loader2, Bell, Edit3, Globe, Save, Megaphone, Camera, RefreshCw, X, Calendar, MessageSquare, Shield, CheckCheck, Trash2, LogOut, User as UserIcon, AlertTriangle, Phone, PhoneCall, LayoutDashboard, Upload } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
@@ -66,6 +66,7 @@ const AppContent = () => {
   const location = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -207,6 +208,20 @@ const AppContent = () => {
     } catch (error) { alert("Update Failed."); } finally { setIsSaving(false); }
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsLogoSpinning(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setSiteConfig(prev => ({ ...prev, logoUrl: base64 }));
+      setTimeout(() => setIsLogoSpinning(false), 2000);
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (isConfigLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
@@ -225,20 +240,45 @@ const AppContent = () => {
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
         {/* Left: Branding */}
         <div className="flex items-center gap-4">
-          <Link 
-            to="/" 
-            className="flex items-center gap-3 group"
-            onClick={() => {
-              setIsLogoSpinning(true);
-              setTimeout(() => setIsLogoSpinning(false), 2000);
-            }}
-          >
-            <img src={currentLogo} className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} alt="Shotabdi" />
-            <div className="hidden sm:block">
-              <h1 className="text-sm font-serif font-black text-gray-900 tracking-wider uppercase leading-none">Shotabdi</h1>
-              <p className="text-[7px] text-hotel-primary font-black uppercase tracking-[0.3em] mt-0.5">Residential</p>
-            </div>
-          </Link>
+          <div className="flex items-center gap-3 group relative">
+            <Link 
+              to="/" 
+              className="flex items-center gap-3 group"
+              onClick={() => {
+                setIsLogoSpinning(true);
+                setTimeout(() => setIsLogoSpinning(false), 2000);
+              }}
+            >
+              <div className="relative">
+                <img 
+                  src={currentLogo} 
+                  className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform group-hover:scale-110 ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
+                  alt="Hotel Shotabdi Abashik Logo"
+                  draggable="false"
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+                />
+                {isEditMode && (
+                  <button 
+                    onClick={(e) => { e.preventDefault(); logoInputRef.current?.click(); }}
+                    className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
+                  >
+                    <Upload size={14} />
+                  </button>
+                )}
+                <input 
+                  type="file" 
+                  ref={logoInputRef}
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-sm font-serif font-black text-gray-900 tracking-wider uppercase leading-none">Hotel Shotabdi</h1>
+                <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">Abashik</p>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Center: Desktop Navigation */}
