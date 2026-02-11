@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, Bed, Utensils, Map as MapIcon, 
   Calendar, Users, ChevronDown, Moon, ShieldCheck, Key,
-  Tag, MessageSquare, History, Sparkles
+  Tag, MessageSquare, History, Sparkles, MapPin, ExternalLink
 } from 'lucide-react';
 import { HeroConfig } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -113,6 +113,30 @@ const Hero: React.FC<HeroProps> = ({ config, isEditMode, onUpdate, onImageUpload
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         {/* Simple Header Text */}
         <div className="mb-6 md:mb-10 text-center animate-fade-in max-w-3xl">
+          <div className="flex justify-center mb-6">
+            <a 
+              href="https://share.google/EkzdwSiIlFoyFWvrR" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-1 rounded-2xl flex items-center gap-3 transition-all hover:bg-white/10 hover:scale-105"
+            >
+              <div className="w-12 h-12 rounded-xl overflow-hidden bg-hotel-primary/20 relative">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-2 h-2 bg-hotel-primary rounded-full animate-ping"></div>
+                   <MapPin className="text-hotel-primary absolute" size={16} />
+                </div>
+              </div>
+              <div className="pr-4 text-left">
+                <p className="text-[7px] font-black text-hotel-primary uppercase tracking-widest">Hotel Location</p>
+                <p className="text-[10px] font-bold text-white/80 leading-tight">Kumargaon Bus Terminal, Sylhet</p>
+              </div>
+              <div className="absolute -top-2 -right-2 bg-hotel-primary text-white p-1 rounded-full shadow-lg scale-0 group-hover:scale-100 transition-transform">
+                <ExternalLink size={10} />
+              </div>
+            </a>
+          </div>
+
           <h2 className="text-white text-3xl md:text-6xl font-serif font-black mb-3 md:mb-5 leading-tight tracking-tight px-4">
              Experience Elite Hospitality
           </h2>
