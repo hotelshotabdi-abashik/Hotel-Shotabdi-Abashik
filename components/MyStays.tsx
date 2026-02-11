@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { 
   History, Calendar, Info, ShieldCheck, Download, 
   Eye, Loader2, ArrowRight, X, User, Phone, IdCard, Database, ClipboardCheck,
-  CheckCircle2, Printer, MapPin, Clock, Tag, Shield
+  CheckCircle2, Printer, MapPin, Clock, Tag, Shield, Receipt
 } from 'lucide-react';
 import { db, auth, ref, onValue } from '../services/firebase';
 import { Booking, UserProfile } from '../types';
@@ -63,15 +63,15 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
          <div id="print-record" className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[100vh] md:max-h-[95vh] border border-white/20 overflow-hidden relative print:block print:h-auto print:max-h-none print:shadow-none print:border-none print:rounded-none">
             
             {/* Header for Receipt */}
-            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:bg-white print:border-black/10">
+            <div className="px-8 md:px-12 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 print:bg-white print:border-b-2 print:border-gray-200">
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100 print:bg-black print:shadow-none">
-                     <ClipboardCheck size={32} />
+                  <div className="w-16 h-16 bg-hotel-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-100 print:bg-black print:w-12 print:h-12 print:shadow-none">
+                     <Receipt size={32} />
                   </div>
                   <div>
-                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none uppercase">Stay Submission Record</h2>
-                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
-                       <Database size={12} /> SYNC ID: {selectedBooking.id}
+                     <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter leading-none uppercase print:text-xl">Stay Invoice</h2>
+                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2 print:mt-1 print:text-[8px]">
+                       <Database size={12} className="print:hidden" /> Registry ID: {selectedBooking.id}
                      </p>
                   </div>
                </div>
@@ -84,89 +84,86 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                    <X size={24}/>
                  </button>
                </div>
+               <div className="hidden print:block text-right">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Generated On</p>
+                  <p className="text-[10px] font-black text-gray-900 uppercase">{new Date().toLocaleDateString()}</p>
+               </div>
             </div>
 
-            <div id="print-record-scroll" className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible">
-               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div id="print-record-scroll" className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar print:overflow-visible print:p-6">
+               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 print:block">
                   
                   {/* Summary Sidebar */}
-                  <div className="lg:col-span-4 space-y-8 print:col-span-12 print:grid print:grid-cols-2 print:gap-8 print:space-y-0">
+                  <div className="lg:col-span-4 space-y-8 print:w-full print:mb-8">
                     <section className="space-y-4">
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Stay Details</h4>
-                      <div className="space-y-4">
-                         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Room Type</p>
-                           <p className="text-base font-black text-gray-900">{selectedBooking.roomTitle}</p>
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Resident Information</h4>
+                      <div className="space-y-4 print:grid print:grid-cols-2 print:gap-4 print:space-y-0">
+                         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 print:bg-white print:border-gray-200">
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 print:text-[7px]">Reserved Category</p>
+                           <p className="text-base font-black text-gray-900 print:text-sm">{selectedBooking.roomTitle}</p>
                            {selectedBooking.roomNumber && (
                              <div className="mt-3 pt-3 border-t border-gray-200">
-                               <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1">Assigned Room</p>
-                               <p className="text-xl font-black text-gray-900">Room {selectedBooking.roomNumber}</p>
+                               <p className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1 print:text-black print:text-[7px]">Allocated Unit</p>
+                               <p className="text-xl font-black text-gray-900 print:text-lg">Room {selectedBooking.roomNumber}</p>
                              </div>
                            )}
                          </div>
-                         <div className="grid grid-cols-2 gap-4">
-                           <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Check In</p>
+                         <div className="grid grid-cols-2 gap-4 print:grid-cols-1 print:gap-2">
+                           <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 print:bg-white print:border-gray-200">
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 print:text-[7px]">Check In</p>
                              <p className="text-xs font-black text-gray-900">{selectedBooking.checkIn}</p>
                            </div>
-                           <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Check Out</p>
+                           <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 print:bg-white print:border-gray-200">
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 print:text-[7px]">Check Out</p>
                              <p className="text-xs font-black text-gray-900">{selectedBooking.checkOut}</p>
                            </div>
                          </div>
                       </div>
                     </section>
 
-                    <div className="space-y-8">
-                      <section className="space-y-4">
-                        <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Financial Info</h4>
-                        <div className="bg-[#B22222]/5 p-6 rounded-3xl border border-[#B22222]/10 flex items-center justify-between print:bg-gray-50 print:border-black/10">
-                           <p className="text-[10px] font-black text-[#B22222] uppercase tracking-widest print:text-black">Grand Total</p>
-                           <p className="text-3xl font-serif font-black text-[#B22222] print:text-black">৳{selectedBooking.price}</p>
-                        </div>
-                      </section>
-
-                      <section className="space-y-4">
-                        <div className={`p-6 rounded-3xl border flex items-center gap-4 ${selectedBooking.status === 'accepted' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-                            {selectedBooking.status === 'accepted' ? <CheckCircle2 size={24} /> : <ShieldCheck size={24} />}
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Registry Status</p>
-                              <p className="text-sm font-black uppercase tracking-tight">{selectedBooking.status}</p>
-                              {selectedBooking.arrivedAt && (
-                                <p className="text-[8px] font-black uppercase mt-1 opacity-70">Entry: {formatTime(selectedBooking.arrivedAt)}</p>
-                              )}
-                            </div>
-                        </div>
-                      </section>
-                    </div>
+                    <section className="space-y-4 print:mt-6">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Financial Log</h4>
+                      <div className="bg-[#B22222]/5 p-6 rounded-3xl border border-[#B22222]/10 flex items-center justify-between print:bg-white print:border-2 print:border-black print:rounded-xl">
+                         <div>
+                           <p className="text-[10px] font-black text-[#B22222] uppercase tracking-widest print:text-black print:text-[8px]">Grand Total</p>
+                           <p className="hidden print:block text-[7px] text-gray-400 font-bold uppercase">Includes Taxes & Fees</p>
+                         </div>
+                         <p className="text-3xl font-serif font-black text-[#B22222] print:text-2xl print:text-black">৳{selectedBooking.price}</p>
+                      </div>
+                    </section>
                   </div>
 
-                  {/* Identity Records */}
-                  <div className="lg:col-span-8 space-y-10 print:col-span-12">
-                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">Guest Identity Submissions</h4>
+                  {/* Identity Records - NO IMAGES FOR PRINT */}
+                  <div className="lg:col-span-8 space-y-10 print:w-full">
+                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3 print:text-[9px] print:tracking-widest">Registered Occupants ({selectedBooking.totalGuests})</h4>
                      
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-1">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-1 print:gap-4">
                         {selectedBooking.guests.map((guest, idx) => (
-                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col border-l-4 border-l-hotel-primary/20 print:border print:border-black/10 print:rounded-2xl print:page-break-inside-avoid">
-                             <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center gap-4 print:bg-white">
-                                <User size={20} className="text-hotel-primary" />
+                          <div key={idx} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col border-l-4 border-l-hotel-primary/20 print:border print:border-gray-200 print:rounded-xl print:border-l-0 print:bg-white print:page-break-inside-avoid">
+                             <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center gap-4 print:bg-white print:p-4">
+                                <User size={20} className="text-hotel-primary print:text-black" />
                                 <div>
-                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guest {idx + 1}</p>
-                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase">{guest.legalName}</h5>
+                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 print:text-[7px]">Occupant {idx + 1}</p>
+                                   <h5 className="text-sm font-black text-gray-900 truncate uppercase print:text-xs">{guest.legalName}</h5>
+                                </div>
+                                <div className="ml-auto text-right print:block">
+                                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Verification Status</p>
+                                   <p className="text-[9px] font-black text-green-600 uppercase">Verified</p>
                                 </div>
                              </div>
-                             <div className="p-6 space-y-4">
-                                <div className="flex items-center gap-3 text-[11px] font-black text-gray-600">
-                                   <Phone size={14} className="text-hotel-primary" /> {guest.phone || 'N/A'}
+                             <div className="p-6 space-y-4 print:p-4 print:space-y-2">
+                                <div className="flex items-center gap-3 text-[11px] font-black text-gray-600 print:text-[10px]">
+                                   <Phone size={14} className="text-hotel-primary print:text-black" /> {guest.phone || 'N/A'}
                                 </div>
-                                <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900">
-                                   <IdCard size={14} className="text-hotel-primary" /> ID: {guest.nidNumber}
+                                <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 print:text-[10px]">
+                                   <IdCard size={14} className="text-hotel-primary print:text-black" /> ID NO: {guest.nidNumber}
                                 </div>
+                                {/* NID Image Hidden for Print */}
                                 {guest.nidImageUrl && (
-                                   <div className="mt-4 pt-4 border-t border-gray-50 flex flex-col items-center">
+                                   <div className="mt-4 pt-4 border-t border-gray-50 flex flex-col items-center print:hidden">
                                       <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-2">Verified ID Copy</p>
                                       <div className="w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all print:grayscale-0 print:opacity-100" />
+                                         <img src={guest.nidImageUrl} className="w-full h-full object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
                                       </div>
                                    </div>
                                 )}
@@ -175,17 +172,17 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
                         ))}
                      </div>
 
-                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:border-black/20 print:bg-white print:rounded-2xl print:page-break-inside-avoid">
+                     <div className="p-10 border-2 border-dashed border-gray-100 rounded-[3rem] bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-10 mt-12 print:mt-10 print:border-gray-300 print:p-6 print:rounded-xl print:bg-white">
                         <div>
-                           <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Official Registry Seal</h5>
-                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed">Verified by Hotel Shotabdi Abashik Registry Portal. Authenticated Digital Record for Resident Identity.</p>
+                           <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1 print:text-xs">Digital Authorization</h5>
+                           <p className="text-[10px] text-gray-400 font-medium max-w-xs leading-relaxed print:text-[8px]">Authenticated by Hotel Shotabdi Abashik. This record is for residential verification and accounting purposes.</p>
                         </div>
-                        <div className="flex gap-10 shrink-0">
+                        <div className="flex gap-10 shrink-0 print:gap-8">
                            <div className="text-center">
-                              <div className="w-24 h-12 border-b border-gray-900 mb-2 flex items-center justify-center">
-                                 <img src={LOGO_ICON_URL} className="w-10 h-10 object-contain opacity-20" />
+                              <div className="w-24 h-12 border-b border-gray-900 mb-2 flex items-center justify-center print:w-20 print:h-8">
+                                 <img src={LOGO_ICON_URL} className="w-10 h-10 object-contain opacity-20 print:w-6 print:h-6" />
                               </div>
-                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Registry Vault</p>
+                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Official Seal</p>
                            </div>
                         </div>
                      </div>
@@ -194,7 +191,12 @@ const MyStays: React.FC<MyStaysProps> = ({ profile }) => {
             </div>
 
             <div className="p-10 bg-gray-50 border-t border-gray-100 flex justify-center print:hidden">
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">End of Stay Registry Record</p>
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">End of Stay Invoice Record</p>
+            </div>
+            
+            {/* Print Footer */}
+            <div className="hidden print:block p-8 border-t border-gray-200 mt-auto text-center">
+               <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Hotel Shotabdi Abashik • Sylhet, Bangladesh • Official Digital Receipt</p>
             </div>
          </div>
       </div>

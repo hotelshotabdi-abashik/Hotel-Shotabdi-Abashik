@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Phone, LayoutDashboard, ChevronRight, X, Info, Camera, RefreshCw } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Phone, LayoutDashboard, ChevronRight, X, Info, Camera, MessageSquare, PhoneCall } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS, LOGO_ICON_URL } from '../constants';
 
@@ -15,7 +15,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
   const location = useLocation();
   const navigate = useNavigate();
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
-  const [showCallChoices, setShowCallChoices] = useState(false);
+  const [activeNumberChoice, setActiveNumberChoice] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const contactNumbers = [
+    { label: "Line 1", value: "+880 1717-425702", clean: "+8801717425702" },
+    { label: "Line 2", value: "+880 1334-935566", clean: "+8801334935566" }
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveNumberChoice(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -109,20 +125,38 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false, logoUrl, isEditMode,
           <span className="text-[10px] tracking-[0.15em] font-black uppercase">About</span>
         </button>
 
-        <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 group hover:border-hotel-primary/20 transition-all">
+        <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 group hover:border-hotel-primary/20 transition-all relative" ref={dropdownRef}>
           <div className="flex items-center gap-3 mb-3">
             <Phone size={14} className="text-gray-400 group-hover:text-hotel-primary transition-colors" />
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Live Desk</span>
           </div>
-          <div className="space-y-1 mb-5">
-            <p className="text-[11px] text-gray-500 font-medium tracking-tight">+880 1717-425702</p>
+          <div className="space-y-2 mb-5">
+            {contactNumbers.map((num) => (
+              <div key={num.value} className="relative">
+                <button 
+                  onClick={() => setActiveNumberChoice(activeNumberChoice === num.value ? null : num.value)}
+                  className={`text-[11px] font-black tracking-tight transition-colors w-full text-left flex justify-between items-center group/num ${activeNumberChoice === num.value ? 'text-hotel-primary' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                  {num.value}
+                  <ChevronRight size={12} className={`transition-transform ${activeNumberChoice === num.value ? 'rotate-90' : ''}`} />
+                </button>
+                
+                {activeNumberChoice === num.value && (
+                  <div className="absolute left-full top-0 ml-4 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-[60] animate-fade-in origin-left">
+                     <a href={`tel:${num.clean}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 text-blue-600 transition-all">
+                        <PhoneCall size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Direct Call</span>
+                     </a>
+                     <a href={`https://wa.me/${num.clean.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-green-600 transition-all">
+                        <MessageSquare size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
+                     </a>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <button 
-            onClick={() => setShowCallChoices(!showCallChoices)}
-            className="block w-full bg-hotel-primary text-white py-3.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-100 text-center active:scale-95"
-          >
-            Call Registry
-          </button>
+          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center mt-2 opacity-60 italic">Click for direct contact</p>
         </div>
       </div>
     </aside>

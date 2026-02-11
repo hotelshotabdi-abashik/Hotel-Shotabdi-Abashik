@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo } from 'react';
-import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone, Star } from 'lucide-react';
+import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone, Star, Link2 } from 'lucide-react';
 import { Attraction } from '../types';
 import { SYLHET_ATTRACTIONS } from '../constants';
 
@@ -189,9 +190,25 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
                   </p>
                 )}
 
+                {isEditMode && (
+                  <div className="mb-4 pt-3 border-t border-gray-50 flex flex-col gap-1.5">
+                     <div className="flex items-center gap-2">
+                        <Link2 size={12} className="text-blue-600" />
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Google Maps Link</p>
+                     </div>
+                     <input 
+                        type="text"
+                        className="w-full bg-gray-50 rounded-lg px-3 py-2 text-[9px] font-bold text-blue-600 outline-none border border-blue-50"
+                        value={spot.mapUrl || ''}
+                        placeholder="Paste Precise Link..."
+                        onChange={(e) => updateSpot(spot.id, 'mapUrl', e.target.value)}
+                     />
+                  </div>
+                )}
+
                 <div className="mt-auto pt-3 md:pt-6 border-t border-gray-50">
                   <a 
-                    href={spot.mapUrl.startsWith('http') ? spot.mapUrl : generateMapUrl(spot.mapUrl || spot.name)} 
+                    href={spot.mapUrl && spot.mapUrl.startsWith('http') ? spot.mapUrl : generateMapUrl(spot.mapUrl || spot.name)} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="w-full bg-gray-50 hover:bg-blue-600 hover:text-white text-gray-500 font-black text-[8px] md:text-[10px] uppercase tracking-widest py-2 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-1.5 group/btn"

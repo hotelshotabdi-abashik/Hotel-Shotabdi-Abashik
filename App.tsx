@@ -505,6 +505,7 @@ const AppContent = () => {
                <address className="not-italic space-y-4">
                  <p className="text-gray-900 font-black">Contact</p>
                  <a href="tel:+8801717425702" className="block hover:text-hotel-primary">+880 1717-425702</a>
+                 <a href="tel:+8801334935566" className="block hover:text-hotel-primary">+880 1334-935566</a>
                  <p className="normal-case">hotelshotabdiabashik@gmail.com</p>
                </address>
                <nav className="space-y-4">

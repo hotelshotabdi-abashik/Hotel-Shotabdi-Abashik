@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo } from 'react';
-import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, Search, Wand2, CheckSquare, Phone, AlertCircle } from 'lucide-react';
+import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, Search, Wand2, CheckSquare, Phone, AlertCircle, Link2 } from 'lucide-react';
 import { Restaurant } from '../types';
 
 interface Props {
@@ -211,6 +212,22 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
                   ) : <span>{res.distance}</span>}
                 </div>
               </div>
+
+              {isEditMode && (
+                <div className="mt-3 pt-3 border-t border-gray-50 flex flex-col gap-2">
+                   <div className="flex items-center gap-2">
+                     <Link2 size={12} className="text-blue-600" />
+                     <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Google Maps URL</p>
+                   </div>
+                   <input 
+                      type="text"
+                      className="w-full bg-gray-50 rounded-xl px-4 py-2 text-[9px] font-bold text-blue-600 outline-none border border-blue-50 focus:border-blue-300"
+                      value={res.mapUrl || ''}
+                      placeholder="Paste Map URL here..."
+                      onChange={(e) => updateRes(res.id, 'mapUrl', e.target.value)}
+                   />
+                </div>
+              )}
 
               {(res.phone || isEditMode) && (
                 <div className="mt-3 flex items-center gap-1.5">
