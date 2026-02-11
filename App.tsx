@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
-import HomeShortcuts from './components/HomeShortcuts';
 import ExclusiveOffers from './components/ExclusiveOffers';
 import OfferPage from './components/OfferPage';
 import RoomGrid from './components/RoomGrid';
@@ -491,7 +490,13 @@ const AppContent = () => {
 
         <div className="flex-1">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={(f) => uploadToR2(f, 'hero')} /><HomeShortcuts /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} onClaim={(o) => setActiveDiscount(o.discountPercent || 0)} /><RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} /></>} />
+            <Route path="/" element={<>
+              <Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={(f) => uploadToR2(f, 'hero')} />
+              <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} onClaim={(o) => setActiveDiscount(o.discountPercent || 0)} />
+              <RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} />
+              <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={(f) => uploadToR2(f, 'restaurants')} />
+              <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={(f) => uploadToR2(f, 'guide')} />
+            </>} />
             <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={(f) => uploadToR2(f, 'offers')} />} />
             <Route path="/offers/:offerId" element={<OfferPage offers={siteConfig.offers} />} />
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={(f) => uploadToR2(f, 'rooms')} onBook={setSelectedRoomToBook} />} />
