@@ -212,6 +212,13 @@ const AppContent = () => {
     return name;
   };
 
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-white font-sans text-hotel-text w-full overflow-x-hidden">
       <RouteMetadata siteConfig={siteConfig} />
@@ -219,7 +226,7 @@ const AppContent = () => {
       
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" onClick={handleHomeClick} className="flex items-center gap-3 group">
             <div className="relative">
               <img 
                 src={currentLogo} 
@@ -245,7 +252,12 @@ const AppContent = () => {
 
         <nav className="hidden lg:flex items-center bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
           {NAV_ITEMS.map((item) => (
-            <Link key={item.id} to={item.path} className={`px-5 py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase font-bold ${location.pathname === item.path ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}>
+            <Link 
+              key={item.id} 
+              to={item.path} 
+              onClick={item.path === '/' ? handleHomeClick : undefined}
+              className={`px-5 py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase font-bold ${location.pathname === item.path ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
               {item.label}
             </Link>
           ))}

@@ -30,6 +30,13 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
     return 'Me';
   };
 
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav className="lg:hidden fixed bottom-4 left-0 right-0 px-4 z-[70] transition-all duration-500 animate-fade-in">
       <div className="max-w-lg mx-auto bg-white/90 backdrop-blur-2xl border border-white/40 shadow-[0_15px_40px_rgba(0,0,0,0.12)] rounded-[2rem] px-2 py-2 flex items-center justify-around">
@@ -39,6 +46,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
             <Link
               key={item.id}
               to={item.path}
+              onClick={item.path === '/' ? handleHomeClick : undefined}
               className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
                 isActive ? 'text-hotel-primary' : 'text-gray-400'
               }`}
