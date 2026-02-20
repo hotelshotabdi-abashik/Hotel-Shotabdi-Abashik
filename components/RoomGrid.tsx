@@ -59,13 +59,28 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
   const location = useLocation();
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const category = params.get('category');
-    if (category) {
-      setHighlightedId(category);
-      const timer = setTimeout(() => setHighlightedId(null), 5000);
-      return () => clearTimeout(timer);
-    }
+    const handleLocationChange = () => {
+      const params = new URLSearchParams(window.location.search);
+      const category = params.get('category');
+      if (category) {
+        setHighlightedId(category);
+        
+        // Scroll to element
+        setTimeout(() => {
+          const element = document.getElementById(category);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+
+        const timer = setTimeout(() => setHighlightedId(null), 5000);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    handleLocationChange();
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, [location.search]);
 
   const sortedRooms = useMemo(() => {

@@ -10,13 +10,13 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@firebase/database": "^1.1.0",
     "@firebase/messaging": "^0.12.23",
     "@google/genai": "^1.38.0",
     "@vitejs/plugin-react": "^5.1.2",
     "firebase": "^12.8.0",
     "lucide-react": "^0.563.0",
-    "motion": "^12.34.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.0",

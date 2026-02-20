@@ -1,5 +1,5 @@
 
-import emailjs from 'https://esm.sh/@emailjs/browser';
+import emailjs from '@emailjs/browser';
 
 const SERVICE_ID = "service_ek24m6g";
 const TEMPLATE_ID = "template_kikr6i5";
