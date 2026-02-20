@@ -185,13 +185,36 @@ const AppContent = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsLogoSpinning(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setSiteConfig(prev => ({ ...prev, logoUrl: base64 }));
+    try {
+      const url = await handleImageUpload(file);
+      setSiteConfig(prev => ({ ...prev, logoUrl: url }));
       setTimeout(() => setIsLogoSpinning(false), 2000);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      alert("Logo upload failed.");
+      setIsLogoSpinning(false);
+    }
+  };
+
+  const handleImageUpload = async (file: File): Promise<string> => {
+    // Senior Architect Note: Cloudflare R2 Upload Logic
+    // In a production environment with Cloudflare Pages, you would typically 
+    // use a Cloudflare Worker (Functions) to securely upload to R2.
+    // For now, we use a robust Base64 conversion to ensure immediate UI feedback.
+    
+    return new Promise((resolve, reject) => {
+      if (file.size > 10 * 1024 * 1024) {
+        reject(new Error("File too large. Max 10MB."));
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        resolve(base64);
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
   };
 
   if (isConfigLoading) return (
@@ -212,16 +235,6 @@ const AppContent = () => {
     return name;
   };
 
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const handleHomeClick = (e: React.MouseEvent) => {
     if (location.pathname === '/') {
       e.preventDefault();
@@ -234,13 +247,13 @@ const AppContent = () => {
       <RouteMetadata siteConfig={siteConfig} />
       <SchemaOrg />
       
-      <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-4 md:px-10 flex justify-between items-center ${scrolled ? 'h-[72px] md:h-[80px] bg-white/80 backdrop-blur-2xl border-b border-gray-100 shadow-sm' : 'h-[88px] md:h-[100px] bg-transparent'}`}>
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
         <div className="flex items-center gap-4">
           <Link to="/" onClick={handleHomeClick} className="flex items-center gap-3 group">
             <div className="relative">
               <img 
                 src={currentLogo} 
-                className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-500 ${isLogoSpinning ? 'animate-spin-once' : ''} ${!scrolled && location.pathname === '/' ? 'brightness-0 invert' : ''}`} 
+                className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
                 alt="Logo"
               />
               {isEditMode && isAdmin && (
@@ -254,41 +267,33 @@ const AppContent = () => {
               <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
             </div>
             <div className="hidden sm:block">
-              <h1 className={`text-sm font-serif font-black uppercase leading-none transition-colors duration-500 ${!scrolled && location.pathname === '/' ? 'text-white' : 'text-gray-900'}`}>Hotel Shotabdi</h1>
-              <p className={`text-[6px] font-black uppercase tracking-[0.4em] mt-0.5 transition-colors duration-500 ${!scrolled && location.pathname === '/' ? 'text-white/80' : 'text-hotel-primary'}`}>Abashik</p>
+              <h1 className="text-sm font-serif font-black text-gray-900 uppercase leading-none">Hotel Shotabdi</h1>
+              <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">Abashik</p>
             </div>
           </Link>
         </div>
 
-        <nav className={`hidden lg:flex items-center p-1 rounded-2xl border transition-all duration-500 ${!scrolled && location.pathname === '/' ? 'bg-white/10 border-white/20 backdrop-blur-md' : 'bg-gray-50/50 border-gray-100'}`}>
+        <nav className="hidden lg:flex items-center bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
           {NAV_ITEMS.map((item) => (
             <Link 
               key={item.id} 
               to={item.path} 
               onClick={item.path === '/' ? handleHomeClick : undefined}
-              className={`px-5 py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase font-bold ${location.pathname === item.path ? (scrolled || location.pathname !== '/' ? 'text-hotel-primary font-black' : 'text-white font-black') : (scrolled || location.pathname !== '/' ? 'text-gray-400 hover:text-hotel-primary' : 'text-white/60 hover:text-white')}`}
+              className={`px-5 py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase font-bold ${location.pathname === item.path ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
             >
               {item.label}
             </Link>
           ))}
           {isAdmin && (
-            <Link to="/admin" className={`px-5 py-2.5 rounded-xl text-[10px] tracking-widest uppercase font-black ${location.pathname === '/admin' ? 'text-amber-600' : (scrolled || location.pathname !== '/' ? 'text-amber-600/70 hover:text-amber-600' : 'text-amber-400 hover:text-amber-300')}`}>
+            <Link to="/admin" className={`px-5 py-2.5 rounded-xl text-[10px] tracking-widest uppercase font-black ${location.pathname === '/admin' ? 'text-amber-600' : 'text-amber-600/70 hover:text-amber-600'}`}>
               Admin
             </Link>
           )}
         </nav>
 
         <div className="flex items-center gap-2 md:gap-4">
-          {scrolled && (
-            <Link 
-              to="/rooms" 
-              className="hidden md:flex items-center gap-2 bg-hotel-primary text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-red-100 hover:bg-[#B22222] transition-all active:scale-95"
-            >
-              Book Now
-            </Link>
-          )}
           {isAdmin && (
-            <button onClick={() => setIsEditMode(!isEditMode)} className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${isEditMode ? 'bg-amber-100 text-amber-600' : (scrolled || location.pathname !== '/' ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-white/10 text-white hover:bg-white/20')}`}>
+            <button onClick={() => setIsEditMode(!isEditMode)} className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
               <Edit3 size={14} /> {isEditMode ? 'Live Editing' : 'Edit Web'}
             </button>
           )}
@@ -296,14 +301,14 @@ const AppContent = () => {
           {user ? (
             <div className="flex items-center gap-2 md:gap-4">
               <div className="relative" ref={notificationRef}>
-                <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : (scrolled || location.pathname !== '/' ? 'text-gray-400 hover:text-hotel-primary' : 'text-white/60 hover:text-white')}`}>
+                <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}>
                   <Bell size={24} />
                   {unreadCount > 0 && <span className="absolute top-2 right-2 w-5 h-5 bg-hotel-primary text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white">{unreadCount}</span>}
                 </button>
               </div>
 
               <div className="relative" ref={dropdownRef}>
-                <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : (scrolled || location.pathname !== '/' ? 'border-white ring-gray-100' : 'border-white/20 ring-white/10')}`}>
+                <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
                   <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="Profile" />
                 </button>
                 {isProfileMenuOpen && (
@@ -351,11 +356,11 @@ const AppContent = () => {
         )}
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} /></>} />
-            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} />} />
+            <Route path="/" element={<><Hero config={siteConfig.hero} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={handleImageUpload} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} /></>} />
+            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
@@ -372,7 +377,7 @@ const AppContent = () => {
         )}
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
-        {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={async(f)=>""} />}
+        {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={handleImageUpload} />}
         <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
       </main>
     </div>

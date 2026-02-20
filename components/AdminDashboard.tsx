@@ -122,6 +122,27 @@ const AdminDashboard: React.FC = () => {
        alert("Access Denied: Only the Owner can authorize Managers.");
        return;
     }
+
+    // If owner is giving manager role, bypass the password gate
+    if (isOwner && newRole === 'manager') {
+      setRoleUpdatingUid(uid);
+      try {
+        const targetUser = users.find(u => u.uid === uid);
+        await update(ref(db), {
+          [`roles/${uid}`]: newRole,
+          [`profiles/${uid}/role`]: newRole
+        });
+        await createAdminLog('MANAGER_AUTHORIZED', `Owner authorized ${targetUser?.legalName || uid} as Manager.`);
+        await triggerRoleNotification(uid, newRole);
+        alert("Role Authorized: User is now a Manager.");
+      } catch (err) {
+        alert("Role update failed.");
+      } finally {
+        setRoleUpdatingUid(null);
+      }
+      return;
+    }
+
     setRoleUpdatingUid(uid);
     try {
       const targetUser = users.find(u => u.uid === uid);
@@ -349,6 +370,27 @@ const AdminDashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
              <div className="lg:col-span-4 space-y-6">
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                   <div>
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><Database size={16} className="text-hotel-primary"/> Cloudflare R2 Assets</h4>
+                      <div className="space-y-4">
+                         <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
+                            <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mb-2">Data Catalog Warehouse</p>
+                            <p className="text-[11px] font-mono font-bold text-blue-900 break-all mb-4">4db63b5a946ef5ebc26acd7bd228a0e1_hotel-shotabdi-assets</p>
+                            <a 
+                              href="https://catalog.cloudflarestorage.com/4db63b5a946ef5ebc26acd7bd228a0e1/hotel-shotabdi-assets" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-100 hover:scale-105 transition-all"
+                            >
+                               Open R2 Catalog <Maximize2 size={14} />
+                            </a>
+                         </div>
+                         <p className="text-[9px] text-gray-400 font-medium leading-relaxed italic">
+                           Use the catalog to manage large volumes of room and restaurant media assets directly in Cloudflare.
+                         </p>
+                      </div>
+                   </div>
+
                    <div>
                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Statistics</h4>
                       <div className="grid grid-cols-2 gap-4">
