@@ -46,6 +46,8 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
         const url = await onImageUpload(file);
         const updated = displayList.map(r => r.id === id ? { ...r, image: url } : r);
         onUpdate?.(updated);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
       } finally {
         setUploadingId(null);
       }

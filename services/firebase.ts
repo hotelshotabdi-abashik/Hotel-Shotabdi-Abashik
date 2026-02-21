@@ -110,7 +110,13 @@ export const syncUserProfile = async (user: any) => {
   
   try {
     const [profileSnap, roleSnap] = await Promise.all([get(userRef), get(roleRef)]);
-    const role = roleSnap.exists() ? roleSnap.val() : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
+    let role = roleSnap.exists() ? roleSnap.val() : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
+    
+    // Senior Architect Fix: Ensure owner role is explicitly set in the roles node
+    if (user.email === OWNER_EMAIL && role !== 'owner') {
+      await set(roleRef, 'owner');
+      role = 'owner';
+    }
     
     trackPresence(user.uid);
 
@@ -131,7 +137,6 @@ export const syncUserProfile = async (user: any) => {
         role: role
       };
       await set(userRef, freshProfile);
-      if (user.email === OWNER_EMAIL) await set(roleRef, 'owner');
       return freshProfile;
     } else {
       const data = profileSnap.val();

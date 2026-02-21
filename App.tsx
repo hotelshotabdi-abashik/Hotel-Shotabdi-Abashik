@@ -174,11 +174,15 @@ const AppContent = () => {
     if (!isAdmin) return;
     setIsSaving(true);
     try {
+      const configRef = ref(db, 'site-config');
       await update(ref(db), { 'site-config': { ...siteConfig, lastUpdated: Date.now() } });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
       setIsEditMode(false);
       alert("Update Success!");
-    } catch (error) { alert("Update Failed."); } finally { setIsSaving(false); }
+    } catch (error: any) { 
+      console.error("Save Error:", error);
+      alert(`Update Failed: ${error.message || 'Connection error'}`); 
+    } finally { setIsSaving(false); }
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,17 +206,26 @@ const AppContent = () => {
     // For now, we use a robust Base64 conversion to ensure immediate UI feedback.
     
     return new Promise((resolve, reject) => {
+      if (!file) {
+        reject(new Error("No file selected."));
+        return;
+      }
+
       if (file.size > 10 * 1024 * 1024) {
-        reject(new Error("File too large. Max 10MB."));
+        reject(new Error("File too large. Max 10MB allowed for Base64 storage."));
         return;
       }
       
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
+        if (!base64) {
+          reject(new Error("Failed to convert image to data."));
+          return;
+        }
         resolve(base64);
       };
-      reader.onerror = (err) => reject(err);
+      reader.onerror = () => reject(new Error("Error reading file."));
       reader.readAsDataURL(file);
     });
   };

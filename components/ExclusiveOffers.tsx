@@ -110,8 +110,8 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
           mediaType: file.type.startsWith('video') ? 'video' as const : 'image' as const 
         } : o);
         onUpdate?.(updated);
-      } catch (err) {
-        alert("Upload failed. Ensure file is under 10MB.");
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Ensure file is under 10MB.'}`);
       } finally {
         setIsUploading(false);
       }

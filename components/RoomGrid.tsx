@@ -98,6 +98,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
         const url = await onImageUpload(file);
         const updated = rooms.map(r => r.id === roomId ? { ...r, image: url } : r);
         onUpdate?.(updated);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
       } finally {
         setUploadingId(null);
       }
