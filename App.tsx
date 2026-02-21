@@ -84,6 +84,7 @@ const AppContent = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
+  const [showStickyCategories, setShowStickyCategories] = useState(false);
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
@@ -136,6 +137,19 @@ const AppContent = () => {
     });
     return () => unsub();
   }, [user]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroSection = document.getElementById('hero-section');
+      if (heroSection) {
+        const rect = heroSection.getBoundingClientRect();
+        // If the bottom of the hero section is above the top of the viewport
+        setShowStickyCategories(rect.bottom < 80);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const loadProfile = useCallback(async (u: any) => {
     if (!u) {
@@ -290,6 +304,33 @@ const AppContent = () => {
           </Link>
         </div>
 
+        {showStickyCategories && (
+          <div className="hidden xl:flex items-center gap-6 animate-fade-in ml-8">
+            {[
+              { id: 'rooms', label: t.ourLuxuryRooms },
+              { id: 'offers', label: t.exclusiveOffers },
+              { id: 'restaurants', label: t.restaurantsTitle },
+              { id: 'guide', label: t.guideTitle },
+              { id: 'helpdesk', label: t.helpDesk }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  const el = document.getElementById(item.id);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  else navigate(item.id === 'helpdesk' ? '/helpdesk' : `/#${item.id}`);
+                }}
+                className="flex items-center gap-2 group"
+              >
+                <div className="w-3 h-3 rounded-full border border-gray-200 group-hover:border-hotel-primary flex items-center justify-center transition-colors">
+                  <div className="w-1.5 h-1.5 bg-hotel-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+                <span className="text-[9px] font-black text-gray-400 group-hover:text-gray-900 uppercase tracking-widest transition-colors">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <nav className="hidden lg:flex items-center gap-8 ml-auto mr-8">
           <Link 
             to="/" 
@@ -416,7 +457,7 @@ const AppContent = () => {
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
         {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={handleImageUpload} />}
-        <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
+        <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} language={language} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
       </main>
     </div>
   );

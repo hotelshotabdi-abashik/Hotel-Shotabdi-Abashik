@@ -81,7 +81,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
   };
 
   return (
-    <section id="guide" className="bg-gray-50/50 min-h-screen w-full">
+    <section id="guide" className="bg-gray-50/50 min-h-screen w-full scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-8 md:pb-12 text-center">
         <header>
           <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm mx-auto">

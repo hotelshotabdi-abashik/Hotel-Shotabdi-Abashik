@@ -124,7 +124,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, c
   const activeOffer = offers.find(o => o.id === activeSettingsId);
 
   return (
-    <section className="py-24 bg-white overflow-hidden relative">
+    <section id="offers" className="py-24 bg-white overflow-hidden relative scroll-mt-24">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-end mb-16">
           <div className="max-w-xl">

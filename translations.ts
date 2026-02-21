@@ -44,6 +44,7 @@ export const translations = {
     sylhetDining: "Sylhet Dining",
     topAttractions: "Top Attractions",
     contactUs: "Contact Us",
+    filter: "Filter",
     footerDesc: "Hotel Shotabdi Abashik provides 24-hour front desk and room services in the heart of Sylhet."
   },
   BN: {
@@ -90,6 +91,7 @@ export const translations = {
     sylhetDining: "সিলেট ডাইনিং",
     topAttractions: "সেরা আকর্ষণ",
     contactUs: "যোগাযোগ করুন",
+    filter: "ফিল্টার",
     footerDesc: "হোটেল শতাব্দী আবাসিক সিলেটের প্রাণকেন্দ্রে ২৪ ঘণ্টা ফ্রন্ট ডেস্ক এবং রুম সার্ভিস প্রদান করে।"
   }
 };

@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, Bed, Utensils, Map as MapIcon, 
   Calendar, Users, ChevronDown, Moon, ShieldCheck, Key,
-  Tag, MessageSquare, History, Sparkles, MapPin, ExternalLink
+  Tag, MessageSquare, History, Sparkles, MapPin, ExternalLink, Filter
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -26,6 +26,17 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const [activeTab, setActiveTab] = useState('hotel');
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id || '');
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      const path = shortcuts.find(s => s.id === id)?.path;
+      if (path) navigate(path);
+    }
+  };
 
   useEffect(() => {
     if (rooms.length > 0 && !selectedRoomId) {
@@ -109,7 +120,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section id="hero-section" className="relative h-[300px] md:h-[400px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white">
+    <section id="hero-section" className="relative min-h-[550px] md:h-[400px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white py-12 md:py-0">
       {isEditMode && (
         <div className="absolute top-4 right-4 md:right-10 z-20">
           <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
@@ -216,8 +227,11 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
         </div>
 
         {/* Categories / Shortcuts below search - Styled as Filters */}
-        <div className="w-full max-w-4xl flex flex-wrap justify-center items-center gap-x-8 gap-y-4">
-          <div className="flex items-center gap-3 group cursor-pointer">
+        <div className="hidden lg:flex w-full max-w-4xl flex-wrap justify-center items-center gap-x-8 gap-y-4">
+          <div 
+            onClick={() => scrollToSection('hero-section')}
+            className="flex items-center gap-3 group cursor-pointer"
+          >
             <div className="w-4 h-4 rounded-full border-2 border-hotel-primary flex items-center justify-center">
               <div className="w-2 h-2 bg-hotel-primary rounded-full"></div>
             </div>
@@ -225,18 +239,78 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           </div>
 
           {shortcuts.map((item) => (
-            <Link
+            <button
               key={item.id}
-              to={item.path}
+              onClick={() => scrollToSection(item.id)}
               className="flex items-center gap-3 group cursor-pointer"
             >
               <div className="w-4 h-4 rounded-full border-2 border-gray-200 group-hover:border-hotel-primary flex items-center justify-center transition-colors">
                 <div className="w-2 h-2 bg-hotel-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
               <span className="text-[11px] font-black text-gray-400 group-hover:text-gray-900 uppercase tracking-widest transition-colors">{item.label}</span>
-            </Link>
+            </button>
           ))}
         </div>
+
+        {/* Mobile Filter Button */}
+        <div className="lg:hidden w-full px-4 mt-6">
+           <button 
+             onClick={() => setShowMobileFilters(true)}
+             className="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl transition-all border border-gray-200 shadow-sm"
+           >
+              <Filter size={18} className="text-gray-500" />
+              <span className="text-xs font-black uppercase tracking-widest text-gray-700">{t.filter}</span>
+           </button>
+        </div>
+
+        {/* Mobile Filter Modal */}
+        {showMobileFilters && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center px-6 lg:hidden">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)}></div>
+            <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Select Category</h3>
+                <button onClick={() => setShowMobileFilters(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <ChevronDown size={20} className="text-gray-400" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto no-scrollbar">
+                <button 
+                  onClick={() => { scrollToSection('hero-section'); setShowMobileFilters(false); }}
+                  className="w-full flex items-center gap-4 group"
+                >
+                  <div className="w-5 h-5 rounded-full border-2 border-hotel-primary flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 bg-hotel-primary rounded-full"></div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">{t.allCategories}</span>
+                </button>
+
+                {shortcuts.map((item) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => { scrollToSection(item.id); setShowMobileFilters(false); }}
+                    className="w-full flex items-center gap-4 group"
+                  >
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-hotel-primary flex items-center justify-center transition-colors">
+                      <div className="w-2.5 h-2.5 bg-hotel-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <span className="text-sm font-bold text-gray-500 group-hover:text-gray-900 transition-colors">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-6 bg-gray-50">
+                <button 
+                  onClick={() => setShowMobileFilters(false)}
+                  className="w-full bg-[#FFC107] hover:bg-[#FFB300] text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-yellow-100 transition-all active:scale-95"
+                >
+                  {t.filter}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Dynamic Background Glow */}

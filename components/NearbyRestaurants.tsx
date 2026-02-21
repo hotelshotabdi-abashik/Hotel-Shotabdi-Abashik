@@ -87,7 +87,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
   };
 
   return (
-    <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in">
+    <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in scroll-mt-24">
       <div className="mb-12 text-center flex flex-col items-center">
         <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">{t.sylhetDining}</span>
         <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">{t.restaurantsTitle}</h2>

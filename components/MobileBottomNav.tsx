@@ -4,24 +4,27 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Bed, Map, Utensils, User, LogIn, Tag, LayoutDashboard } from 'lucide-react';
 import { UserProfile } from '../types';
 import { OWNER_EMAIL } from '../services/firebase';
+import { translations, Language } from '../translations';
 
 interface MobileBottomNavProps {
   user: any;
   profile: UserProfile | null;
   isAdmin: boolean;
+  language: Language;
   openAuth: () => void;
   toggleProfile: () => void;
 }
 
-const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmin, openAuth, toggleProfile }) => {
+const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmin, language, openAuth, toggleProfile }) => {
   const location = useLocation();
+  const t = translations[language];
 
   const navItems = [
-    { id: 'home', path: '/', label: 'Home', icon: <Home size={20} /> },
-    { id: 'offers', path: '/offers', label: 'Offers', icon: <Tag size={20} /> },
-    { id: 'rooms', path: '/rooms', label: 'Rooms', icon: <Bed size={20} /> },
-    { id: 'restaurants', path: '/restaurants', label: 'Dining', icon: <Utensils size={20} /> },
-    { id: 'guide', path: '/guide', label: 'Guide', icon: <Map size={20} /> },
+    { id: 'home', path: '/', label: t.home, icon: <Home size={20} /> },
+    { id: 'offers', path: '/offers', label: t.exclusiveOffers, icon: <Tag size={20} /> },
+    { id: 'rooms', path: '/rooms', label: t.ourLuxuryRooms, icon: <Bed size={20} /> },
+    { id: 'restaurants', path: '/restaurants', label: t.restaurantsTitle, icon: <Utensils size={20} /> },
+    { id: 'guide', path: '/guide', label: t.guideTitle, icon: <Map size={20} /> },
   ];
 
   const getRoleLabel = () => {
@@ -103,7 +106,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
               </div>
             )}
             <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
-              {user ? 'Me' : 'Login'}
+              {user ? 'Me' : t.login}
             </span>
           </button>
         )}
