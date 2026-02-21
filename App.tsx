@@ -34,6 +34,7 @@ import {
 import { UserProfile, SiteConfig, AppNotification, Room } from './types';
 import { LogIn, Loader2, Bell, Edit3, Save, CheckCheck, LogOut, User as UserIcon, AlertTriangle, LayoutDashboard, Upload, Info, Key, Shield } from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
+import { translations, Language } from './translations';
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
   const { pathname } = useLocation();
@@ -71,6 +72,9 @@ const AppContent = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
+  const [language, setLanguage] = useState<Language>('EN');
+  
+  const t = translations[language];
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -233,7 +237,7 @@ const AppContent = () => {
   if (isConfigLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Master Hub...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t.syncingHub}</p>
     </div>
   );
 
@@ -286,40 +290,61 @@ const AppContent = () => {
           </Link>
         </div>
 
-        <nav className="hidden lg:flex items-center bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
-          {NAV_ITEMS.map((item) => (
-            <Link 
-              key={item.id} 
-              to={item.path} 
-              onClick={item.path === '/' ? handleHomeClick : undefined}
-              className={`px-5 py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase font-bold ${location.pathname === item.path ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
-            >
-              {item.label}
-            </Link>
-          ))}
-          {isAdmin && (
-            <Link to="/admin" className={`px-5 py-2.5 rounded-xl text-[10px] tracking-widest uppercase font-black ${location.pathname === '/admin' ? 'text-amber-600' : 'text-amber-600/70 hover:text-amber-600'}`}>
-              Admin
-            </Link>
-          )}
+        <nav className="hidden lg:flex items-center gap-8 ml-auto mr-8">
+          <Link 
+            to="/" 
+            onClick={handleHomeClick}
+            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+          >
+            {t.home}
+          </Link>
+          <button 
+            onClick={() => {
+              const el = document.getElementById('about');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              else navigate('/#about');
+            }}
+            className="transition-all text-[11px] tracking-widest uppercase font-bold text-gray-400 hover:text-hotel-primary"
+          >
+            {t.about}
+          </button>
+          <Link 
+            to="/helpdesk" 
+            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+          >
+            {t.helpDesk}
+          </Link>
+
+          <button 
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className={`transition-all relative ${isNotificationsOpen ? 'text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
+            title={t.notifications}
+          >
+            <Bell size={22} />
+            {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">{unreadCount}</span>}
+          </button>
+          
+          <div className="h-4 w-[1px] bg-gray-200"></div>
+
+          <button 
+            onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
+            className="transition-all text-[11px] tracking-widest uppercase font-black text-hotel-primary hover:bg-hotel-primary/5 flex items-center gap-2 px-3 py-1.5 rounded-xl border border-hotel-primary/10"
+          >
+            <span className={language === 'EN' ? 'opacity-100' : 'opacity-30'}>EN</span>
+            <span className="text-gray-300">/</span>
+            <span className={language === 'BN' ? 'opacity-100' : 'opacity-30'}>BN</span>
+          </button>
         </nav>
 
         <div className="flex items-center gap-2 md:gap-4">
           {isAdmin && (
             <button onClick={() => setIsEditMode(!isEditMode)} className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-              <Edit3 size={14} /> {isEditMode ? 'Live Editing' : 'Edit Web'}
+              <Edit3 size={14} /> {isEditMode ? t.liveEditing : t.editWeb}
             </button>
           )}
 
           {user ? (
             <div className="flex items-center gap-2 md:gap-4">
-              <div className="relative" ref={notificationRef}>
-                <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className={`p-2.5 rounded-2xl transition-all relative ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}>
-                  <Bell size={24} />
-                  {unreadCount > 0 && <span className="absolute top-2 right-2 w-5 h-5 bg-hotel-primary text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-white">{unreadCount}</span>}
-                </button>
-              </div>
-
               <div className="relative" ref={dropdownRef}>
                 <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
                   <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="Profile" />
@@ -355,7 +380,7 @@ const AppContent = () => {
               </div>
             </div>
           ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-xl hover:brightness-110 active:scale-95 transition-all">Login</button>
+            <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-xl hover:brightness-110 active:scale-95 transition-all">{t.login}</button>
           )}
         </div>
       </header>
@@ -364,28 +389,28 @@ const AppContent = () => {
         {isProfileIncomplete && (
           <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 shadow-lg">
              <AlertTriangle size={16} className="shrink-0 animate-bounce" />
-             <p className="font-black text-[10px] uppercase tracking-widest">Identity registry incomplete. <button onClick={() => setIsManageAccountOpen(true)} className="underline ml-1">Finish Onboarding</button></p>
+             <p className="font-black text-[10px] uppercase tracking-widest">{t.identityIncomplete} <button onClick={() => setIsManageAccountOpen(true)} className="underline ml-1">{t.finishOnboarding}</button></p>
           </div>
         )}
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} rooms={siteConfig.rooms} isEditMode={isEditMode} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={handleImageUpload} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} /></>} />
-            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/" element={<><Hero config={siteConfig.hero} rooms={siteConfig.rooms} isEditMode={isEditMode} language={language} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={handleImageUpload} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} /></>} />
+            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
-            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">Unauthorized Access</div>} />
+            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">{t.unauthorized}</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>
         </div>
-        <Footer isEditMode={isEditMode} logoUrl={currentLogo} socialLinks={siteConfig.socialLinks} onUpdateSocial={(links) => setSiteConfig(prev => ({ ...prev, socialLinks: links }))} />
+        <Footer isEditMode={isEditMode} language={language} logoUrl={currentLogo} socialLinks={siteConfig.socialLinks} onUpdateSocial={(links) => setSiteConfig(prev => ({ ...prev, socialLinks: links }))} />
         {isEditMode && isAdmin && (
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] flex items-center gap-10 shadow-2xl border border-white/10">
-             <button onClick={saveConfig} className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:brightness-110 active:scale-95 transition-all"><Save size={16} /> Publish Changes</button>
+             <button onClick={saveConfig} className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:brightness-110 active:scale-95 transition-all"><Save size={16} /> {t.publishChanges}</button>
           </div>
         )}
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />

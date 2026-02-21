@@ -6,20 +6,23 @@ import {
   Tag, Settings2, ShieldCheck, X, CheckCircle2, Loader2, CalendarRange, Star
 } from 'lucide-react';
 import { Offer } from '../types';
+import { translations, Language } from '../translations';
 
 interface Props {
   offers: Offer[];
   isEditMode?: boolean;
+  language: Language;
   claimedOfferId?: string | null;
   onClaim?: (offer: Offer) => void;
   onUpdate?: (offers: Offer[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOfferId, onClaim, onUpdate, onImageUpload }) => {
+const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, claimedOfferId, onClaim, onUpdate, onImageUpload }) => {
   const [activeSettingsId, setActiveSettingsId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const swiperRef = useRef<any>(null);
+  const t = translations[language];
 
   // Sort offers: recommended first
   const sortedOffers = useMemo(() => {
@@ -126,7 +129,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, claimedOffe
         <div className="flex justify-between items-end mb-16">
           <div className="max-w-xl">
             <span className="text-[#B22222] font-black text-[10px] uppercase tracking-[0.4em] mb-4 block">Limited Opportunities</span>
-            <h2 className="text-4xl md:text-6xl font-sans text-gray-900 font-black tracking-tighter leading-tight">Exclusive Offers</h2>
+            <h2 className="text-4xl md:text-6xl font-sans text-gray-900 font-black tracking-tighter leading-tight">{t.exclusiveOffers}</h2>
           </div>
           {isEditMode && (
             <button 

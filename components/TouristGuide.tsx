@@ -3,18 +3,21 @@ import React, { useState, useMemo } from 'react';
 import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone, Star, Link2 } from 'lucide-react';
 import { Attraction } from '../types';
 import { SYLHET_ATTRACTIONS } from '../constants';
+import { translations, Language } from '../translations';
 
 interface Props {
   touristGuides: Attraction[];
   isEditMode?: boolean;
+  language: Language;
   onUpdate?: (tg: Attraction[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdate, onImageUpload }) => {
+const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, language, onUpdate, onImageUpload }) => {
   const [visibleCount, setVisibleCount] = useState(12);
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const t = translations[language];
 
   const displayList = touristGuides.length > 0 ? touristGuides : SYLHET_ATTRACTIONS;
 
@@ -84,7 +87,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, onUpdat
           <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm mx-auto">
             <Compass size={24} />
           </div>
-          <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">Sylhet Tourist Guide</h2>
+          <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">{t.guideTitle}</h2>
           <p className="text-gray-500 text-xs md:text-lg max-w-2xl mx-auto leading-relaxed font-light mb-8 md:mb-10 px-4">
              Explore shrines, nature, and culture. Distances from <span className="text-hotel-primary font-black">Hotel Shotabdi Residential</span>.
           </p>

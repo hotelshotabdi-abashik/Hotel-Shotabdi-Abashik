@@ -3,22 +3,25 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star, Percent } from 'lucide-react';
 import { Room } from '../types';
+import { translations, Language } from '../translations';
 
 interface RoomGridProps {
   rooms: Room[];
   activeDiscount?: number;
   isBookingDisabled?: boolean;
   isEditMode?: boolean;
+  language: Language;
   onBook?: (room: Room) => void;
   onUpdate?: (rooms: Room[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
+const RoomDescription: React.FC<{ text: string; language: Language }> = ({ text = "", language }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const safeText = text || "";
+  const t = translations[language];
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -46,17 +49,18 @@ const RoomDescription: React.FC<{ text: string }> = ({ text = "" }) => {
           onClick={() => setIsExpanded(!isExpanded)}
           className="mt-1 text-hotel-primary font-black text-[9px] uppercase tracking-widest hover:underline inline-flex items-center gap-0.5"
         >
-          {isExpanded ? '...less' : '...more'}
+          {isExpanded ? t.less : t.more}
         </button>
       )}
     </div>
   );
 };
 
-const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = false, isEditMode, onBook, onUpdate, onImageUpload }) => {
+const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = false, isEditMode, language, onBook, onUpdate, onImageUpload }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const location = useLocation();
+  const t = translations[language];
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -139,11 +143,11 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4">
         <header className="max-w-3xl text-center md:text-left mx-auto md:mx-0">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-3">
-            <Zap size={10} fill="currentColor" /> Premier Units
+            <Zap size={10} fill="currentColor" /> {t.premierUnits}
           </div>
-          <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter mb-4">Our Luxury Rooms</h2>
+          <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter mb-4">{t.ourLuxuryRooms}</h2>
           <p className="text-gray-400 text-xs md:text-lg leading-relaxed font-light px-2 md:px-0">
-            Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">exclusive manual rates</span>.
+            Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">{t.exclusiveRates}</span>.
           </p>
         </header>
         
@@ -181,7 +185,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                   {room.isRecommended && (
                     <span className="bg-amber-400 text-gray-900 px-2.5 py-1 rounded-lg text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/50">
-                      <Star size={10} fill="currentColor" /> Recommended
+                      <Star size={10} fill="currentColor" /> {t.recommended}
                     </span>
                   )}
                   {room.discountLabel && (
@@ -252,13 +256,13 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                     ) : (
                       <div className="flex flex-col">
                         {!hasPrice ? (
-                          <span className="text-sm md:text-lg font-black text-gray-400 italic">Price on Request</span>
+                          <span className="text-sm md:text-lg font-black text-gray-400 italic">{t.priceOnRequest}</span>
                         ) : (
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through font-sans">৳{room.price}</span>
                             <div className="flex items-baseline gap-0.5">
                                <span className="text-xl md:text-4xl font-sans font-black text-[#B22222] tracking-tighter">৳{room.discountPrice}</span>
-                               <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ nt</span>
+                               <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ {t.night}</span>
                             </div>
                           </div>
                         )}
@@ -267,7 +271,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                   </div>
                 </div>
 
-                <RoomDescription text={room.desc} />
+                <RoomDescription text={room.desc} language={language} />
 
                 <div className="mb-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1.5 md:gap-y-3">
@@ -290,7 +294,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                       : 'bg-[#9B1C1C] hover:bg-[#B22222] text-white'
                     }`}
                   >
-                    {!hasPrice && !isEditMode ? 'Enquire' : isBookingDisabled && !isEditMode ? 'Pending' : 'Book Now'}
+                    {!hasPrice && !isEditMode ? t.enquire : isBookingDisabled && !isEditMode ? t.pending : t.bookNow}
                     {(!isBookingDisabled && hasPrice) && <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
                   </button>
                 </div>

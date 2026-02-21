@@ -8,17 +8,20 @@ import {
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
 import { ROOMS_DATA } from '../constants';
+import { translations, Language } from '../translations';
 
 interface HeroProps {
   config: HeroConfig;
   rooms: Room[];
   isEditMode?: boolean;
+  language: Language;
   onUpdate?: (config: Partial<HeroConfig>) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, onUpdate, onImageUpload }) => {
+const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload }) => {
   const navigate = useNavigate();
+  const t = translations[language];
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('hotel');
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id || '');
@@ -106,19 +109,9 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, onUpdate, o
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section id="hero-section" className="relative min-h-[65vh] md:min-h-[95vh] flex flex-col items-center justify-center pt-6 md:pt-12 pb-16 md:pb-24 px-4 md:px-10 w-full overflow-hidden bg-[#0A192F]">
-      {/* Background Image Layer */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={config.backgroundImage} 
-          className="w-full h-full object-cover opacity-30 md:opacity-40 scale-105" 
-          alt="Hotel Background"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A192F]/40 via-transparent to-[#0A192F]/95"></div>
-      </div>
-      
+    <section id="hero-section" className="relative h-[300px] md:h-[400px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white">
       {isEditMode && (
-        <div className="absolute top-20 md:top-24 right-4 md:right-10 z-20">
+        <div className="absolute top-4 right-4 md:right-10 z-20">
           <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
             <input type="file" className="hidden" onChange={handleImageChange} />
             {isUploading ? <Loader2 className="animate-spin text-hotel-primary" size={14} /> : <Camera size={14} className="text-hotel-primary" />}
@@ -129,210 +122,120 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, onUpdate, o
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
-        {/* Simple Header Text */}
-        <div className="mb-6 md:mb-10 text-center animate-fade-in max-w-3xl">
-          <div className="flex justify-center mb-6">
-            <a 
-              href="https://maps.app.goo.gl/NonEKgvUTbKvvkxTA" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-1 rounded-2xl flex items-center gap-3 transition-all hover:bg-white/10 hover:scale-105"
-            >
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-hotel-primary/20 relative">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="w-2.5 h-2.5 bg-hotel-primary rounded-full animate-ping"></div>
-                   <MapIcon className="text-hotel-primary absolute" size={18} />
-                </div>
-              </div>
-              <div className="pr-4 text-left">
-                <p className="text-[7px] font-black text-hotel-primary uppercase tracking-widest">Hotel Location</p>
-                <p className="text-[10px] font-bold text-white/80 leading-tight">Kumargaon Bus Terminal, Sylhet</p>
-              </div>
-              <div className="absolute -top-2 -right-2 bg-hotel-primary text-white p-1 rounded-full shadow-lg scale-0 group-hover:scale-100 transition-transform">
-                <ExternalLink size={10} />
-              </div>
-            </a>
-          </div>
-
-          <h2 className="text-white text-3xl md:text-6xl font-serif font-black mb-3 md:mb-5 leading-tight tracking-tight px-4">
-             Experience Elite Hospitality
+        <div className="text-center mb-10">
+          <h2 className="text-gray-900 text-4xl md:text-6xl font-serif font-black mb-2 tracking-tight">
+             {t.residentialService}
           </h2>
-          <p className="text-[10px] md:text-base text-white/60 font-medium leading-relaxed opacity-90 px-6 max-w-2xl mx-auto">
-            {isEditMode ? (
-              <textarea 
-                className="bg-transparent border-b border-white/20 outline-none w-full text-center resize-none h-16 md:h-20 text-white"
-                value={config.subtitle}
-                onChange={(e) => onUpdate?.({ subtitle: e.target.value })}
-              />
-            ) : config.subtitle}
+          <p className="text-gray-500 text-xs md:text-sm font-medium tracking-widest uppercase">
+            {t.eliteHospitality}
           </p>
         </div>
 
-        {/* The Refined Hotel Booking Widget */}
-        <div className="w-full max-w-6xl bg-white rounded-[1.2rem] md:rounded-[1.5rem] shadow-[0_40px_120px_rgba(0,0,0,0.6)] border border-white/10 overflow-visible animate-fade-in mb-8 md:mb-16">
+        {/* Refined Hotel Search Bar */}
+        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch overflow-hidden p-1.5 border border-gray-100 mb-12">
           
-          <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar scroll-smooth bg-gray-50/50 rounded-t-[1.2rem] md:rounded-t-[1.5rem]">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); navigate(tab.path); }}
-                className={`flex items-center gap-2 px-6 md:px-10 py-4 md:py-6 transition-all relative whitespace-nowrap group ${
-                  activeTab === tab.id ? 'text-[#006CE4]' : 'text-gray-400 hover:text-gray-900'
-                }`}
-              >
-                <span className={`transition-transform duration-300 ${activeTab === tab.id ? 'scale-110' : 'group-hover:scale-110'}`}>
-                  {tab.icon}
-                </span>
-                <span className="text-[9px] md:text-[13px] font-black uppercase tracking-widest">{tab.label}</span>
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] md:h-[3px] bg-hotel-primary"></div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <div className="p-4 md:p-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-10">
-              <div className="flex items-center gap-2 bg-green-50/50 px-4 py-2.5 rounded-xl border border-green-100/50 text-[9px] md:text-xs font-black group shrink-0">
-                <ShieldCheck size={12} className="text-green-500" />
-                <span className="text-green-600 uppercase tracking-widest">Official Direct Rates</span>
+          <div className="relative flex-[1.2] border-b lg:border-b-0 lg:border-r border-gray-100">
+            <div 
+              onClick={() => setShowRoomDropdown(!showRoomDropdown)}
+              className="p-4 md:p-5 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all"
+            >
+              <div className="w-10 h-10 bg-hotel-primary/5 rounded-xl flex items-center justify-center mr-4 shrink-0">
+                <Key size={18} className="text-hotel-primary" />
               </div>
-              
-              <div className="flex items-center gap-2 bg-gray-50/80 px-4 py-2.5 rounded-xl border border-gray-100 text-gray-900 text-[9px] md:text-xs font-black cursor-default group shrink-0">
-                <Users size={12} className="text-gray-400" />
-                <span>MULTIPLE GUEST CAPACITY</span>
+              <div className="flex flex-col items-start text-left">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.selectRoom}</span>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-black text-gray-900 truncate max-w-[140px]">
+                    {rooms.find(r => r.id === selectedRoomId)?.title || t.selectRoom}
+                  </p>
+                  <ChevronDown size={12} className={`text-gray-300 transition-transform ${showRoomDropdown ? 'rotate-180 text-hotel-primary' : ''}`} />
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-0.5 items-stretch bg-gray-100 rounded-xl md:rounded-[1.5rem] overflow-hidden border border-gray-100">
-              
-              <div className="relative flex-[1.2]">
-                <div 
-                  onClick={() => setShowRoomDropdown(!showRoomDropdown)}
-                  className="bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all rounded-t-lg md:rounded-l-[1.2rem] md:rounded-tr-none border-b lg:border-b-0 lg:border-r border-gray-100"
-                >
-                  <div className="w-9 h-9 md:w-11 md:h-11 bg-hotel-primary/5 rounded-xl flex items-center justify-center mr-4 shrink-0">
-                    <Key size={18} className="text-hotel-primary" />
-                  </div>
-                  <div className="flex flex-col items-start overflow-hidden text-left">
-                    <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Select Experience</span>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm md:text-lg font-black text-gray-900 truncate max-w-[140px] md:max-w-none">
-                        {rooms.find(r => r.id === selectedRoomId)?.title || 'Select Room'}
-                      </p>
-                      <ChevronDown size={12} className={`text-gray-300 transition-transform duration-300 ${showRoomDropdown ? 'rotate-180 text-hotel-primary' : ''}`} />
+            {showRoomDropdown && (
+              <div className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[250px] overflow-y-auto no-scrollbar">
+                {rooms.map((room) => (
+                  <div 
+                    key={room.id}
+                    onClick={() => { setSelectedRoomId(room.id); setShowRoomDropdown(false); }}
+                    className={`p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0 ${selectedRoomId === room.id ? 'bg-blue-50/20' : ''}`}
+                  >
+                    <div className="text-left">
+                      <p className="text-[11px] font-black text-gray-900">{room.title}</p>
+                      <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{room.tag}</p>
                     </div>
+                    <p className="text-[10px] font-sans font-black text-hotel-primary">৳{room.discountPrice}</p>
                   </div>
-                </div>
-
-                {showRoomDropdown && (
-                  <div className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[250px] overflow-y-auto no-scrollbar">
-                    {rooms.map((room) => (
-                      <div 
-                        key={room.id}
-                        onClick={() => {
-                          setSelectedRoomId(room.id);
-                          setShowRoomDropdown(false);
-                        }}
-                        className={`p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0 ${selectedRoomId === room.id ? 'bg-blue-50/20' : ''}`}
-                      >
-                        <div className="text-left">
-                          <p className="text-[11px] font-black text-gray-900">{room.title}</p>
-                          <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{room.tag}</p>
-                        </div>
-                        <p className="text-[10px] font-sans font-black text-hotel-primary">৳{room.discountPrice}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                ))}
               </div>
+            )}
+          </div>
 
-              <div 
-                onClick={() => checkInRef.current?.showPicker()}
-                className="relative flex-1 bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
-              >
-                <input 
-                  type="date" 
-                  ref={checkInRef}
-                  value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none" 
-                />
-                <div className="w-9 h-9 md:w-11 md:h-11 bg-gray-50 rounded-xl flex items-center justify-center mr-4 shrink-0 group-hover:bg-white transition-all">
-                  <Calendar size={18} className="text-gray-400 group-hover:text-hotel-primary" />
-                </div>
-                <div className="flex flex-col items-start text-left">
-                  <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check-in</span>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-sm md:text-lg font-black text-gray-900">{checkInDisplay.day} {checkInDisplay.month}</p>
-                    <p className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase">{checkInDisplay.weekday}</p>
-                  </div>
-                </div>
+          <div 
+            onClick={() => checkInRef.current?.showPicker()}
+            className="relative flex-1 p-4 md:p-5 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
+          >
+            <input type="date" ref={checkInRef} value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="absolute inset-0 opacity-0 pointer-events-none" />
+            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mr-4 shrink-0 group-hover:bg-white transition-all">
+              <Calendar size={18} className="text-gray-400 group-hover:text-hotel-primary" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.checkIn}</span>
+              <div className="flex items-baseline gap-2">
+                <p className="text-sm font-black text-gray-900">{checkInDisplay.day} {checkInDisplay.month}</p>
+                <p className="text-[8px] text-gray-400 font-bold uppercase">{checkInDisplay.weekday}</p>
               </div>
-
-              <div 
-                onClick={() => checkOutRef.current?.showPicker()}
-                className="relative flex-1 bg-white p-4 md:p-6 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
-              >
-                <input 
-                  type="date" 
-                  ref={checkOutRef}
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  className="absolute inset-0 opacity-0 pointer-events-none" 
-                />
-                <div className="w-9 h-9 md:w-11 md:h-11 bg-gray-50 rounded-xl flex items-center justify-center mr-4 shrink-0 group-hover:bg-white transition-all">
-                  <Moon size={18} className="text-gray-400 group-hover:text-hotel-primary" />
-                </div>
-                <div className="flex flex-col items-start text-left">
-                  <span className="text-[7px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Check-out</span>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-sm md:text-lg font-black text-gray-900">{checkOutDisplay.day} {checkOutDisplay.month}</p>
-                    <p className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase">{checkOutDisplay.weekday}</p>
-                  </div>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleSearch}
-                className="bg-hotel-primary hover:bg-[#B22222] text-white px-8 md:px-12 py-5 md:py-8 lg:py-0 rounded-b-lg lg:rounded-r-[1.5rem] lg:rounded-b-none flex items-center justify-center transition-all active:scale-[0.98] shadow-inner gap-3 shrink-0"
-              >
-                <Search size={22} strokeWidth={3} className="shrink-0" />
-                <span className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Check Vacancy</span>
-              </button>
             </div>
           </div>
-        </div>
 
-        {/* Section Shortcuts Grid - Added directly to Hero */}
-        <div className="w-full max-w-5xl px-4 md:px-0">
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-6 animate-fade-in delay-200">
-            {shortcuts.map((item) => (
-              <Link
-                key={item.id}
-                to={item.path}
-                className="flex flex-col items-center group"
-              >
-                <div className={`w-12 h-12 md:w-16 md:h-16 ${item.bg} rounded-2xl md:rounded-3xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl shadow-black/5 mb-3 ring-1 ring-white/10 group-hover:ring-hotel-primary/20`}>
-                   <div className={`${item.color} group-hover:scale-110 transition-transform`}>
-                     {item.icon}
-                   </div>
-                </div>
-                <span className="text-[8px] md:text-[10px] font-black text-white/50 group-hover:text-hotel-primary uppercase tracking-[0.2em] transition-colors text-center">
-                  {item.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Minimized Scroll Indicator */}
-        <div className="mt-12 md:mt-20 flex flex-col items-center gap-2 animate-bounce">
-            <div className="w-7 h-7 md:w-10 md:h-10 bg-white/5 backdrop-blur rounded-full flex items-center justify-center text-white/40 border border-white/10">
-                <ChevronDown size={18} />
+          <div 
+            onClick={() => checkOutRef.current?.showPicker()}
+            className="relative flex-1 p-4 md:p-5 flex items-center h-full group cursor-pointer hover:bg-gray-50/80 transition-all border-b lg:border-b-0 lg:border-r border-gray-100"
+          >
+            <input type="date" ref={checkOutRef} value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="absolute inset-0 opacity-0 pointer-events-none" />
+            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mr-4 shrink-0 group-hover:bg-white transition-all">
+              <Moon size={18} className="text-gray-400 group-hover:text-hotel-primary" />
             </div>
-            <span className="text-[7px] md:text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Scroll Explore</span>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.checkOut}</span>
+              <div className="flex items-baseline gap-2">
+                <p className="text-sm font-black text-gray-900">{checkOutDisplay.day} {checkOutDisplay.month}</p>
+                <p className="text-[8px] text-gray-400 font-bold uppercase">{checkOutDisplay.weekday}</p>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleSearch}
+            className="bg-hotel-primary hover:bg-hotel-secondary text-white px-10 py-5 lg:py-0 font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95 shrink-0 rounded-xl shadow-xl shadow-red-100 flex items-center justify-center gap-3"
+          >
+            <Search size={18} strokeWidth={3} />
+            {t.checkVacancy}
+          </button>
+        </div>
+
+        {/* Categories / Shortcuts below search - Styled as Filters */}
+        <div className="w-full max-w-4xl flex flex-wrap justify-center items-center gap-x-8 gap-y-4">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-4 h-4 rounded-full border-2 border-hotel-primary flex items-center justify-center">
+              <div className="w-2 h-2 bg-hotel-primary rounded-full"></div>
+            </div>
+            <span className="text-[11px] font-black text-gray-900 uppercase tracking-widest">{t.allCategories}</span>
+          </div>
+
+          {shortcuts.map((item) => (
+            <Link
+              key={item.id}
+              to={item.path}
+              className="flex items-center gap-3 group cursor-pointer"
+            >
+              <div className="w-4 h-4 rounded-full border-2 border-gray-200 group-hover:border-hotel-primary flex items-center justify-center transition-colors">
+                <div className="w-2 h-2 bg-hotel-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+              <span className="text-[11px] font-black text-gray-400 group-hover:text-gray-900 uppercase tracking-widest transition-colors">{item.label}</span>
+            </Link>
+          ))}
         </div>
       </div>
       

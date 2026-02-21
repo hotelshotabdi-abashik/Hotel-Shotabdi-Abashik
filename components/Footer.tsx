@@ -2,9 +2,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Facebook, Instagram, ChevronRight, Globe, Edit3 } from 'lucide-react';
+import { translations, Language } from '../translations';
 
 interface FooterProps {
   isEditMode?: boolean;
+  language: Language;
   logoUrl?: string;
   socialLinks?: {
     facebook: string;
@@ -14,8 +16,9 @@ interface FooterProps {
   onUpdateSocial?: (links: { facebook: string; instagram: string; website: string }) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ isEditMode, logoUrl, socialLinks, onUpdateSocial }) => {
+const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLinks, onUpdateSocial }) => {
   const currentYear = new Date().getFullYear();
+  const t = translations[language];
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -59,7 +62,7 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, logoUrl, socialLinks, onUpd
             </div>
           </div>
           <p className="text-xs text-gray-500 leading-relaxed font-medium">
-            Sylhet's premier residential destination. Experience unmatched hospitality, premium AC rooms, and authentic dining in the heart of the city.
+            {t.footerDesc}
           </p>
           <div className="flex gap-4">
             <button 

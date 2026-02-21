@@ -2,18 +2,21 @@
 import React, { useState, useMemo } from 'react';
 import { MapPin, Clock, Star, Map as MapIcon, ChevronRight, Camera, RefreshCw, Trash2, Plus, Globe, Search, Wand2, CheckSquare, Phone, AlertCircle, Link2 } from 'lucide-react';
 import { Restaurant } from '../types';
+import { translations, Language } from '../translations';
 
 interface Props {
   restaurants: Restaurant[];
   isEditMode?: boolean;
+  language: Language;
   onUpdate?: (res: Restaurant[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
 }
 
-const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUpdate, onImageUpload }) => {
+const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, language, onUpdate, onImageUpload }) => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const t = translations[language];
 
   const displayList = restaurants;
 
@@ -86,8 +89,8 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, onUp
   return (
     <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in">
       <div className="mb-12 text-center flex flex-col items-center">
-        <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">nearby restaurants</span>
-        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">Nearby Dining & Restaurants</h2>
+        <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">{t.sylhetDining}</span>
+        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">{t.restaurantsTitle}</h2>
         <p className="text-gray-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed mb-10">
           A curated selection of the finest eateries in Sylhet, ranging from local favorites to international cuisines, all near <span className="text-hotel-primary font-bold">Hotel Shotabdi Residential</span>.
         </p>
