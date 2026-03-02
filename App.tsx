@@ -29,7 +29,9 @@ import {
   ref,
   onValue,
   update,
-  createAdminLog
+  createAdminLog,
+  playNotificationSound,
+  trackUserMovement
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Room } from './types';
 import { LogIn, Loader2, Bell, Edit3, Save, CheckCheck, LogOut, User as UserIcon, AlertTriangle, LayoutDashboard, Upload, Info, Key, Shield } from 'lucide-react';
@@ -79,11 +81,21 @@ const AppContent = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showStickyCategories, setShowStickyCategories] = useState(false);
+  
+  const requireAuth = (action: () => void) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    action();
+  };
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
@@ -125,16 +137,92 @@ const AppContent = () => {
   }, [isSaving]);
 
   useEffect(() => {
+    if (user) {
+      trackUserMovement(user.uid, location.pathname);
+    }
+  }, [location.pathname, user]);
+
+  useEffect(() => {
     if (!user) { setNotifications([]); return; }
     const notificationsRef = ref(db, `notifications/${user.uid}`);
+    let initialLoad = true;
     const unsub = onValue(notificationsRef, (snap) => {
       if (snap.exists()) {
         const list = Object.values(snap.val()) as AppNotification[];
-        setNotifications(list.sort((a, b) => b.createdAt - a.createdAt));
-      } else setNotifications([]);
+        const sorted = list.sort((a, b) => b.createdAt - a.createdAt);
+        
+        // Play sound for new unread notifications after initial load
+        if (!initialLoad) {
+          const hasNewUnread = sorted.some(n => !n.read && n.createdAt > (notifications[0]?.createdAt || 0));
+          if (hasNewUnread) playNotificationSound();
+        }
+        
+        setNotifications(sorted);
+        initialLoad = false;
+      } else {
+        setNotifications([]);
+        initialLoad = false;
+      }
     });
     return () => unsub();
   }, [user]);
+
+  // Real-time Unread Messages Sync
+  useEffect(() => {
+    if (!user) { setUnreadMessages(0); setPendingBookingsCount(0); return; }
+    
+    if (isAdmin) {
+      // Admin listens to all active chats for unread counts
+      const chatsRef = ref(db, 'help_dex/active_chats');
+      const unsubChats = onValue(chatsRef, (snap) => {
+        if (snap.exists()) {
+          const chats = Object.values(snap.val()) as any[];
+          const totalUnread = chats.reduce((acc, chat) => acc + (chat.unreadCount || 0), 0);
+          if (totalUnread > unreadMessages) playNotificationSound();
+          setUnreadMessages(totalUnread);
+        } else {
+          setUnreadMessages(0);
+        }
+      });
+
+      // Admin listens to new bookings
+      const bookingsRef = ref(db, 'bookings');
+      const unsubBookings = onValue(bookingsRef, (snap) => {
+        if (snap.exists()) {
+          const bookingsList = Object.values(snap.val()) as any[];
+          const pending = bookingsList.filter(b => b.status === 'pending').length;
+          if (pending > pendingBookingsCount) playNotificationSound();
+          setPendingBookingsCount(pending);
+        } else {
+          setPendingBookingsCount(0);
+        }
+      });
+
+      return () => { unsubChats(); unsubBookings(); };
+    } else {
+      // Guest listens to their own chat session for unread flag or count
+      const chatRef = ref(db, `help_dex/active_chats/${user.uid}`);
+      const unsub = onValue(chatRef, (snap) => {
+        if (snap.exists()) {
+          const chat = snap.val();
+          // For guests, we might want to track if the last message was from admin and not seen
+          // In HelpDex.tsx, we mark messages as seen. Here we can just check unreadCount if we implement it for guests too.
+          // For now, let's assume the admin updates a flag or we check the messages node.
+          // A simpler way: listen to messages and count unseen from others
+          const msgsRef = ref(db, `help_dex/messages/${user.uid}`);
+          onValue(msgsRef, (mSnap) => {
+            if (mSnap.exists()) {
+              const msgs = Object.values(mSnap.val()) as any[];
+              const unseen = msgs.filter(m => m.senderId !== user.uid && m.status !== 'seen').length;
+              if (unseen > unreadMessages) playNotificationSound();
+              setUnreadMessages(unseen);
+            }
+          });
+        }
+      });
+      return () => unsub();
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -171,8 +259,22 @@ const AppContent = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthLoading(false);
-      if (currentUser) loadProfile(currentUser);
-      else { setProfile(null); setIsAdmin(false); }
+      if (currentUser) {
+        loadProfile(currentUser);
+      } else {
+        setProfile(null);
+        setIsAdmin(false);
+        // Auto-prompt login on refresh if not logged in and hasn't been prompted this session
+        const hasPrompted = sessionStorage.getItem('auth_prompted');
+        if (!hasPrompted) {
+          setTimeout(() => {
+            if (!auth.currentUser) {
+              setIsAuthModalOpen(true);
+              sessionStorage.setItem('auth_prompted', 'true');
+            }
+          }, 2000);
+        }
+      }
     });
     return () => unsubscribe();
   }, [loadProfile]);
@@ -289,8 +391,8 @@ const AppContent = () => {
               <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-sm font-serif font-black text-gray-900 uppercase leading-none">Hotel Shotabdi</h1>
-              <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">Abashik</p>
+              <h1 className="text-sm font-serif font-black text-gray-900 uppercase leading-none">{t.hotelName}</h1>
+              <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">{t.hotelTagline}</p>
             </div>
           </Link>
         </div>
@@ -342,9 +444,18 @@ const AppContent = () => {
           </button>
           <Link 
             to="/helpdesk" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            onClick={(e) => {
+              e.preventDefault();
+              requireAuth(() => navigate('/helpdesk'));
+            }}
+            className={`transition-all text-[11px] tracking-widest uppercase font-bold relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.helpDesk}
+            {(unreadMessages + (isAdmin ? pendingBookingsCount : 0)) > 0 && (
+              <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white shadow-sm">
+                {unreadMessages + (isAdmin ? pendingBookingsCount : 0)}
+              </span>
+            )}
           </Link>
 
           <button 
@@ -395,16 +506,23 @@ const AppContent = () => {
                         <p className="text-[9px] text-gray-400 truncate font-bold tracking-widest opacity-70">{user.email}</p>
                      </div>
                      <div className="p-2 space-y-1">
-                        <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase text-left">
-                          <UserIcon size={18} className="shrink-0" /> Manage Identity
+                        <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center justify-between px-4 py-4 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase text-left group">
+                          <div className="flex items-center gap-3">
+                            <UserIcon size={18} className="shrink-0" /> {t.manageIdentity}
+                          </div>
+                          {(unreadCount + unreadMessages) > 0 && (
+                            <span className="bg-hotel-primary text-white text-[8px] px-1.5 py-0.5 rounded-full">
+                              {unreadCount + unreadMessages}
+                            </span>
+                          )}
                         </button>
                         {isAdmin && (
                           <Link to="/admin" onClick={() => setIsProfileMenuOpen(false)} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-amber-600 hover:bg-amber-50 transition-all uppercase text-left">
-                            <LayoutDashboard size={18} className="shrink-0" /> Admin Console
+                            <LayoutDashboard size={18} className="shrink-0" /> {t.adminConsole}
                           </Link>
                         )}
                         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase text-left">
-                          <LogOut size={18} className="shrink-0" /> De-authorize
+                          <LogOut size={18} className="shrink-0" /> {t.deAuthorize}
                         </button>
                      </div>
                   </div>
@@ -426,9 +544,9 @@ const AppContent = () => {
         )}
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} rooms={siteConfig.rooms} isEditMode={isEditMode} language={language} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={handleImageUpload} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} /><RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} /></>} />
+            <Route path="/" element={<><Hero config={siteConfig.hero} rooms={siteConfig.rooms} isEditMode={isEditMode} language={language} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={handleImageUpload} requireAuth={requireAuth} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} /><RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} /></>} />
             <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={setSelectedRoomToBook} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />

@@ -59,6 +59,31 @@ export const trackPresence = (uid: string) => {
   onDisconnect(statusRef).set(false);
 };
 
+// Notification Sound Utility
+export const playNotificationSound = () => {
+  try {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.warn("Audio play blocked by browser policy"));
+  } catch (e) {
+    console.error("Audio error", e);
+  }
+};
+
+// Track User Movement (The "Brain")
+export const trackUserMovement = (uid: string, path: string) => {
+  const movementRef = ref(db, `analytics/movements/${uid}`);
+  push(movementRef, {
+    path,
+    timestamp: serverTimestamp()
+  });
+  // Also update last seen path in profile
+  update(ref(db, `profiles/${uid}`), {
+    lastSeenPath: path,
+    lastActive: serverTimestamp()
+  });
+};
+
 // Fix: Added checkUsernameUnique to verify if a handle is available or owned by the current user
 export const checkUsernameUnique = async (username: string, uid: string) => {
   const usernameRef = ref(db, `usernames/${username.toLowerCase()}`);
@@ -151,12 +176,17 @@ export const syncUserProfile = async (user: any) => {
 export const createNotification = async (userId: string, notification: any) => {
   const notificationsRef = ref(db, `notifications/${userId}`);
   const newNotificationRef = push(notificationsRef);
-  return set(newNotificationRef, {
+  const data = {
     ...notification,
     id: newNotificationRef.key,
     read: false,
     createdAt: Date.now()
-  });
+  };
+  await set(newNotificationRef, data);
+  
+  // If it's a critical notification and user is offline, we could trigger email here
+  // but usually we do it from the component or a cloud function.
+  return data;
 };
 
 export { 

@@ -28,6 +28,7 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [movements, setMovements] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -95,8 +96,24 @@ const AdminDashboard: React.FC = () => {
       if (loadedCount < 3) checkLoadingFinished();
     }, handleLoadError);
 
-    return () => { uUnsub(); bUnsub(); lUnsub(); };
-  }, []);
+    const movementsRef = ref(db, 'analytics/movements');
+    const mUnsub = onValue(movementsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const allMovements: any[] = [];
+        Object.keys(data).forEach(uid => {
+          const userMovements = Object.values(data[uid]) as any[];
+          const user = users.find(u => u.uid === uid);
+          userMovements.forEach(m => {
+            allMovements.push({ ...m, uid, userName: user?.legalName || user?.email || 'Guest' });
+          });
+        });
+        setMovements(allMovements.sort((a, b) => b.timestamp - a.timestamp).slice(0, 100));
+      }
+    });
+
+    return () => { uUnsub(); bUnsub(); lUnsub(); mUnsub(); };
+  }, [users]);
 
   const triggerRoleNotification = async (uid: string, newRole: string) => {
     const targetUser = users.find(u => u.uid === uid);
@@ -295,6 +312,14 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+               <a 
+                 href={`tel:${booking.guests?.[0]?.phone}`} 
+                 onClick={(e) => e.stopPropagation()}
+                 className="p-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors"
+                 title="Call Guest"
+               >
+                 <Phone size={20} />
+               </a>
                <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl ${
                  booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
                  booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
@@ -416,7 +441,33 @@ const AdminDashboard: React.FC = () => {
                    <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                       <div className="flex items-center gap-3">
                          <Activity size={18} className="text-hotel-primary" />
-                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs</h4>
+                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Live User Movements</h4>
+                       </div>
+                       <span className="text-[9px] font-bold text-gray-400 uppercase">{movements.length} entries</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
+                       {movements.map((m, idx) => (
+                         <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-hotel-primary font-black text-[10px]">
+                                 {m.userName.charAt(0)}
+                               </div>
+                               <div>
+                                  <p className="text-[10px] font-black text-gray-900">{m.userName}</p>
+                                  <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Visited: {m.path}</p>
+                               </div>
+                            </div>
+                            <span className="text-[8px] font-bold text-gray-300">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
+                    <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                       <div className="flex items-center gap-3">
+                          <ClipboardCheck size={18} className="text-hotel-primary" />
+                          <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs</h4>
                       </div>
                       <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
                    </div>
