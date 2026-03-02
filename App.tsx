@@ -83,7 +83,6 @@ const AppContent = () => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isConfigLoading, setIsConfigLoading] = useState(true);
   const [showStickyCategories, setShowStickyCategories] = useState(false);
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
@@ -121,7 +120,6 @@ const AppContent = () => {
         const data = snapshot.val();
         setSiteConfig(prev => !isSaving ? { ...prev, ...data } : prev);
       }
-      setIsConfigLoading(false);
     });
     return () => unsubscribe();
   }, [isSaving]);
@@ -247,13 +245,6 @@ const AppContent = () => {
       reader.readAsDataURL(file);
     });
   };
-
-  if (isConfigLoading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <Loader2 className="animate-spin text-hotel-primary mb-4" size={32} />
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t.syncingHub}</p>
-    </div>
-  );
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
