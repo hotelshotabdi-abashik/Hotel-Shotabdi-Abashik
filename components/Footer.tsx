@@ -94,26 +94,26 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
 
         {/* Column 2: Discover */}
         <div className="space-y-6">
-          <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] border-l-4 border-hotel-primary pl-3">Explore Hub</h4>
+          <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] border-l-4 border-hotel-primary pl-3">{t.exploreHub}</h4>
           <ul className="space-y-4">
             <li>
               <Link to="/" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Home Overview
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.homeOverview}
               </Link>
             </li>
             <li>
               <Link to="/rooms" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Luxury Rooms
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.luxuryRooms}
               </Link>
             </li>
             <li>
               <Link to="/offers" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Special Offers
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.specialOffers}
               </Link>
             </li>
             <li>
               <Link to="/restaurants" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Nearby Dining
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.nearbyDining}
               </Link>
             </li>
           </ul>
@@ -121,21 +121,21 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
 
         {/* Column 3: Support & Legal */}
         <div className="space-y-6">
-          <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] border-l-4 border-hotel-primary pl-3">Registry Support</h4>
+          <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] border-l-4 border-hotel-primary pl-3">{t.registrySupport}</h4>
           <ul className="space-y-4">
             <li>
               <Link to="/helpdesk" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Help Desk
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.helpDesk}
               </Link>
             </li>
             <li>
               <Link to="/privacypolicy" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Privacy Policy
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.privacyPolicy}
               </Link>
             </li>
             <li>
               <Link to="/termsofservice" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> Terms of service
+                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.termsOfService}
               </Link>
             </li>
           </ul>
@@ -143,7 +143,7 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
 
         {/* Column 4: Contact Info */}
         <div className="space-y-6">
-          <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] border-l-4 border-hotel-primary pl-3">Official HQ</h4>
+          <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] border-l-4 border-hotel-primary pl-3">{t.officialHQ}</h4>
           <div className="space-y-4">
             <div className="space-y-2">
               <a href="tel:+8801717425702" className="flex items-center gap-3 group">

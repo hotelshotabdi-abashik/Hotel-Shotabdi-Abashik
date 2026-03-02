@@ -18,6 +18,11 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
   const [searchQuery, setSearchQuery] = useState('');
   const t = translations[language];
 
+  const formatNumber = (num: number | string) => {
+    if (language === 'EN') return String(num);
+    return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
   const displayList = restaurants;
 
   // Filtered and sorted list: recommended first
@@ -181,7 +186,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
                   <p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1 truncate">{res.cuisine}</p>
                 </div>
                 <div className="flex items-center gap-0.5 bg-green-50 text-green-600 px-1.5 py-0.5 rounded-md shrink-0">
-                  <span className="text-[10px] md:text-xs font-black">{res.rating}</span>
+                  <span className="text-[10px] md:text-xs font-black">{formatNumber(res.rating)}</span>
                   <Star size={8} fill="currentColor" />
                 </div>
               </div>
@@ -208,13 +213,13 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
                   <Clock size={10} className="text-hotel-primary" />
                   {isEditMode ? (
                     <input className="w-full bg-transparent border-b border-gray-100 outline-none" value={res.time} onChange={(e) => updateRes(res.id, 'time', e.target.value)} />
-                  ) : <span>{res.time}</span>}
+                  ) : <span>{formatNumber(res.time)}</span>}
                 </div>
                 <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] font-black text-gray-700">
                   <MapPin size={10} className="text-hotel-primary" />
                   {isEditMode ? (
                     <input className="w-full bg-transparent border-b border-gray-100 outline-none" value={res.distance} onChange={(e) => updateRes(res.id, 'distance', e.target.value)} />
-                  ) : <span>{res.distance}</span>}
+                  ) : <span>{formatNumber(res.distance)}</span>}
                 </div>
               </div>
 

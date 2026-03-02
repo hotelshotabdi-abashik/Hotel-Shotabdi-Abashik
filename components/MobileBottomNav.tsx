@@ -28,9 +28,9 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
   ];
 
   const getRoleLabel = () => {
-    if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return 'Owner';
-    if (profile?.role === 'manager') return 'Manager';
-    return 'Me';
+    if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return language === 'EN' ? 'Owner' : 'মালিক';
+    if (profile?.role === 'manager') return language === 'EN' ? 'Manager' : 'ম্যানেজার';
+    return language === 'EN' ? 'Me' : 'আমি';
   };
 
   const handleHomeClick = (e: React.MouseEvent) => {
@@ -106,7 +106,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
               </div>
             )}
             <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
-              {user ? 'Me' : t.login}
+              {user ? (language === 'EN' ? 'Me' : 'আমি') : t.login}
             </span>
           </button>
         )}

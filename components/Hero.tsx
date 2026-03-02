@@ -24,6 +24,12 @@ interface HeroProps {
 const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, requireAuth }) => {
   const navigate = useNavigate();
   const t = translations[language];
+  
+  const formatNumber = (num: number | string) => {
+    if (language === 'EN') return String(num);
+    return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('hotel');
   const [selectedRoomId, setSelectedRoomId] = useState('all');
@@ -127,18 +133,18 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   };
 
   const tabs = [
-    { id: 'hotel', label: 'Book Stay', icon: <Bed size={16} />, path: '/rooms' },
-    { id: 'restaurants', label: 'Restaurants', icon: <Utensils size={16} />, path: '/restaurants' },
-    { id: 'guide', label: 'Tourist Guide', icon: <MapIcon size={16} />, path: '/guide' }
+    { id: 'hotel', label: t.bookStay, icon: <Bed size={16} />, path: '/rooms' },
+    { id: 'restaurants', label: t.restaurants, icon: <Utensils size={16} />, path: '/restaurants' },
+    { id: 'guide', label: t.touristGuide, icon: <MapIcon size={16} />, path: '/guide' }
   ];
 
   const shortcuts = [
-    { id: 'rooms', label: 'Our Rooms', icon: <Bed size={18} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'offers', label: 'Offers', icon: <Tag size={18} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
-    { id: 'restaurants', label: 'Dining', icon: <Utensils size={18} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { id: 'guide', label: 'Guide', icon: <MapIcon size={18} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
-    { id: 'mystays', label: 'History', icon: <History size={18} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 'helpdesk', label: 'Support', icon: <MessageSquare size={18} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { id: 'rooms', label: t.ourRooms, icon: <Bed size={18} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'offers', label: t.offers, icon: <Tag size={18} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
+    { id: 'restaurants', label: t.dining, icon: <Utensils size={18} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'guide', label: t.guide, icon: <MapIcon size={18} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
+    { id: 'mystays', label: t.history, icon: <History size={18} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { id: 'helpdesk', label: t.support, icon: <MessageSquare size={18} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId);
@@ -212,7 +218,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                       <p className="text-[11px] font-black text-gray-900">{room.title}</p>
                       <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{room.tag}</p>
                     </div>
-                    <p className="text-[10px] font-sans font-black text-hotel-primary">৳{room.discountPrice}</p>
+                    <p className="text-[10px] font-sans font-black text-hotel-primary">৳{formatNumber(room.discountPrice)}</p>
                   </div>
                 ))}
               </div>
@@ -230,7 +236,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             <div className="flex flex-col items-start text-left">
               <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.checkIn}</span>
               <div className="flex items-baseline gap-2">
-                <p className="text-sm font-black text-gray-900">{checkInDisplay.day} {checkInDisplay.month}</p>
+                <p className="text-sm font-black text-gray-900">{formatNumber(checkInDisplay.day)} {checkInDisplay.month}</p>
                 <p className="text-[8px] text-gray-400 font-bold uppercase">{checkInDisplay.weekday}</p>
               </div>
             </div>
@@ -247,7 +253,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             <div className="flex flex-col items-start text-left">
               <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.checkOut}</span>
               <div className="flex items-baseline gap-2">
-                <p className="text-sm font-black text-gray-900">{checkOutDisplay.day} {checkOutDisplay.month}</p>
+                <p className="text-sm font-black text-gray-900">{formatNumber(checkOutDisplay.day)} {checkOutDisplay.month}</p>
                 <p className="text-[8px] text-gray-400 font-bold uppercase">{checkOutDisplay.weekday}</p>
               </div>
             </div>

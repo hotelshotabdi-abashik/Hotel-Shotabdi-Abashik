@@ -19,6 +19,11 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const t = translations[language];
 
+  const formatNumber = (num: number | string) => {
+    if (language === 'EN') return String(num);
+    return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
   const displayList = touristGuides.length > 0 ? touristGuides : SYLHET_ATTRACTIONS;
 
   const filtered = useMemo(() => {
@@ -134,7 +139,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
                       </span>
                    )}
                    <div className="bg-white/95 backdrop-blur shadow-xl text-blue-600 text-[7px] md:text-[9px] font-black px-2 py-1 rounded-lg md:rounded-xl border border-blue-50">
-                    <span className="flex items-center gap-1"><MapPin size={8} /> {spot.distance}</span>
+                    <span className="flex items-center gap-1"><MapPin size={8} /> {formatNumber(spot.distance)}</span>
                    </div>
                 </div>
 

@@ -62,6 +62,11 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
   const location = useLocation();
   const t = translations[language];
 
+  const formatNumber = (num: number | string) => {
+    if (language === 'EN') return String(num);
+    return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
   useEffect(() => {
     const handleLocationChange = () => {
       const params = new URLSearchParams(window.location.search);
@@ -259,9 +264,9 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
                           <span className="text-sm md:text-lg font-black text-gray-400 italic">{t.priceOnRequest}</span>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through font-sans">৳{room.price}</span>
+                            <span className="text-[10px] md:text-sm font-bold text-gray-300 line-through font-sans">৳{formatNumber(room.price)}</span>
                             <div className="flex items-baseline gap-0.5">
-                               <span className="text-xl md:text-4xl font-sans font-black text-[#B22222] tracking-tighter">৳{room.discountPrice}</span>
+                               <span className="text-xl md:text-4xl font-sans font-black text-[#B22222] tracking-tighter">৳{formatNumber(room.discountPrice)}</span>
                                <span className="text-[7px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ {t.night}</span>
                             </div>
                           </div>

@@ -78,6 +78,11 @@ const AppContent = () => {
   
   const t = translations[language];
   
+  const formatNumber = (num: number | string) => {
+    if (language === 'EN') return String(num);
+    return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+  
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -247,7 +252,7 @@ const AppContent = () => {
       const data = await syncUserProfile(u);
       setProfile(data);
       // Senior Architect Update: Managers have administrative access
-      const isPowerUser = u.email === OWNER_EMAIL || data?.role === 'owner' || data?.role === 'manager';
+      const isPowerUser = u.email === OWNER_EMAIL || data?.role === 'owner';
       setIsAdmin(isPowerUser);
     } catch (error) { 
       console.warn("Profile Sync Issue", error);
@@ -451,20 +456,65 @@ const AppContent = () => {
             className={`transition-all text-[11px] tracking-widest uppercase font-bold relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.helpDesk}
-            {(unreadMessages + (isAdmin ? pendingBookingsCount : 0)) > 0 && (
+            {unreadMessages + (isAdmin ? pendingBookingsCount : 0) > 0 && (
               <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white shadow-sm">
-                {unreadMessages + (isAdmin ? pendingBookingsCount : 0)}
+                {formatNumber(unreadMessages + (isAdmin ? pendingBookingsCount : 0))}
               </span>
             )}
           </Link>
 
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className={`transition-all relative ${isNotificationsOpen ? 'text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary'}`}
+            className={`transition-all relative p-2 rounded-xl ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary hover:bg-gray-50'}`}
             title={t.notifications}
           >
             <Bell size={22} />
-            {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">{unreadCount}</span>}
+            {unreadCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">{formatNumber(unreadCount)}</span>}
+            
+            {isNotificationsOpen && (
+              <div ref={notificationRef} className="absolute right-0 top-full mt-4 w-80 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right cursor-default" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                  <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">{t.notifications}</h3>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={async () => {
+                        const updates: any = {};
+                        notifications.forEach(n => { if (!n.read) updates[`notifications/${user.uid}/${n.id}/read`] = true; });
+                        await update(ref(db), updates);
+                      }}
+                      className="text-[8px] font-black text-hotel-primary uppercase tracking-widest hover:underline"
+                    >
+                      {t.markAllRead}
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-96 overflow-y-auto no-scrollbar">
+                  {notifications.length === 0 ? (
+                    <div className="p-10 text-center">
+                      <Bell size={32} className="mx-auto text-gray-200 mb-4" />
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.noNotifications}</p>
+                    </div>
+                  ) : (
+                    <div className="p-2 space-y-1">
+                      {notifications.map(n => (
+                        <div 
+                          key={n.id} 
+                          className={`p-4 rounded-xl transition-all border ${n.read ? 'bg-white border-transparent' : 'bg-hotel-primary/5 border-hotel-primary/10'}`}
+                          onClick={async () => {
+                            if (!n.read) await update(ref(db, `notifications/${user.uid}/${n.id}`), { read: true });
+                            if (n.link) navigate(n.link);
+                          }}
+                        >
+                          <p className="text-[11px] font-black text-gray-900 mb-1">{n.title}</p>
+                          <p className="text-[10px] text-gray-500 font-medium leading-relaxed mb-2">{n.message}</p>
+                          <p className="text-[8px] font-black text-gray-300 uppercase">{new Date(n.createdAt).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </button>
           
           <div className="h-4 w-[1px] bg-gray-200"></div>
@@ -512,7 +562,7 @@ const AppContent = () => {
                           </div>
                           {(unreadCount + unreadMessages) > 0 && (
                             <span className="bg-hotel-primary text-white text-[8px] px-1.5 py-0.5 rounded-full">
-                              {unreadCount + unreadMessages}
+                              {formatNumber(unreadCount + unreadMessages)}
                             </span>
                           )}
                         </button>
@@ -552,7 +602,7 @@ const AppContent = () => {
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
-            <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">{t.unauthorized}</div>} />
+            <Route path="/admin" element={isAdmin ? <AdminDashboard language={language} /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">{t.unauthorized}</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>

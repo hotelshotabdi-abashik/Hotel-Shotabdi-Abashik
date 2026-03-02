@@ -11,6 +11,8 @@ import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, create
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking } from '../types';
 
+import { translations, Language } from '../translations';
+
 interface AuditLog {
   id: string;
   actorId: string;
@@ -20,7 +22,14 @@ interface AuditLog {
   timestamp: number;
 }
 
-const AdminDashboard: React.FC = () => {
+const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
+  const t = translations[language];
+  
+  const formatNumber = (num: number | string) => {
+    if (language === 'EN') return String(num);
+    return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
   const currentUser = auth.currentUser;
   const isOwner = currentUser?.email === OWNER_EMAIL;
   
@@ -210,18 +219,16 @@ const AdminDashboard: React.FC = () => {
   const rejectedCount = analyticsBookings.filter(b => b.status === 'rejected').length;
   const pendingCount = analyticsBookings.filter(b => b.status === 'pending').length;
 
-  const currentAdminRole = isOwner ? 'Owner' : 'Manager';
-
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <Loader2 className="animate-spin text-hotel-primary mb-4" size={40} />
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Master Data...</p>
-      {loadError && <p className="mt-4 text-[9px] text-red-500 font-bold uppercase tracking-widest">{loadError}</p>}
-    </div>
-  );
+  const currentAdminRole = isOwner ? 'Owner' : 'Admin';
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-32 lg:pb-10 animate-fade-in relative z-10">
+      {loading && (
+        <div className="fixed top-24 right-8 z-[100] flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm animate-pulse">
+          <Loader2 className="animate-spin text-hotel-primary" size={14} />
+          <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">Syncing...</span>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="flex items-center gap-4">
           <div className={`p-4 rounded-[1.5rem] shadow-xl ${isOwner ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
@@ -229,7 +236,7 @@ const AdminDashboard: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
+              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">{t.adminConsole}</h1>
               <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${isOwner ? 'bg-hotel-primary/10 text-hotel-primary' : 'bg-blue-50 text-blue-600'}`}>
                 {currentAdminRole}
               </span>
@@ -240,7 +247,7 @@ const AdminDashboard: React.FC = () => {
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
           {['bookings', 'users', 'data'].map((tab) => (
             <button key={tab} onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} className={`px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white shadow-md text-[#B22222]' : 'text-gray-400 hover:text-gray-600'}`}>
-              {tab}
+              {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : t.data}
             </button>
           ))}
         </div>
