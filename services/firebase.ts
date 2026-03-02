@@ -84,6 +84,18 @@ export const trackUserMovement = (uid: string, path: string) => {
   });
 };
 
+// Save User History (Generic utility for Fuad Ahmed)
+export const saveUserHistory = async (uid: string, type: string, data: any) => {
+  const historyRef = ref(db, `history/${uid}/${type}`);
+  const newEntryRef = push(historyRef);
+  await set(newEntryRef, {
+    ...data,
+    id: newEntryRef.key,
+    timestamp: serverTimestamp()
+  });
+  return newEntryRef.key;
+};
+
 // Fix: Added checkUsernameUnique to verify if a handle is available or owned by the current user
 export const checkUsernameUnique = async (username: string, uid: string) => {
   const usernameRef = ref(db, `usernames/${username.toLowerCase()}`);
@@ -184,8 +196,9 @@ export const createNotification = async (userId: string, notification: any) => {
   };
   await set(newNotificationRef, data);
   
-  // If it's a critical notification and user is offline, we could trigger email here
-  // but usually we do it from the component or a cloud function.
+  // Also log to history for persistence
+  await saveUserHistory(userId, 'notifications', { title: notification.title, type: notification.type });
+  
   return data;
 };
 

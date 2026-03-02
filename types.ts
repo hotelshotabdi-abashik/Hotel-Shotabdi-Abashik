@@ -128,6 +128,7 @@ export interface UserProfile {
   fcmToken?: string;
   role?: 'guest' | 'staff' | 'manager' | 'owner';
   onlineStatus?: boolean;
+  isTyping?: boolean;
 }
 
 export interface AppNotification {

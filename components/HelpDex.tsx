@@ -26,7 +26,8 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
   const [messages, setMessages] = useState<HelpDeskMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeUserId, setActiveUserId] = useState<string | null>(isAdmin ? null : user?.uid || null);
-  const [activeUserPresence, setActiveUserPresence] = useState<{ online: boolean; lastLogin: number } | null>(null);
+  const [activeUserPresence, setActiveUserPresence] = useState<{ online: boolean; lastLogin: number; typing?: boolean } | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -89,7 +90,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
     return () => unsub();
   }, [isAdmin]);
 
-  // Monitor presence of the user/admin we are chatting with
+  // Monitor presence and typing of the user/admin we are chatting with
   useEffect(() => {
     if (isAdmin && activeUserId) {
       // Admin tracks the active guest
@@ -99,7 +100,8 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
           const data = snap.val();
           setActiveUserPresence({
             online: data.onlineStatus === true,
-            lastLogin: data.lastUpdated || data.lastLogin || 0
+            lastLogin: data.lastUpdated || data.lastLogin || 0,
+            typing: data.isTyping === true
           });
         }
       });
@@ -115,11 +117,16 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
           const ownerProfile = allProfiles.find(p => p.email === OWNER_EMAIL);
           
           if (activeStaff) {
-             setActiveUserPresence({ online: true, lastLogin: Date.now() });
+             setActiveUserPresence({ 
+               online: true, 
+               lastLogin: Date.now(),
+               typing: activeStaff.isTyping === true
+             });
           } else if (ownerProfile) {
             setActiveUserPresence({
               online: ownerProfile.onlineStatus === true,
-              lastLogin: ownerProfile.lastLogin || 0
+              lastLogin: ownerProfile.lastLogin || 0,
+              typing: ownerProfile.isTyping === true
             });
           }
         }
@@ -127,6 +134,22 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
       return () => unsub();
     }
   }, [activeUserId, isAdmin]);
+
+  // Handle local typing status
+  useEffect(() => {
+    if (!user) return;
+    const typingRef = ref(db, `profiles/${user.uid}/isTyping`);
+    set(typingRef, isTyping);
+    return () => { set(typingRef, false); };
+  }, [isTyping, user]);
+
+  const handleInputChange = (val: string) => {
+    setInput(val);
+    if (!isTyping) {
+      setIsTyping(true);
+      setTimeout(() => setIsTyping(false), 3000);
+    }
+  };
 
   useEffect(() => {
     if (!activeUserId) {
@@ -162,6 +185,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
     if (!isAdmin && cooldown > 0) return;
 
     setLoading(true);
+    setIsTyping(false);
     const text = input.trim();
     setInput('');
 
@@ -277,7 +301,16 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
                      <h4 className="text-[15px] font-black text-gray-900 truncate">{String(session.userName)}</h4>
                      <span className="text-[9px] font-bold text-gray-400 shrink-0">{new Date(session.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
-                  <p className="text-xs truncate text-gray-400 font-medium">{String(session.lastMessage)}</p>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs truncate font-medium ${session.unreadCount > 0 ? 'text-hotel-primary font-black' : 'text-gray-400'}`}>
+                      {session.lastMessage}
+                    </p>
+                    {session.unreadCount > 0 && (
+                      <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full">
+                        {session.unreadCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             ))}
@@ -314,7 +347,11 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
                      {isAdmin ? (sessions.find(s=>s.userId===activeUserId)?.userName || 'Resident') : 'Registry Assistant'}
                    </h3>
                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      {activeUserPresence?.online ? (
+                      {activeUserPresence?.typing ? (
+                         <div className="flex items-center gap-1.5">
+                            <span className="text-[8px] md:text-[10px] font-black text-hotel-primary tracking-widest uppercase animate-pulse">Typing...</span>
+                         </div>
+                      ) : activeUserPresence?.online ? (
                         <div className="flex items-center gap-1.5">
                            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shrink-0 border-2 border-white"></div>
                            <span className="text-[8px] md:text-[10px] font-black text-green-600 tracking-widest uppercase whitespace-nowrap">Online Now</span>
@@ -372,7 +409,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
                       placeholder={!isAdmin && cooldown > 0 ? `Synchronization Delay: ${cooldown}s...` : "Command the registry..."}
                       className="w-full bg-gray-50 border border-gray-100 rounded-[2rem] py-5 px-8 text-sm md:text-base font-semibold outline-none focus:bg-white focus:border-hotel-primary transition-all disabled:opacity-50 pr-16"
                       value={input}
-                      onChange={(e) => setInput(e.target.value)}
+                      onChange={(e) => handleInputChange(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                       disabled={!isAdmin && cooldown > 0}
                     />
