@@ -208,6 +208,10 @@ const AdminDashboard: React.FC = () => {
         rejectionReason: status === 'rejected' ? meta : null
       };
       await update(ref(db, `bookings/${booking.id}`), updates);
+      
+      // Senior Architect Fix: Sync update to user_registry so guest sees it live
+      await update(ref(db, `user_registry/${booking.userId}/bookings/${booking.id}`), updates);
+      
       await createAdminLog(status === 'accepted' ? 'BOOKING_ACCEPTED' : 'BOOKING_REJECTED', `${status === 'accepted' ? 'Verified stay' : 'Rejected stay'} for ${booking.userName}. ID: ${booking.id}`);
       const message = status === 'accepted' 
         ? `Your booking for ${booking.roomTitle} is confirmed! Room No: ${meta}.` 

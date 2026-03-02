@@ -126,6 +126,10 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
         createdAt: Date.now()
       };
       await set(ref(db, `bookings/${bookingId}`), bookingData);
+      
+      // Senior Architect Fix: Sync to user_registry for guest-side persistence
+      await set(ref(db, `user_registry/${profile.uid}/bookings/${bookingId}`), bookingData);
+      
       sendGuestEmail({
         to_name: profile.legalName,
         to_email: profile.email,

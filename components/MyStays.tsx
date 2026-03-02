@@ -27,13 +27,11 @@ const MyStays: React.FC<MyStaysProps> = ({ profile, logoUrl }) => {
       setLoading(false);
       return;
     }
-    const bookingsRef = ref(db, 'bookings');
+    const bookingsRef = ref(db, `user_registry/${user.uid}/bookings`);
     const unsub = onValue(bookingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = Object.values(snapshot.val()) as Booking[];
-        const userStays = data
-          .filter(b => b.userId === user.uid)
-          .sort((a, b) => b.createdAt - a.createdAt);
+        const userStays = data.sort((a, b) => b.createdAt - a.createdAt);
         setBookings(userStays);
       } else {
         setBookings([]);

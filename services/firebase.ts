@@ -88,12 +88,31 @@ export const trackUserMovement = (uid: string, path: string) => {
 export const saveUserHistory = async (uid: string, type: string, data: any) => {
   const historyRef = ref(db, `history/${uid}/${type}`);
   const newEntryRef = push(historyRef);
-  await set(newEntryRef, {
+  const entry = {
     ...data,
     id: newEntryRef.key,
     timestamp: serverTimestamp()
-  });
+  };
+  await set(newEntryRef, entry);
+  
+  // Also sync to user_registry for easy guest access
+  await update(ref(db, `user_registry/${uid}/history/${type}/${newEntryRef.key}`), entry);
+  
   return newEntryRef.key;
+};
+
+// Save to User Registry (Dedicated node for guest-accessible history)
+export const saveToRegistry = async (uid: string, path: string, data: any) => {
+  const registryRef = ref(db, `user_registry/${uid}/${path}`);
+  if (path.includes('/')) {
+    // If it's a specific item update
+    await update(registryRef, { ...data, lastUpdated: serverTimestamp() });
+  } else {
+    // If it's a list push
+    const newRef = push(registryRef);
+    await set(newRef, { ...data, id: newRef.key, timestamp: serverTimestamp() });
+    return newRef.key;
+  }
 };
 
 // Fix: Added checkUsernameUnique to verify if a handle is available or owned by the current user
@@ -119,6 +138,8 @@ export const deleteUserProfile = async (uid: string) => {
   await remove(ref(db, `notifications/${uid}`));
   await remove(ref(db, `help_dex/messages/${uid}`));
   await remove(ref(db, `help_dex/active_chats/${uid}`));
+  await remove(ref(db, `user_registry/${uid}`));
+  await remove(ref(db, `history/${uid}`));
 };
 
 /**
@@ -196,8 +217,9 @@ export const createNotification = async (userId: string, notification: any) => {
   };
   await set(newNotificationRef, data);
   
-  // Also log to history for persistence
+  // Also log to history and registry for persistence
   await saveUserHistory(userId, 'notifications', { title: notification.title, type: notification.type });
+  await saveToRegistry(userId, `notifications/${newNotificationRef.key}`, data);
   
   return data;
 };

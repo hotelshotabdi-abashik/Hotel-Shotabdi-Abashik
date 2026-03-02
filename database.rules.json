@@ -57,6 +57,12 @@
         ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')"
       }
     },
+    "user_registry": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager')"
+      }
+    },
     "logs": {
       ".read": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
       ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'manager' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
