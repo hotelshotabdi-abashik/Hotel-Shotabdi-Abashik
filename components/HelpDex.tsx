@@ -20,8 +20,7 @@ interface HelpDeskProps {
 const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
   const user = auth.currentUser;
   const isOwner = user?.email === OWNER_EMAIL;
-  const isManager = profile?.role === 'manager';
-  const isAdmin = isOwner || isManager;
+  const isAdmin = isOwner; // Only owner is admin now
   
   const [messages, setMessages] = useState<HelpDeskMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -34,6 +33,13 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const FAQ_QUESTIONS = [
+    { q: "What are the room rates?", a: "Our room rates start from ৳1,500 for single rooms and up to ৳3,500 for premium suites. Guests booking via the portal get a 25% discount!" },
+    { q: "Where is the hotel located?", a: "Hotel Shotabdi Residential is located in the heart of Sylhet, Bangladesh, near the main commercial hub and tourist attractions." },
+    { q: "Is there a restaurant?", a: "Yes! We have an in-house restaurant serving traditional Sylheti cuisine and international dishes." },
+    { q: "How do I book a room?", a: "You can book directly through this portal. Just go to the 'Rooms' section, select your stay, and submit your NID for verification." }
+  ];
 
   // Helper for relative time formatting
   const formatRelativeTime = (timestamp: number) => {
@@ -112,17 +118,10 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
       const unsub = onValue(profilesRef, (snapshot) => {
         if (snapshot.exists()) {
           const allProfiles = Object.values(snapshot.val()) as UserProfile[];
-          // Search for any active Admin/Owner/Manager who is online
-          const activeStaff = allProfiles.find(p => (p.role === 'owner' || p.role === 'manager') && p.onlineStatus === true);
+          // Search for owner who is online
           const ownerProfile = allProfiles.find(p => p.email === OWNER_EMAIL);
           
-          if (activeStaff) {
-             setActiveUserPresence({ 
-               online: true, 
-               lastLogin: Date.now(),
-               typing: activeStaff.isTyping === true
-             });
-          } else if (ownerProfile) {
+          if (ownerProfile) {
             setActiveUserPresence({
               online: ownerProfile.onlineStatus === true,
               lastLogin: ownerProfile.lastLogin || 0,
@@ -140,7 +139,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
     if (!user) return;
     const typingRef = ref(db, `profiles/${user.uid}/isTyping`);
     set(typingRef, isTyping);
-    return () => { set(typingRef, false); };
+    return () => { if (user) set(typingRef, false); };
   }, [isTyping, user]);
 
   const handleInputChange = (val: string) => {
@@ -180,20 +179,64 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
     return () => unsub();
   }, [activeUserId, isAdmin, user?.uid]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !user || !activeUserId || loading) return;
+  const handleAutoAnswer = async (question: string, answer: string) => {
+    if (!user || !activeUserId || loading) return;
+    setLoading(true);
+    
+    try {
+      const timestamp = Date.now();
+      
+      // 1. Send User Question
+      const userMsgRef = push(ref(db, `help_dex/messages/${activeUserId}`));
+      await set(userMsgRef, {
+        id: userMsgRef.key,
+        senderId: user.uid,
+        senderName: profile?.legalName || 'Guest',
+        senderPhoto: user.photoURL || '',
+        text: question,
+        timestamp,
+        role: 'guest',
+        status: 'seen'
+      });
+
+      // 2. Send Bot Answer
+      const botMsgRef = push(ref(db, `help_dex/messages/${activeUserId}`));
+      await set(botMsgRef, {
+        id: botMsgRef.key,
+        senderId: 'BOT-SYSTEM',
+        senderName: 'Registry Bot',
+        senderPhoto: logoUrl || '',
+        text: answer,
+        timestamp: timestamp + 500,
+        role: 'owner',
+        status: 'sent'
+      });
+
+      await update(ref(db, `help_dex/active_chats/${activeUserId}`), {
+        lastMessage: answer,
+        lastTimestamp: timestamp + 500,
+        unreadCount: 0
+      });
+
+    } catch (err) { console.error(err); } finally { setLoading(false); }
+  };
+
+  const handleSend = async (overrideText?: string) => {
+    const textToSend = overrideText || input.trim();
+    if (!textToSend || !user || !activeUserId || loading) return;
+    
+    // Cooldown check for guests
     if (!isAdmin && cooldown > 0) return;
 
     setLoading(true);
     setIsTyping(false);
-    const text = input.trim();
-    setInput('');
+    if (!overrideText) setInput('');
 
     try {
       const msgRef = push(ref(db, `help_dex/messages/${activeUserId}`));
       const timestamp = Date.now();
       
-      const roleLabel = isOwner ? 'Owner' : isManager ? 'Manager' : 'Guest';
+      const roleLabel = isOwner ? 'Owner' : 'Guest';
       const senderName = `${roleLabel}: ${profile?.legalName || user.displayName || 'Staff'}`;
       
       const newMessage: HelpDeskMessage = {
@@ -201,7 +244,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
         senderId: String(user.uid),
         senderName: senderName,
         senderPhoto: String(user.photoURL || ''),
-        text: String(text),
+        text: String(textToSend),
         timestamp,
         role: roleLabel.toLowerCase() as any,
         status: 'sent'
@@ -219,10 +262,16 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
           userName: String(profile?.legalName || user.displayName || 'Guest'),
           userEmail: String(user.email || ''),
           userPhoto: String(user.photoURL || ''),
-          lastMessage: String(text),
+          lastMessage: String(textToSend),
           lastTimestamp: timestamp,
           unreadCount: currentUnread
         });
+        
+        // Update last message timestamp for cooldown rule
+        await update(ref(db, `help_dex/messages/${user.uid}`), {
+          lastMessageTimestamp: timestamp
+        });
+        
         setCooldown(60); 
       } else {
         const guestProfileRef = ref(db, `profiles/${activeUserId}`);
@@ -234,14 +283,14 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
                to_name: guestData.legalName,
                to_email: guestData.email,
                subject: "New Registry Message - Action Required",
-               message: `Our ${roleLabel} has replied to your inquiry: "${text}". Please log in to the portal to view full details.`,
+               message: `Our ${roleLabel} has replied to your inquiry: "${textToSend}". Please log in to the portal to view full details.`,
                booking_id: "HELP-DESK"
              });
           }
         }
 
         await update(ref(db, `help_dex/active_chats/${activeUserId}`), {
-          lastMessage: String(text),
+          lastMessage: String(textToSend),
           lastTimestamp: timestamp,
           unreadCount: 0 
         });
@@ -249,7 +298,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
 
       await createNotification(isAdmin ? activeUserId : OWNER_EMAIL, {
         title: isAdmin ? 'Message from Registry' : 'Help Desk Inquiry',
-        message: text,
+        message: textToSend,
         type: 'chat_message'
       });
     } catch (err) { console.error(err); } finally { setLoading(false); }
@@ -376,13 +425,31 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
             </div>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-10 md:px-16 space-y-6 no-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-[0.98]">
+               {messages.length === 0 && !isAdmin && (
+                 <div className="space-y-4 mb-8">
+                   <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest text-center mb-6">Common Inquiries</p>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     {FAQ_QUESTIONS.map((faq, i) => (
+                       <button 
+                         key={i}
+                         onClick={() => handleAutoAnswer(faq.q, faq.a)}
+                         className="text-left p-4 bg-white border border-gray-100 rounded-2xl hover:border-hotel-primary hover:shadow-md transition-all group"
+                       >
+                         <p className="text-xs font-black text-gray-900 group-hover:text-hotel-primary">{faq.q}</p>
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               
                {messages.map((msg, idx) => {
                  const isOwn = msg.senderId === user.uid;
+                 const isBot = msg.senderId === 'BOT-SYSTEM';
                  return (
                    <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
                       <div className={`max-w-[90%] md:max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                         {!isOwn && <span className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1.5 px-2">{msg.senderName}</span>}
-                        <div className={`p-4 md:p-5 px-6 text-[14px] md:text-[15px] leading-relaxed shadow-sm ${isOwn ? 'bg-hotel-primary text-white rounded-[1.8rem] rounded-tr-none shadow-lg shadow-red-50' : 'bg-white text-gray-800 rounded-[1.8rem] rounded-tl-none border border-gray-100 shadow-sm'}`}>
+                        <div className={`p-4 md:p-5 px-6 text-[14px] md:text-[15px] leading-relaxed shadow-sm ${isOwn ? 'bg-hotel-primary text-white rounded-[1.8rem] rounded-tr-none shadow-lg shadow-red-50' : isBot ? 'bg-gray-900 text-white rounded-[1.8rem] rounded-tl-none' : 'bg-white text-gray-800 rounded-[1.8rem] rounded-tl-none border border-gray-100 shadow-sm'}`}>
                           {String(msg.text)}
                         </div>
                         <div className="flex items-center gap-2 mt-2 px-2">

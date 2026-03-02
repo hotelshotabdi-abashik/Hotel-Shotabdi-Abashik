@@ -44,9 +44,6 @@ const AdminDashboard: React.FC = () => {
     end: new Date().toISOString().split('T')[0]
   });
 
-  const [managerGateUid, setManagerGateUid] = useState<string | null>(null);
-  const [managerPassword, setManagerPassword] = useState('');
-  const [gateError, setGateError] = useState('');
   const [roleUpdatingUid, setRoleUpdatingUid] = useState<string | null>(null);
 
   useEffect(() => {
@@ -134,32 +131,7 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const handleUpdateRole = async (uid: string, newRole: 'guest' | 'staff' | 'manager') => {
-    if (!isOwner && newRole === 'manager') {
-       alert("Access Denied: Only the Owner can authorize Managers.");
-       return;
-    }
-
-    // If owner is giving manager role, bypass the password gate
-    if (isOwner && newRole === 'manager') {
-      setRoleUpdatingUid(uid);
-      try {
-        const targetUser = users.find(u => u.uid === uid);
-        await update(ref(db), {
-          [`roles/${uid}`]: newRole,
-          [`profiles/${uid}/role`]: newRole
-        });
-        await createAdminLog('MANAGER_AUTHORIZED', `Owner authorized ${targetUser?.legalName || uid} as Manager.`);
-        await triggerRoleNotification(uid, newRole);
-        alert("Role Authorized: User is now a Manager.");
-      } catch (err) {
-        alert("Role update failed.");
-      } finally {
-        setRoleUpdatingUid(null);
-      }
-      return;
-    }
-
+  const handleUpdateRole = async (uid: string, newRole: 'guest' | 'staff') => {
     setRoleUpdatingUid(uid);
     try {
       const targetUser = users.find(u => u.uid === uid);
@@ -173,29 +145,6 @@ const AdminDashboard: React.FC = () => {
       alert("Role update failed. Connection error.");
     } finally {
       setRoleUpdatingUid(null);
-    }
-  };
-
-  const handleMakeManager = async () => {
-    if (managerPassword !== 'kahar02') {
-      setGateError('Unauthorized Access Code');
-      return;
-    }
-    if (!managerGateUid) return;
-    try {
-      const targetUser = users.find(u => u.uid === managerGateUid);
-      await update(ref(db), {
-        [`roles/${managerGateUid}`]: 'manager',
-        [`profiles/${managerGateUid}/role`]: 'manager'
-      });
-      await createAdminLog('MANAGER_AUTHORIZED', `Security Gate cleared for ${targetUser?.legalName || managerGateUid}.`);
-      await triggerRoleNotification(managerGateUid, 'manager');
-      alert("Role Authorized: User is now a Manager.");
-      setManagerGateUid(null);
-      setManagerPassword('');
-      setGateError('');
-    } catch (err) {
-      alert("Authorization failed.");
     }
   };
 
@@ -375,13 +324,6 @@ const AdminDashboard: React.FC = () => {
                       className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'staff' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
                       Staff
-                    </button>
-                    <button 
-                      onClick={() => setManagerGateUid(user.uid)}
-                      disabled={roleUpdatingUid === user.uid}
-                      className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'manager' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      Manager
                     </button>
                  </div>
                ) : (
@@ -587,22 +529,6 @@ const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 z-[10001] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4 transition-colors"><X size={32} /></button>
           <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Document Full View" />
-        </div>
-      )}
-
-      {managerGateUid && (
-        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-           <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 text-center animate-fade-in">
-              <div className="w-16 h-16 bg-hotel-primary/10 text-hotel-primary rounded-[1.5rem] flex items-center justify-center mx-auto mb-6"><ShieldAlert size={32} /></div>
-              <h2 className="text-2xl font-serif font-black mb-2">Security Gate</h2>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-8">Enter Master Admin Key</p>
-              <input type="password" autoFocus placeholder="••••••••" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 px-6 font-black text-center text-lg outline-none mb-4 focus:border-hotel-primary" value={managerPassword} onChange={e => setManagerPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleMakeManager()} />
-              {gateError && <p className="text-[9px] text-hotel-primary font-black uppercase mb-4">{gateError}</p>}
-              <div className="flex gap-4">
-                 <button onClick={() => {setManagerGateUid(null); setManagerPassword('');}} className="flex-1 py-4 text-[9px] font-black uppercase text-gray-400">Cancel</button>
-                 <button onClick={handleMakeManager} className="flex-1 bg-hotel-primary text-white py-5 rounded-2xl font-black text-[10px] uppercase shadow-xl">Verify</button>
-              </div>
-           </div>
         </div>
       )}
     </div>

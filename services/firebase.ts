@@ -49,6 +49,13 @@ export const messaging = typeof window !== 'undefined' ? getMessaging(app) : nul
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
 export const VAPID_KEY = "uQlADdOxjQ7QLMhQew2uYE-9LYVr9R9m73dzKlRVwSs";
 
+// Check if current user is Admin (Owner only)
+export const isAdminUser = async (uid: string) => {
+  const roleRef = ref(db, `roles/${uid}`);
+  const snapshot = await get(roleRef);
+  return snapshot.exists() && snapshot.val() === 'owner';
+};
+
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
@@ -171,9 +178,15 @@ export const syncUserProfile = async (user: any) => {
     let role = roleSnap.exists() ? roleSnap.val() : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
     
     // Senior Architect Fix: Ensure owner role is explicitly set in the roles node
-    if (user.email === OWNER_EMAIL && role !== 'owner') {
-      await set(roleRef, 'owner');
-      role = 'owner';
+    if (user.email === OWNER_EMAIL) {
+      if (role !== 'owner') {
+        await set(roleRef, 'owner');
+        role = 'owner';
+      }
+    } else if (role === 'manager') {
+      // Demote manager to guest as per new requirements
+      await set(roleRef, 'guest');
+      role = 'guest';
     }
     
     trackPresence(user.uid);
