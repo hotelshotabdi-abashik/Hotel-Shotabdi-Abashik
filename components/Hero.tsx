@@ -40,6 +40,10 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
 
   const toggleCategory = (id: string) => {
+    if (['mystays', 'helpdesk'].includes(id)) {
+      scrollToSection(id);
+      return;
+    }
     onCategoryChange(id);
   };
 
@@ -264,28 +268,32 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           </button>
         </div>
 
-        {/* Categories / Shortcuts below search - Styled as Filters */}
-        <div className="hidden lg:flex w-full max-w-4xl flex-wrap justify-center items-center gap-x-8 gap-y-4">
-          <div 
+        {/* Categories / Shortcuts below search - Styled as Pills */}
+        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-center gap-4">
+          <button 
             onClick={() => toggleCategory('all')}
-            className="flex items-center gap-3 group cursor-pointer"
+            className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 border ${
+              activeCategory === 'all' 
+              ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-105' 
+              : 'bg-white text-gray-400 border-gray-100 hover:border-hotel-primary hover:text-hotel-primary'
+            }`}
           >
-            <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${activeCategory === 'all' ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200 group-hover:border-hotel-primary'}`}>
-              {activeCategory === 'all' && <Check size={12} strokeWidth={4} />}
-            </div>
-            <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>{t.allCategories}</span>
-          </div>
+            <Sparkles size={14} />
+            {t.allCategories}
+          </button>
 
           {shortcuts.map((item) => (
             <button
               key={item.id}
               onClick={() => toggleCategory(item.id)}
-              className="flex items-center gap-3 group cursor-pointer"
+              className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 border ${
+                activeCategory === item.id 
+                ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-105' 
+                : 'bg-white text-gray-400 border-gray-100 hover:border-hotel-primary hover:text-hotel-primary'
+              }`}
             >
-              <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${activeCategory === item.id ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200 group-hover:border-hotel-primary'}`}>
-                {activeCategory === item.id && <Check size={12} strokeWidth={4} />}
-              </div>
-              <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${activeCategory === item.id ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>{item.label}</span>
+              {React.cloneElement(item.icon as React.ReactElement, { size: 14 })}
+              {item.label}
             </button>
           ))}
         </div>
@@ -313,27 +321,37 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                 </button>
               </div>
               
-              <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto no-scrollbar">
+              <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto no-scrollbar">
                 <button 
-                  onClick={() => toggleCategory('all')}
-                  className="w-full flex items-center gap-4 group"
+                  onClick={() => { toggleCategory('all'); setShowMobileFilters(false); }}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                    activeCategory === 'all' 
+                    ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
+                    : 'bg-white border-gray-100 text-gray-500'
+                  }`}
                 >
-                  <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${activeCategory === 'all' ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200'}`}>
-                    {activeCategory === 'all' && <Check size={14} strokeWidth={4} />}
+                  <div className="flex items-center gap-4">
+                    <Sparkles size={18} />
+                    <span className="text-sm font-black uppercase tracking-widest">{t.allCategories}</span>
                   </div>
-                  <span className={`text-sm font-bold ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-500'}`}>{t.allCategories}</span>
+                  {activeCategory === 'all' && <Check size={18} strokeWidth={3} />}
                 </button>
 
                 {shortcuts.map((item) => (
                   <button 
                     key={item.id}
-                    onClick={() => toggleCategory(item.id)}
-                    className="w-full flex items-center gap-4 group"
+                    onClick={() => { toggleCategory(item.id); setShowMobileFilters(false); }}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                      activeCategory === item.id 
+                      ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
+                      : 'bg-white border-gray-100 text-gray-500'
+                    }`}
                   >
-                    <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${activeCategory === item.id ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200'}`}>
-                      {activeCategory === item.id && <Check size={14} strokeWidth={4} />}
+                    <div className="flex items-center gap-4">
+                      {item.icon}
+                      <span className="text-sm font-black uppercase tracking-widest">{item.label}</span>
                     </div>
-                    <span className={`text-sm font-bold ${activeCategory === item.id ? 'text-gray-900' : 'text-gray-500'}`}>{item.label}</span>
+                    {activeCategory === item.id && <Check size={18} strokeWidth={3} />}
                   </button>
                 ))}
               </div>

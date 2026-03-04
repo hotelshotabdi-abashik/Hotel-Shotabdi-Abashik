@@ -7,7 +7,7 @@ import {
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
   MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get } from '../services/firebase';
+import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get, query, limitToLast } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking } from '../types';
 
@@ -91,7 +91,9 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
       }
     }, handleLoadError);
 
-    const lUnsub = onValue(logsRef, (snapshot) => {
+    // Optimize: Limit logs to last 50 to save bandwidth
+    const logsQuery = query(logsRef, limitToLast(50));
+    const lUnsub = onValue(logsQuery, (snapshot) => {
       if (snapshot.exists()) {
         const data = Object.values(snapshot.val()) as AuditLog[];
         setLogs(data.sort((a, b) => b.timestamp - a.timestamp));
@@ -100,19 +102,24 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
       }
     }, handleLoadError);
 
-    const movementsRef = ref(db, 'analytics/movements');
-    const mUnsub = onValue(movementsRef, (snapshot) => {
+    // Optimize: Movements are expensive. We only need the latest status from profiles
+    // instead of the full movement history tree.
+    const mUnsub = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.val();
+        const profilesData = snapshot.val();
         const allMovements: any[] = [];
-        Object.keys(data).forEach(uid => {
-          const userMovements = Object.values(data[uid]) as any[];
-          const user = users.find(u => u.uid === uid);
-          userMovements.forEach(m => {
-            allMovements.push({ ...m, uid, userName: user?.legalName || user?.email || 'Guest' });
-          });
+        Object.keys(profilesData).forEach(uid => {
+          const p = profilesData[uid];
+          if (p.lastSeenPath) {
+            allMovements.push({ 
+              uid, 
+              path: p.lastSeenPath, 
+              timestamp: p.lastActive || Date.now(),
+              userName: p.legalName || p.email || 'Guest'
+            });
+          }
         });
-        setMovements(allMovements.sort((a, b) => b.timestamp - a.timestamp).slice(0, 100));
+        setMovements(allMovements.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50));
       }
     });
 

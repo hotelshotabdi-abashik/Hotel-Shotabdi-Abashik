@@ -24,7 +24,10 @@ import {
   onValue,
   remove,
   serverTimestamp,
-  onDisconnect
+  onDisconnect,
+  query,
+  limitToLast,
+  orderByChild
 } from "@firebase/database";
 
 // Fix: Using @firebase/messaging to ensure proper modular function resolution and background messaging support
@@ -77,14 +80,27 @@ export const playNotificationSound = () => {
   }
 };
 
-// Track User Movement (The "Brain")
+// Track User Movement (Optimized for Free Plan)
 export const trackUserMovement = (uid: string, path: string) => {
+  // Only track if it's the owner to save bandwidth/storage on Spark plan
+  const user = auth.currentUser;
+  if (user?.email !== OWNER_EMAIL) {
+    // For guests, just update their last active status (1 write instead of 2+push)
+    update(ref(db, `profiles/${uid}`), {
+      lastActive: serverTimestamp(),
+      lastSeenPath: path
+    });
+    return;
+  }
+
+  // If owner, record movement for the "Live" view
   const movementRef = ref(db, `analytics/movements/${uid}`);
-  push(movementRef, {
+  const newMoveRef = push(movementRef);
+  set(newMoveRef, {
     path,
     timestamp: serverTimestamp()
   });
-  // Also update last seen path in profile
+  
   update(ref(db, `profiles/${uid}`), {
     lastSeenPath: path,
     lastActive: serverTimestamp()
@@ -252,5 +268,8 @@ export {
   onValue,
   serverTimestamp,
   onMessage,
-  onDisconnect
+  onDisconnect,
+  query,
+  limitToLast,
+  orderByChild
 };

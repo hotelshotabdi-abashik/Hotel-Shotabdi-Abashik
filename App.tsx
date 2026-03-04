@@ -32,7 +32,9 @@ import {
   get,
   createAdminLog,
   playNotificationSound,
-  trackUserMovement
+  trackUserMovement,
+  query,
+  limitToLast
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Room } from './types';
 import { LogIn, Loader2, Bell, Edit3, Save, CheckCheck, LogOut, User as UserIcon, AlertTriangle, LayoutDashboard, Upload, Info, Key, Shield } from 'lucide-react';
@@ -257,9 +259,10 @@ const AppContent = () => {
           // For guests, we might want to track if the last message was from admin and not seen
           // In HelpDex.tsx, we mark messages as seen. Here we can just check unreadCount if we implement it for guests too.
           // For now, let's assume the admin updates a flag or we check the messages node.
-          // A simpler way: listen to messages and count unseen from others
+          // Optimize: Only fetch last 50 messages to count unread
           const msgsRef = ref(db, `help_dex/messages/${user.uid}`);
-          onValue(msgsRef, (mSnap) => {
+          const msgsQuery = query(msgsRef, limitToLast(50));
+          onValue(msgsQuery, (mSnap) => {
             if (mSnap.exists()) {
               const msgs = Object.values(mSnap.val()) as any[];
               const unseen = msgs.filter(m => m.senderId !== user.uid && m.status !== 'seen').length;
@@ -479,10 +482,7 @@ const AppContent = () => {
                 }}
                 className="flex items-center gap-2 group"
               >
-                <div className="w-3 h-3 rounded-full border border-gray-200 group-hover:border-hotel-primary flex items-center justify-center transition-colors">
-                  <div className="w-1.5 h-1.5 bg-hotel-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-                <span className="text-[9px] font-black text-gray-400 group-hover:text-gray-900 uppercase tracking-widest transition-colors">{item.label}</span>
+                <span className="text-[10px] font-black text-gray-400 group-hover:text-hotel-primary uppercase tracking-widest transition-all border-b-2 border-transparent group-hover:border-hotel-primary pb-1">{item.label}</span>
               </button>
             ))}
           </div>
@@ -695,6 +695,7 @@ const AppContent = () => {
 
 const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImageUpload, requireAuth }: any) => {
   const [activeCategory, setActiveCategory] = useState('all');
+  const t = (translations as any)[language];
   
   return (
     <>
@@ -709,6 +710,20 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
       />
+      {activeCategory !== 'all' && (
+        <div className="max-w-7xl mx-auto px-4 md:px-10 mt-12 mb-6 animate-fade-in">
+          <div className="flex items-center gap-4">
+            <div className="h-[1px] flex-1 bg-gray-100"></div>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-hotel-primary bg-white px-6 py-2 rounded-full border border-hotel-primary/10 shadow-sm">
+              {activeCategory === 'rooms' ? t.ourLuxuryRooms : 
+               activeCategory === 'offers' ? t.exclusiveOffers : 
+               activeCategory === 'restaurants' ? t.restaurantsTitle : 
+               activeCategory === 'guide' ? t.guideTitle : activeCategory}
+            </h2>
+            <div className="h-[1px] flex-1 bg-gray-100"></div>
+          </div>
+        </div>
+      )}
       {(activeCategory === 'all' || activeCategory === 'offers') && (
         <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />
       )}
