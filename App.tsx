@@ -37,7 +37,11 @@ import {
   limitToLast
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Room } from './types';
-import { LogIn, Loader2, Bell, Edit3, Save, CheckCheck, LogOut, User as UserIcon, AlertTriangle, LayoutDashboard, Upload, Info, Key, Shield } from 'lucide-react';
+import { 
+  LogIn, Loader2, Bell, Edit3, Save, CheckCheck, LogOut, 
+  User as UserIcon, AlertTriangle, LayoutDashboard, Upload, 
+  Info, Key, Shield, Bed, Tag, Utensils, Map as MapIcon, Sparkles 
+} from 'lucide-react';
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
 import { translations, Language } from './translations';
 
@@ -710,31 +714,29 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
       />
-      {activeCategory !== 'all' && (
-        <div className="max-w-7xl mx-auto px-4 md:px-10 mt-12 mb-6 animate-fade-in">
-          <div className="flex items-center gap-4">
-            <div className="h-[1px] flex-1 bg-gray-100"></div>
-            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-hotel-primary bg-white px-6 py-2 rounded-full border border-hotel-primary/10 shadow-sm">
-              {activeCategory === 'rooms' ? t.ourLuxuryRooms : 
-               activeCategory === 'offers' ? t.exclusiveOffers : 
-               activeCategory === 'restaurants' ? t.restaurantsTitle : 
-               activeCategory === 'guide' ? t.guideTitle : activeCategory}
-            </h2>
-            <div className="h-[1px] flex-1 bg-gray-100"></div>
-          </div>
+      
+      {(activeCategory === 'all' || activeCategory === 'offers') && (
+        <div id="offers">
+          <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />
         </div>
       )}
-      {(activeCategory === 'all' || activeCategory === 'offers') && (
-        <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />
-      )}
+      
       {(activeCategory === 'all' || activeCategory === 'rooms') && (
-        <RoomGrid rooms={siteConfig.rooms} onBook={(room: any) => requireAuth(() => {})} isEditMode={isEditMode} language={language} onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />
+        <div id="rooms">
+          <RoomGrid rooms={siteConfig.rooms} onBook={(room: any) => requireAuth(() => {})} isEditMode={isEditMode} language={language} onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />
+        </div>
       )}
+      
       {(activeCategory === 'all' || activeCategory === 'restaurants') && (
-        <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />
+        <div id="restaurants">
+          <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />
+        </div>
       )}
+      
       {(activeCategory === 'all' || activeCategory === 'guide') && (
-        <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />
+        <div id="guide">
+          <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />
+        </div>
       )}
     </>
   );

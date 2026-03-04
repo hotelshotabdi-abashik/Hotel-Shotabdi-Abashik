@@ -146,7 +146,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section id="hero-section" className="relative min-h-[550px] md:h-[400px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white py-12 md:py-0">
+    <section id="hero-section" className="relative min-h-[550px] md:h-[450px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white pt-12 md:pt-0 pb-0">
       {isEditMode && (
         <div className="absolute top-4 right-4 md:right-10 z-20">
           <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
@@ -175,7 +175,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
         </div>
 
         {/* Refined Hotel Search Bar */}
-        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch overflow-hidden p-1.5 border border-gray-100 mb-12">
+        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch overflow-hidden p-1.5 border border-gray-100 mb-8">
           
           <div className="relative flex-[1.2] border-b lg:border-b-0 lg:border-r border-gray-100">
             <div 
@@ -268,32 +268,40 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           </button>
         </div>
 
-        {/* Categories / Shortcuts below search - Styled as Pills */}
-        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-center gap-4">
+        {/* Categories / Shortcuts below search - Vertical Layout */}
+        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-start gap-12">
           <button 
             onClick={() => toggleCategory('all')}
-            className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 border ${
-              activeCategory === 'all' 
-              ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-105' 
-              : 'bg-white text-gray-400 border-gray-100 hover:border-hotel-primary hover:text-hotel-primary'
-            }`}
+            className="flex flex-col items-center gap-3 group transition-all active:scale-95"
           >
-            <Sparkles size={14} />
-            {t.allCategories}
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border-2 ${
+              activeCategory === 'all' 
+              ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-110' 
+              : 'bg-white text-gray-400 border-gray-100 group-hover:border-hotel-primary group-hover:text-hotel-primary'
+            }`}>
+              <Sparkles size={24} />
+            </div>
+            <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
+              {t.allCategories}
+            </span>
           </button>
 
           {shortcuts.map((item) => (
             <button
               key={item.id}
               onClick={() => toggleCategory(item.id)}
-              className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 border ${
-                activeCategory === item.id 
-                ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-105' 
-                : 'bg-white text-gray-400 border-gray-100 hover:border-hotel-primary hover:text-hotel-primary'
-              }`}
+              className="flex flex-col items-center gap-3 group transition-all active:scale-95"
             >
-              {React.cloneElement(item.icon as React.ReactElement, { size: 14 })}
-              {item.label}
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border-2 ${
+                activeCategory === item.id 
+                ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-110' 
+                : 'bg-white text-gray-400 border-gray-100 group-hover:border-hotel-primary group-hover:text-hotel-primary'
+              }`}>
+                {React.cloneElement(item.icon as React.ReactElement, { size: 24 })}
+              </div>
+              <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategory === item.id ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
+                {item.label}
+              </span>
             </button>
           ))}
         </div>
