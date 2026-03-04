@@ -91,7 +91,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="fixed inset-0 z-[1100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
         <div className="bg-white/95 backdrop-blur-2xl w-full max-w-2xl rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col max-h-[90vh] border border-white/40 ring-1 ring-black/5">
           
           <div className="p-8 md:p-10 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/40">

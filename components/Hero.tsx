@@ -19,9 +19,11 @@ interface HeroProps {
   onUpdate?: (config: Partial<HeroConfig>) => void;
   onImageUpload?: (file: File) => Promise<string>;
   requireAuth?: (action: () => void) => void;
+  activeCategory: string;
+  onCategoryChange: (id: string) => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, requireAuth }) => {
+const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, requireAuth, activeCategory, onCategoryChange }) => {
   const navigate = useNavigate();
   const t = translations[language];
   
@@ -38,19 +40,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
 
   const toggleCategory = (id: string) => {
-    if (id === 'all') {
-      setSelectedCategories(['all']);
-      return;
-    }
-    
-    setSelectedCategories(prev => {
-      const filtered = prev.filter(c => c !== 'all');
-      if (filtered.includes(id)) {
-        const next = filtered.filter(c => c !== id);
-        return next.length === 0 ? ['all'] : next;
-      }
-      return [...filtered, id];
-    });
+    onCategoryChange(id);
   };
 
   const scrollToSection = (id: string) => {
@@ -166,11 +156,17 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         <div className="text-center mb-10">
-          <h2 className="text-gray-900 text-4xl md:text-6xl font-serif font-black mb-2 tracking-tight">
-             {t.residentialService}
+          <h2 
+            className={`text-gray-900 text-4xl md:text-6xl font-serif font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            onClick={() => isEditMode && onUpdate?.({ title: window.prompt("Edit Title:", config.title) || config.title })}
+          >
+             {config.title || t.residentialService}
           </h2>
-          <p className="text-gray-500 text-xs md:text-sm font-medium tracking-widest uppercase">
-            {t.eliteHospitality}
+          <p 
+            className={`text-gray-500 text-xs md:text-sm font-medium tracking-widest uppercase transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            onClick={() => isEditMode && onUpdate?.({ subtitle: window.prompt("Edit Subtitle:", config.subtitle) || config.subtitle })}
+          >
+            {config.subtitle || t.eliteHospitality}
           </p>
         </div>
 
@@ -197,7 +193,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             </div>
 
             {showRoomDropdown && (
-              <div className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[250px] overflow-y-auto no-scrollbar">
+              <div className="absolute top-full left-0 right-0 z-[150] mt-1 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[300px] overflow-y-auto no-scrollbar">
                 <div 
                   onClick={() => { setSelectedRoomId('all'); setShowRoomDropdown(false); }}
                   className={`p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center border-b border-gray-50 ${selectedRoomId === 'all' ? 'bg-blue-50/20' : ''}`}
@@ -274,27 +270,22 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             onClick={() => toggleCategory('all')}
             className="flex items-center gap-3 group cursor-pointer"
           >
-            <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${selectedCategories.includes('all') ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200 group-hover:border-hotel-primary'}`}>
-              {selectedCategories.includes('all') && <Check size={12} strokeWidth={4} />}
+            <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${activeCategory === 'all' ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200 group-hover:border-hotel-primary'}`}>
+              {activeCategory === 'all' && <Check size={12} strokeWidth={4} />}
             </div>
-            <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${selectedCategories.includes('all') ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>{t.allCategories}</span>
+            <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>{t.allCategories}</span>
           </div>
 
           {shortcuts.map((item) => (
             <button
               key={item.id}
-              onClick={() => {
-                toggleCategory(item.id);
-                if (!selectedCategories.includes(item.id)) {
-                  scrollToSection(item.id);
-                }
-              }}
+              onClick={() => toggleCategory(item.id)}
               className="flex items-center gap-3 group cursor-pointer"
             >
-              <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${selectedCategories.includes(item.id) ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200 group-hover:border-hotel-primary'}`}>
-                {selectedCategories.includes(item.id) && <Check size={12} strokeWidth={4} />}
+              <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${activeCategory === item.id ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200 group-hover:border-hotel-primary'}`}>
+                {activeCategory === item.id && <Check size={12} strokeWidth={4} />}
               </div>
-              <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${selectedCategories.includes(item.id) ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>{item.label}</span>
+              <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${activeCategory === item.id ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>{item.label}</span>
             </button>
           ))}
         </div>
@@ -327,10 +318,10 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                   onClick={() => toggleCategory('all')}
                   className="w-full flex items-center gap-4 group"
                 >
-                  <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${selectedCategories.includes('all') ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200'}`}>
-                    {selectedCategories.includes('all') && <Check size={14} strokeWidth={4} />}
+                  <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${activeCategory === 'all' ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200'}`}>
+                    {activeCategory === 'all' && <Check size={14} strokeWidth={4} />}
                   </div>
-                  <span className={`text-sm font-bold ${selectedCategories.includes('all') ? 'text-gray-900' : 'text-gray-500'}`}>{t.allCategories}</span>
+                  <span className={`text-sm font-bold ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-500'}`}>{t.allCategories}</span>
                 </button>
 
                 {shortcuts.map((item) => (
@@ -339,24 +330,17 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                     onClick={() => toggleCategory(item.id)}
                     className="w-full flex items-center gap-4 group"
                   >
-                    <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${selectedCategories.includes(item.id) ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200'}`}>
-                      {selectedCategories.includes(item.id) && <Check size={14} strokeWidth={4} />}
+                    <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${activeCategory === item.id ? 'border-hotel-primary bg-hotel-primary text-white' : 'border-gray-200'}`}>
+                      {activeCategory === item.id && <Check size={14} strokeWidth={4} />}
                     </div>
-                    <span className={`text-sm font-bold ${selectedCategories.includes(item.id) ? 'text-gray-900' : 'text-gray-500'}`}>{item.label}</span>
+                    <span className={`text-sm font-bold ${activeCategory === item.id ? 'text-gray-900' : 'text-gray-500'}`}>{item.label}</span>
                   </button>
                 ))}
               </div>
 
               <div className="p-6 bg-gray-50">
                 <button 
-                  onClick={() => {
-                    if (selectedCategories.includes('all')) {
-                      scrollToSection('hero-section');
-                    } else if (selectedCategories.length > 0) {
-                      scrollToSection(selectedCategories[0]);
-                    }
-                    setShowMobileFilters(false);
-                  }}
+                  onClick={() => setShowMobileFilters(false)}
                   className="w-full bg-[#FFC107] hover:bg-[#FFB300] text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-yellow-100 transition-all active:scale-95"
                 >
                   {t.filter}

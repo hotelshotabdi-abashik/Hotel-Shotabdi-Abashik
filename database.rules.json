@@ -45,7 +45,7 @@
         "$uid": {
           ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')",
           ".write": "auth != null && (
-            (auth.uid === $uid && (!data.exists() || now > data.child('lastMessageTimestamp').val() + 60000)) || 
+            (auth.uid === $uid) || 
             root.child('roles').child(auth.uid).val() === 'owner' || 
             auth.token.email === 'hotelshotabdiabashik@gmail.com'
           )"

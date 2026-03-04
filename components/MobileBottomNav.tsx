@@ -41,8 +41,8 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-4 left-0 right-0 px-4 z-[70] transition-all duration-500 animate-fade-in">
-      <div className="max-w-lg mx-auto bg-white/90 backdrop-blur-2xl border border-white/40 shadow-[0_15px_40px_rgba(0,0,0,0.12)] rounded-[2rem] px-2 py-2 flex items-center justify-around">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 px-2 py-3 z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      <div className="flex items-center justify-start gap-1 overflow-x-auto no-scrollbar pb-1 px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -50,45 +50,42 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
               key={item.id}
               to={item.path}
               onClick={item.path === '/' ? handleHomeClick : undefined}
-              className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
-                isActive ? 'text-hotel-primary' : 'text-gray-400'
+              className={`flex flex-col items-center justify-center min-w-[72px] py-2 rounded-2xl transition-all duration-300 ${
+                isActive ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400'
               }`}
             >
-              <div className={`p-1 rounded-xl transition-all duration-300 ${isActive ? 'bg-hotel-primary/10' : ''}`}>
+              <div className={`relative transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
                 {item.icon}
               </div>
-              <span className={`text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+              <span className={`text-[9px] font-black uppercase tracking-tighter mt-1.5 whitespace-nowrap transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
                 {item.label}
               </span>
-              {isActive && (
-                <div className="absolute -bottom-1 w-1 h-1 bg-hotel-primary rounded-full"></div>
-              )}
             </Link>
           );
         })}
 
         {/* Separator */}
-        <div className="w-[1px] h-6 bg-gray-100 mx-1"></div>
+        <div className="w-[1px] h-8 bg-gray-100 mx-2 shrink-0"></div>
 
         {/* Dynamic Admin/Profile/Login Button */}
         {isAdmin ? (
           <Link
             to="/admin"
-            className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
-              location.pathname === '/admin' ? 'text-amber-600' : 'text-amber-500'
+            className={`flex flex-col items-center justify-center min-w-[72px] py-2 rounded-2xl transition-all duration-300 relative ${
+              location.pathname === '/admin' ? 'bg-amber-50 text-amber-600' : 'text-amber-500'
             }`}
           >
-            <div className={`p-1 rounded-xl transition-all duration-300 ${location.pathname === '/admin' ? 'bg-amber-50' : ''}`}>
+            <div className={`transition-transform duration-300 ${location.pathname === '/admin' ? 'scale-110' : ''}`}>
               <LayoutDashboard size={20} />
             </div>
-            <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
+            <span className="text-[9px] font-black uppercase tracking-tighter mt-1.5 whitespace-nowrap">
               {getRoleLabel()}
             </span>
           </Link>
         ) : (
           <button
             onClick={user ? toggleProfile : openAuth}
-            className={`flex flex-col items-center justify-center flex-1 py-2 transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center min-w-[72px] py-2 rounded-2xl transition-all duration-300 relative ${
               user ? 'text-hotel-primary' : 'text-hotel-primary'
             }`}
           >
@@ -105,7 +102,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
                 <LogIn size={20} />
               </div>
             )}
-            <span className="text-[8px] font-black uppercase tracking-tighter mt-1 whitespace-nowrap">
+            <span className="text-[9px] font-black uppercase tracking-tighter mt-1.5 whitespace-nowrap">
               {user ? (language === 'EN' ? 'Me' : 'আমি') : t.login}
             </span>
           </button>

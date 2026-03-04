@@ -79,7 +79,7 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
     const uUnsub = onValue(profilesRef, (snapshot) => {
       if (snapshot.exists()) setUsers(Object.values(snapshot.val()));
       else setUsers([]);
-      if (loadedCount < 1) checkLoadingFinished();
+      setLoading(false);
     }, handleLoadError);
 
     const bUnsub = onValue(bookingsRef, (snapshot) => {
@@ -89,7 +89,6 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
       } else {
         setBookings([]);
       }
-      if (loadedCount < 2) checkLoadingFinished();
     }, handleLoadError);
 
     const lUnsub = onValue(logsRef, (snapshot) => {
@@ -99,7 +98,6 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
       } else {
         setLogs([]);
       }
-      if (loadedCount < 3) checkLoadingFinished();
     }, handleLoadError);
 
     const movementsRef = ref(db, 'analytics/movements');
@@ -236,7 +234,7 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">{t.adminConsole}</h1>
+              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
               <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${isOwner ? 'bg-hotel-primary/10 text-hotel-primary' : 'bg-blue-50 text-blue-600'}`}>
                 {currentAdminRole}
               </span>
@@ -244,9 +242,13 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
             <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Authorized: {currentUser?.displayName || currentUser?.email}</p>
           </div>
         </div>
-        <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
+        <div className="flex gap-2">
           {['bookings', 'users', 'data'].map((tab) => (
-            <button key={tab} onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} className={`px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white shadow-md text-[#B22222]' : 'text-gray-400 hover:text-gray-600'}`}>
+            <button 
+              key={tab} 
+              onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} 
+              className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab ? 'bg-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+            >
               {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : t.data}
             </button>
           ))}
@@ -348,27 +350,6 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
              <div className="lg:col-span-4 space-y-6">
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-                   <div>
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><Database size={16} className="text-hotel-primary"/> Cloudflare R2 Assets</h4>
-                      <div className="space-y-4">
-                         <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
-                            <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mb-2">Data Catalog Warehouse</p>
-                            <p className="text-[11px] font-mono font-bold text-blue-900 break-all mb-4">4db63b5a946ef5ebc26acd7bd228a0e1_hotel-shotabdi-assets</p>
-                            <a 
-                              href="https://catalog.cloudflarestorage.com/4db63b5a946ef5ebc26acd7bd228a0e1/hotel-shotabdi-assets" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-100 hover:scale-105 transition-all"
-                            >
-                               Open R2 Catalog <Maximize2 size={14} />
-                            </a>
-                         </div>
-                         <p className="text-[9px] text-gray-400 font-medium leading-relaxed italic">
-                           Use the catalog to manage large volumes of room and restaurant media assets directly in Cloudflare.
-                         </p>
-                      </div>
-                   </div>
-
                    <div>
                       <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Statistics</h4>
                       <div className="grid grid-cols-2 gap-4">
@@ -515,7 +496,20 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
                                 </div>
                              </div>
                              <div className="p-6 space-y-4">
-                                <div className="flex items-center gap-3 text-[11px] font-black text-gray-600"><Phone size={14} className="text-hotel-primary" /> {guest.phone || 'N/A'}</div>
+                                <div className="space-y-2">
+                                   <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3 text-[11px] font-black text-gray-600"><Phone size={14} className="text-hotel-primary" /> {guest.phone || 'N/A'}</div>
+                                      {guest.phone && (
+                                         <a href={`tel:${guest.phone}`} className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"><Phone size={12} /></a>
+                                      )}
+                                   </div>
+                                   {guest.guardianPhone && (
+                                      <div className="flex items-center justify-between">
+                                         <div className="flex items-center gap-3 text-[11px] font-black text-gray-600"><Phone size={14} className="text-blue-500" /> {guest.guardianPhone} (Guardian)</div>
+                                         <a href={`tel:${guest.guardianPhone}`} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"><Phone size={12} /></a>
+                                      </div>
+                                   )}
+                                </div>
                                 <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100"><IdCard size={14} className="text-hotel-primary" /> NID: {guest.nidNumber || 'UNSUBMITTED'}</div>
                                 {guest.nidImageUrl && (
                                    <div className="mt-4"><div onClick={() => setLightboxUrl(guest.nidImageUrl)} className="w-full aspect-video rounded-[1.5rem] overflow-hidden shadow-md border-2 border-white bg-gray-100 relative group cursor-zoom-in"><img src={guest.nidImageUrl} className="w-full h-full object-contain" /><div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center"><Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={24} /></div></div></div>

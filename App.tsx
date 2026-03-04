@@ -29,6 +29,7 @@ import {
   ref,
   onValue,
   update,
+  get,
   createAdminLog,
   playNotificationSound,
   trackUserMovement
@@ -71,6 +72,31 @@ const AppContent = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isManageAccountOpen, setIsManageAccountOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const handleLogoEdit = () => {
+    if (!isEditMode || !isAdmin) return;
+    const newUrl = window.prompt("Enter new Logo URL:", siteConfig.logoUrl);
+    if (newUrl) {
+      const newConfig = { ...siteConfig, logoUrl: newUrl };
+      setSiteConfig(newConfig);
+      saveConfig(newConfig);
+    }
+  };
+
+  const handleTextEdit = (path: string, currentVal: string) => {
+    if (!isEditMode || !isAdmin) return;
+    const newVal = window.prompt(`Edit text:`, currentVal);
+    if (newVal !== null) {
+      const keys = path.split('.');
+      const newConfig = { ...siteConfig };
+      let current: any = newConfig;
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = newVal;
+      setSiteConfig({ ...newConfig });
+    }
+  };
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
@@ -117,7 +143,9 @@ const AppContent = () => {
     announcement: "25% OFF DISCOUNT",
     logoUrl: LOGO_ICON_URL,
     lastUpdated: 0,
-    socialLinks: { facebook: "#", instagram: "#", website: "#" }
+    socialLinks: { facebook: "#", instagram: "#", website: "#" },
+    name: "Hotel Shotabdi",
+    tagline: "Abashik"
   });
 
   useEffect(() => {
@@ -144,6 +172,22 @@ const AppContent = () => {
   useEffect(() => {
     if (user) {
       trackUserMovement(user.uid, location.pathname);
+      
+      if (location.pathname === '/helpdesk') {
+        const notificationsRef = ref(db, `notifications/${user.uid}`);
+        get(notificationsRef).then(snap => {
+          if (snap.exists()) {
+            const notifs = snap.val();
+            const updates: any = {};
+            Object.keys(notifs).forEach(key => {
+              if (notifs[key].type === 'chat_message' && !notifs[key].read) {
+                updates[`notifications/${user.uid}/${key}/read`] = true;
+              }
+            });
+            if (Object.keys(updates).length > 0) update(ref(db), updates);
+          }
+        });
+      }
     }
   }, [location.pathname, user]);
 
@@ -293,12 +337,13 @@ const AppContent = () => {
     } catch (err) { console.error("Logout failed", err); }
   };
 
-  const saveConfig = async () => {
+  const saveConfig = async (configToSave?: SiteConfig) => {
     if (!isAdmin) return;
     setIsSaving(true);
     try {
       const configRef = ref(db, 'site-config');
-      await update(ref(db), { 'site-config': { ...siteConfig, lastUpdated: Date.now() } });
+      const finalConfig = configToSave || siteConfig;
+      await update(ref(db), { 'site-config': { ...finalConfig, lastUpdated: Date.now() } });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
       setIsEditMode(false);
       alert("Update Success!");
@@ -323,11 +368,6 @@ const AppContent = () => {
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
-    // Senior Architect Note: Cloudflare R2 Upload Logic
-    // In a production environment with Cloudflare Pages, you would typically 
-    // use a Cloudflare Worker (Functions) to securely upload to R2.
-    // For now, we use a robust Base64 conversion to ensure immediate UI feedback.
-    
     return new Promise((resolve, reject) => {
       if (!file) {
         reject(new Error("No file selected."));
@@ -377,13 +417,22 @@ const AppContent = () => {
       <SchemaOrg />
       
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
-        <div className="flex items-center gap-4">
+        {siteConfig.announcement && (
+          <div 
+            className={`absolute top-0 left-0 right-0 bg-hotel-primary text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 text-center transition-all ${isEditMode ? 'hover:bg-red-700 cursor-pointer' : ''}`}
+            onClick={() => isEditMode && handleTextEdit('announcement', siteConfig.announcement)}
+          >
+            {siteConfig.announcement}
+          </div>
+        )}
+        <div className="flex items-center gap-4 mt-2">
           <Link to="/" onClick={handleHomeClick} className="flex items-center gap-3 group">
             <div className="relative">
               <img 
                 src={currentLogo} 
-                className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform ${isLogoSpinning ? 'animate-spin-once' : ''}`} 
+                className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform ${isLogoSpinning ? 'animate-spin-once' : ''} ${isEditMode ? 'cursor-pointer hover:opacity-50' : ''}`} 
                 alt="Logo"
+                onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleLogoEdit(); } }}
               />
               {isEditMode && isAdmin && (
                 <button 
@@ -396,8 +445,18 @@ const AppContent = () => {
               <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-sm font-serif font-black text-gray-900 uppercase leading-none">{t.hotelName}</h1>
-              <p className="text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5">{t.hotelTagline}</p>
+              <h1 
+                className={`text-sm font-serif font-black text-gray-900 uppercase leading-none transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-1' : ''}`}
+                onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleTextEdit('name', siteConfig.name || t.hotelName); } }}
+              >
+                {siteConfig.name || t.hotelName}
+              </h1>
+              <p 
+                className={`text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5 transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-1' : ''}`}
+                onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleTextEdit('tagline', siteConfig.tagline || t.hotelTagline); } }}
+              >
+                {siteConfig.tagline || t.hotelTagline}
+              </p>
             </div>
           </Link>
         </div>
@@ -447,6 +506,18 @@ const AppContent = () => {
           >
             {t.about}
           </button>
+          <Link 
+            to="/restaurants" 
+            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/restaurants' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+          >
+            {t.restaurantsTitle}
+          </Link>
+          <Link 
+            to="/guide" 
+            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/guide' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+          >
+            {t.guideTitle}
+          </Link>
           <Link 
             to="/helpdesk" 
             onClick={(e) => {
@@ -594,7 +665,7 @@ const AppContent = () => {
         )}
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<><Hero config={siteConfig.hero} rooms={siteConfig.rooms} isEditMode={isEditMode} language={language} onUpdate={(h) => setSiteConfig(prev => ({...prev, hero: {...prev.hero, ...h}}))} onImageUpload={handleImageUpload} requireAuth={requireAuth} /><ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} /><RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} /><NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} /><TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} /></>} />
+            <Route path="/" element={<HomeView siteConfig={siteConfig} isEditMode={isEditMode} language={language} setSiteConfig={setSiteConfig} handleImageUpload={handleImageUpload} requireAuth={requireAuth} />} />
             <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />} />
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
@@ -619,6 +690,38 @@ const AppContent = () => {
         <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} language={language} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
       </main>
     </div>
+  );
+};
+
+const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImageUpload, requireAuth }: any) => {
+  const [activeCategory, setActiveCategory] = useState('all');
+  
+  return (
+    <>
+      <Hero 
+        config={siteConfig.hero} 
+        rooms={siteConfig.rooms} 
+        isEditMode={isEditMode} 
+        language={language} 
+        onUpdate={(h: any) => setSiteConfig((prev: any) => ({...prev, hero: {...prev.hero, ...h}}))} 
+        onImageUpload={handleImageUpload} 
+        requireAuth={requireAuth}
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+      />
+      {(activeCategory === 'all' || activeCategory === 'offers') && (
+        <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />
+      )}
+      {(activeCategory === 'all' || activeCategory === 'rooms') && (
+        <RoomGrid rooms={siteConfig.rooms} onBook={(room: any) => requireAuth(() => {})} isEditMode={isEditMode} language={language} onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />
+      )}
+      {(activeCategory === 'all' || activeCategory === 'restaurants') && (
+        <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />
+      )}
+      {(activeCategory === 'all' || activeCategory === 'guide') && (
+        <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />
+      )}
+    </>
   );
 };
 

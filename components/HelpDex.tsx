@@ -172,6 +172,21 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
         
         if (Object.keys(updates).length > 0) update(ref(db), updates);
         if (isAdmin) update(ref(db, `help_dex/active_chats/${activeUserId}`), { unreadCount: 0 });
+
+        // Mark chat notifications as read
+        const notificationsRef = ref(db, `notifications/${user?.uid}`);
+        get(notificationsRef).then(snap => {
+          if (snap.exists()) {
+            const notifs = snap.val();
+            const notifUpdates: any = {};
+            Object.keys(notifs).forEach(key => {
+              if (notifs[key].type === 'chat_message' && !notifs[key].read) {
+                notifUpdates[`notifications/${user?.uid}/${key}/read`] = true;
+              }
+            });
+            if (Object.keys(notifUpdates).length > 0) update(ref(db), notifUpdates);
+          }
+        });
       } else {
         setMessages([]);
       }
