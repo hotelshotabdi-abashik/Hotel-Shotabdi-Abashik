@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Bed, Map, Utensils, User, LogIn, Tag, LayoutDashboard } from 'lucide-react';
+import { Home, Bed, Map, Utensils, User, LogIn, Tag, LayoutDashboard, Image as ImageIcon } from 'lucide-react';
 import { UserProfile } from '../types';
 import { OWNER_EMAIL } from '../services/firebase';
 import { translations, Language } from '../translations';
@@ -48,6 +48,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
     { id: 'rooms', path: '/rooms', label: t.ourLuxuryRooms, icon: <Bed size={20} /> },
     { id: 'restaurants', path: '/restaurants', label: t.restaurantsTitle, icon: <Utensils size={20} /> },
     { id: 'guide', path: '/guide', label: t.guideTitle, icon: <Map size={20} /> },
+    { id: 'gallery', path: '/gallery', label: language === 'EN' ? 'Gallery' : 'গ্যালারি', icon: <ImageIcon size={20} /> },
   ];
 
   const getRoleLabel = () => {

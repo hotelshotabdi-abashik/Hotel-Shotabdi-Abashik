@@ -146,13 +146,13 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   };
 
   const shortcuts = [
-    { id: 'rooms', label: t.ourRooms, icon: <Bed size={22} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'offers', label: t.offers, icon: <Tag size={22} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
-    { id: 'restaurants', label: t.dining, icon: <Utensils size={22} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { id: 'guide', label: t.guide, icon: <MapIcon size={22} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
-    { id: 'gallery', label: language === 'EN' ? 'Gallery' : 'গ্যালারি', icon: <ImageIcon size={22} />, path: '/gallery', color: 'text-pink-600', bg: 'bg-pink-50' },
-    { id: 'mystays', label: t.history, icon: <History size={22} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 'helpdesk', label: t.support, icon: <MessageSquare size={22} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { id: 'rooms', label: t.ourRooms || (language === 'EN' ? 'Rooms' : 'রুম'), icon: <Bed size={22} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'offers', label: t.offers || (language === 'EN' ? 'Offers' : 'অফার'), icon: <Tag size={22} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
+    { id: 'restaurants', label: t.dining || (language === 'EN' ? 'Dining' : 'ডাইনিং'), icon: <Utensils size={22} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'guide', label: t.guide || (language === 'EN' ? 'Guide' : 'গাইড'), icon: <MapIcon size={22} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
+    { id: 'gallery', label: t.gallery, icon: <ImageIcon size={22} />, path: '/gallery', color: 'text-pink-600', bg: 'bg-pink-50' },
+    { id: 'mystays', label: t.history || (language === 'EN' ? 'History' : 'ইতিহাস'), icon: <History size={22} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { id: 'helpdesk', label: t.support || (language === 'EN' ? 'Support' : 'সাপোর্ট'), icon: <MessageSquare size={22} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId);
@@ -282,56 +282,73 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           </button>
         </div>
 
-        {/* Categories / Shortcuts below search - Modern Restaurant Style */}
-        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-start gap-10">
+        {/* Categories / Shortcuts below search - Modern Editorial Breadcrumb Style */}
+        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-center gap-x-6 gap-y-4">
           <button 
             onClick={() => toggleCategory('all')}
-            className="flex flex-col items-center gap-3 group transition-all active:scale-95"
+            className="flex items-center gap-3 group transition-all active:scale-95 py-2"
           >
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all border-2 ${
-              activeCategories.includes('all') 
-              ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-110' 
-              : 'bg-white text-gray-400 border-gray-100 group-hover:border-hotel-primary group-hover:text-hotel-primary'
-            }`}>
-              <Sparkles size={28} />
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategories.includes('all') ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
+            {activeCategories.includes('all') && <Check size={14} className="text-hotel-primary animate-scale-in" />}
+            <span className={`text-[11px] font-medium uppercase tracking-[0.2em] transition-all ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
               {t.allCategories}
             </span>
           </button>
 
           {shortcuts.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => toggleCategory(item.id)}
-              className="flex flex-col items-center gap-3 group transition-all active:scale-95"
-            >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all border-2 ${
+            <React.Fragment key={item.id}>
+              <div className={`w-1 h-1 rounded-full transition-all ${
                 activeCategories.includes(item.id) 
-                ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-110' 
-                : 'bg-white text-gray-400 border-gray-100 group-hover:border-hotel-primary group-hover:text-hotel-primary'
-              }`}>
-                {item.icon}
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategories.includes(item.id) ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
-                {item.label}
-              </span>
-            </button>
+                ? 'bg-hotel-primary scale-125 shadow-[0_0_8px_rgba(229,57,53,0.4)]' 
+                : 'bg-gray-200'
+              }`}></div>
+              <button
+                onClick={() => toggleCategory(item.id)}
+                className="flex items-center gap-3 group transition-all active:scale-95 py-2"
+              >
+                {activeCategories.includes(item.id) && <Check size={14} className="text-hotel-primary animate-scale-in" />}
+                <span className={`text-[11px] font-medium uppercase tracking-[0.2em] transition-all ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
+                  {item.label}
+                </span>
+              </button>
+            </React.Fragment>
           ))}
         </div>
 
-        {/* Mobile Filter Button */}
-        <div className="lg:hidden w-full px-4 mt-6">
-           <button 
-             onClick={() => setShowMobileFilters(true)}
-             className="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl transition-all border border-gray-200 shadow-sm"
-           >
-              <Filter size={18} className="text-gray-500" />
-              <span className="text-xs font-black uppercase tracking-widest text-gray-700">{t.filter}</span>
-           </button>
+        {/* Mobile Category Bar - Modern Editorial Breadcrumb Style */}
+        <div className="lg:hidden w-full mt-8 px-4">
+          <div className="flex items-center gap-5 overflow-x-auto no-scrollbar pb-4 mask-fade-right">
+            <button 
+              onClick={() => toggleCategory('all')}
+              className="flex items-center gap-2 shrink-0 group"
+            >
+              {activeCategories.includes('all') && <Check size={12} className="text-hotel-primary" />}
+              <span className={`text-[10px] font-medium uppercase tracking-widest transition-colors ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400'}`}>
+                {t.allCategories}
+              </span>
+            </button>
+            
+            {shortcuts.map((item) => (
+              <React.Fragment key={item.id}>
+                <div className={`w-1 h-1 rounded-full shrink-0 transition-all ${
+                  activeCategories.includes(item.id) 
+                  ? 'bg-hotel-primary scale-125' 
+                  : 'bg-gray-300'
+                }`}></div>
+                <button 
+                  onClick={() => toggleCategory(item.id)}
+                  className="flex items-center gap-2 shrink-0 group"
+                >
+                  {activeCategories.includes(item.id) && <Check size={12} className="text-hotel-primary" />}
+                  <span className={`text-[10px] font-medium uppercase tracking-widest transition-colors ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
         </div>
 
-        {/* Mobile Filter Modal */}
+        {/* Mobile Filter Modal - Keep as fallback or for advanced filters if needed */}
         {showMobileFilters && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center px-6 lg:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)}></div>
@@ -346,17 +363,15 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
               <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto no-scrollbar">
                 <button 
                   onClick={() => { toggleCategory('all'); setShowMobileFilters(false); }}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                  className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
                     activeCategories.includes('all') 
                     ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
                     : 'bg-white border-gray-100 text-gray-500'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
-                      <Sparkles size={18} />
-                    </div>
-                    <span className="text-sm font-black uppercase tracking-widest">{t.allCategories}</span>
+                    <div className={`w-2 h-2 rounded-full ${activeCategories.includes('all') ? 'bg-hotel-primary' : 'bg-gray-300'}`}></div>
+                    <span className="text-xs font-black uppercase tracking-widest">{t.allCategories}</span>
                   </div>
                   {activeCategories.includes('all') && <Check size={18} strokeWidth={3} />}
                 </button>
@@ -365,17 +380,15 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                   <button 
                     key={item.id}
                     onClick={() => { toggleCategory(item.id); setShowMobileFilters(false); }}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                    className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
                       activeCategories.includes(item.id) 
                       ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
                       : 'bg-white border-gray-100 text-gray-500'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
-                        {item.icon}
-                      </div>
-                      <span className="text-sm font-black uppercase tracking-widest">{item.label}</span>
+                      <div className={`w-2 h-2 rounded-full ${activeCategories.includes(item.id) ? 'bg-hotel-primary' : 'bg-gray-300'}`}></div>
+                      <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
                     </div>
                     {activeCategories.includes(item.id) && <Check size={18} strokeWidth={3} />}
                   </button>

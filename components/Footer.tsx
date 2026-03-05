@@ -98,22 +98,22 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
           <ul className="space-y-4">
             <li>
               <Link to="/" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.homeOverview}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.homeOverview}
               </Link>
             </li>
             <li>
               <Link to="/rooms" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.luxuryRooms}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.luxuryRooms}
               </Link>
             </li>
             <li>
               <Link to="/offers" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.specialOffers}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.specialOffers}
               </Link>
             </li>
             <li>
               <Link to="/restaurants" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.nearbyDining}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.nearbyDining}
               </Link>
             </li>
           </ul>
@@ -125,17 +125,17 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
           <ul className="space-y-4">
             <li>
               <Link to="/helpdesk" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.helpDesk}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.helpDesk}
               </Link>
             </li>
             <li>
               <Link to="/privacypolicy" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.privacyPolicy}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.privacyPolicy}
               </Link>
             </li>
             <li>
               <Link to="/termsofservice" onClick={scrollToTop} className="text-xs font-bold text-gray-400 hover:text-hotel-primary transition-colors flex items-center gap-2 group">
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /> {t.termsOfService}
+                <div className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-hotel-primary transition-colors"></div> {t.termsOfService}
               </Link>
             </li>
           </ul>
@@ -163,7 +163,7 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
               <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 group-hover:bg-hotel-primary group-hover:text-white transition-all shadow-sm">
                 <Mail size={14} />
               </div>
-              <span className="text-[11px] font-black text-gray-600 group-hover:text-hotel-primary transition-colors truncate">hotelshotabdiabashik@gmail.com</span>
+              <span className="text-[10px] font-black text-gray-600 group-hover:text-hotel-primary transition-colors break-all">hotelshotabdiabashik@gmail.com</span>
             </a>
             <div className="flex items-start gap-3 pt-2">
               <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 shrink-0 shadow-sm">

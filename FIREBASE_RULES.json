@@ -1,0 +1,76 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    
+    "site-config": {
+      ".read": "true",
+      ".write": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'"
+    },
+    
+    "gallery": {
+      ".read": "true",
+      ".write": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'"
+    },
+    
+    "rooms": {
+      ".read": "true",
+      ".write": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'"
+    },
+    
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner')"
+      }
+    },
+    
+    "roles": {
+      "$uid": {
+        ".read": "true",
+        ".write": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'"
+      }
+    },
+    
+    "bookings": {
+      ".read": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'",
+      "$bookingId": {
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('roles').child(auth.uid).val() === 'owner')",
+        ".write": "auth != null"
+      }
+    },
+    
+    "help_dex": {
+      "active_chats": {
+        ".read": "auth != null",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner')",
+          ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner')"
+        }
+      },
+      "messages": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner')",
+          ".write": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).val() === 'owner')"
+        }
+      }
+    },
+    
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+    
+    "analytics": {
+      ".read": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'",
+      ".write": "auth != null"
+    },
+    
+    "logs": {
+      ".read": "auth != null && root.child('roles').child(auth.uid).val() === 'owner'",
+      ".write": "auth != null"
+    }
+  }
+}

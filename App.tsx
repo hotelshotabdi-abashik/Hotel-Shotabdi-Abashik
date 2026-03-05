@@ -234,8 +234,14 @@ const AppContent = () => {
         if (snap.exists()) {
           const chats = Object.values(snap.val()) as any[];
           const totalUnread = chats.reduce((acc, chat) => acc + (chat.unreadCount || 0), 0);
-          if (totalUnread > unreadMessages) playNotificationSound();
-          setUnreadMessages(totalUnread);
+          
+          // If on helpdesk, we assume admin is seeing the chats
+          if (location.pathname === '/helpdesk') {
+            setUnreadMessages(0);
+          } else {
+            if (totalUnread > unreadMessages) playNotificationSound();
+            setUnreadMessages(totalUnread);
+          }
         } else {
           setUnreadMessages(0);
         }
@@ -261,10 +267,12 @@ const AppContent = () => {
       const unsub = onValue(chatRef, (snap) => {
         if (snap.exists()) {
           const chat = snap.val();
-          // For guests, we might want to track if the last message was from admin and not seen
-          // In HelpDex.tsx, we mark messages as seen. Here we can just check unreadCount if we implement it for guests too.
-          // For now, let's assume the admin updates a flag or we check the messages node.
-          // Optimize: Only fetch last 50 messages to count unread
+          // If on helpdesk, guest is seeing the chat
+          if (location.pathname === '/helpdesk') {
+            setUnreadMessages(0);
+            return;
+          }
+
           const msgsRef = ref(db, `help_dex/messages/${user.uid}`);
           const msgsQuery = query(msgsRef, limitToLast(50));
           onValue(msgsQuery, (mSnap) => {
@@ -306,6 +314,11 @@ const AppContent = () => {
       // Senior Architect Update: Managers have administrative access
       const isPowerUser = u.email === OWNER_EMAIL || data?.role === 'owner';
       setIsAdmin(isPowerUser);
+      
+      // Resilience: Run cleanup when admin logs in
+      if (isPowerUser) {
+        import('./services/firebase').then(m => m.cleanupDatabase());
+      }
     } catch (error) { 
       console.warn("Profile Sync Issue", error);
       setIsAdmin(false);
@@ -433,8 +446,8 @@ const AppContent = () => {
             {siteConfig.announcement}
           </div>
         )}
-        <div className="flex items-center gap-4 mt-2">
-          <Link to="/" onClick={handleHomeClick} className="flex items-center gap-3 group">
+        <div className="flex items-center gap-8 mt-2">
+          <Link to="/" onClick={handleHomeClick} className="flex items-center gap-4 group">
             <div className="relative">
               <img 
                 src={currentLogo} 
@@ -470,7 +483,7 @@ const AppContent = () => {
         </div>
 
         {showStickyCategories && (
-          <div className="hidden xl:flex items-center gap-6 animate-fade-in ml-8">
+          <div className="hidden xl:flex items-center gap-8 animate-fade-in ml-16">
             {[
               { id: 'rooms', label: t.ourLuxuryRooms },
               { id: 'offers', label: t.exclusiveOffers },
@@ -493,7 +506,7 @@ const AppContent = () => {
           </div>
         )}
 
-        <nav className="hidden lg:flex items-center gap-8 ml-auto mr-8">
+        <nav className="hidden lg:flex items-center gap-10 ml-auto mr-8">
           <Link 
             to="/" 
             onClick={handleHomeClick}
@@ -522,6 +535,12 @@ const AppContent = () => {
             className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/guide' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.guideTitle}
+          </Link>
+          <Link 
+            to="/gallery" 
+            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/gallery' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+          >
+            {language === 'EN' ? 'Gallery' : 'গ্যালারি'}
           </Link>
           <Link 
             to="/helpdesk" 

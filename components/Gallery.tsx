@@ -30,7 +30,14 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
 
   useEffect(() => {
     const galleryRef = ref(db, 'gallery');
+    
+    // Fallback timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
     const unsub = onValue(galleryRef, (snapshot) => {
+      clearTimeout(timeout);
       if (snapshot.exists()) {
         const data = Object.values(snapshot.val()) as GalleryItem[];
         setItems(data.sort((a, b) => b.createdAt - a.createdAt));
@@ -38,8 +45,16 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
         setItems([]);
       }
       setLoading(false);
+    }, (error) => {
+      console.error("Gallery fetch error:", error);
+      clearTimeout(timeout);
+      setLoading(false);
     });
-    return () => unsub();
+
+    return () => {
+      unsub();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

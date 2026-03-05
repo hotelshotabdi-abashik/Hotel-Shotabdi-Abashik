@@ -165,11 +165,14 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
         const rawData = snapshot.val();
         const data = Object.values(rawData) as HelpDeskMessage[];
         
-        // Fix [object Object] bug: Ensure text is always a string
-        const sanitizedData = data.map(m => ({
-          ...m,
-          text: typeof m.text === 'object' ? JSON.stringify(m.text) : String(m.text || '')
-        }));
+        // Fix [object Object] bug: Ensure text is always a string and not empty
+        const sanitizedData = data
+          .filter(m => m && (typeof m.text === 'string' || typeof m.text === 'object'))
+          .map(m => ({
+            ...m,
+            text: typeof m.text === 'object' ? JSON.stringify(m.text) : String(m.text || '')
+          }))
+          .filter(m => m.text.trim() !== '' && m.text !== 'undefined');
         
         setMessages(sanitizedData.sort((a, b) => a.timestamp - b.timestamp));
         
@@ -259,8 +262,8 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
   };
 
   const handleSend = async (overrideText?: string) => {
-    const textToSend = overrideText || input.trim();
-    if (!textToSend || !user || !activeUserId || loading) return;
+    const textToSend = (overrideText || input).trim();
+    if (!textToSend || textToSend === 'undefined' || !user || !activeUserId || loading) return;
     
     // Cooldown check for guests
     if (!isAdmin && cooldown > 0) return;

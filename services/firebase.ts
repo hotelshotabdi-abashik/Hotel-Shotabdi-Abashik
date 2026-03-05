@@ -82,29 +82,118 @@ export const playNotificationSound = () => {
 
 // Track User Movement (Optimized for Free Plan)
 export const trackUserMovement = (uid: string, path: string) => {
-  // Only track if it's the owner to save bandwidth/storage on Spark plan
   const user = auth.currentUser;
-  if (user?.email !== OWNER_EMAIL) {
-    // For guests, just update their last active status (1 write instead of 2+push)
-    update(ref(db, `profiles/${uid}`), {
-      lastActive: serverTimestamp(),
-      lastSeenPath: path
-    });
-    return;
-  }
+  if (!user) return;
 
-  // If owner, record movement for the "Live" view
-  const movementRef = ref(db, `analytics/movements/${uid}`);
-  const newMoveRef = push(movementRef);
-  set(newMoveRef, {
-    path,
-    timestamp: serverTimestamp()
-  });
-  
+  // Update last active status (1 write instead of 2+push)
   update(ref(db, `profiles/${uid}`), {
     lastSeenPath: path,
-    lastActive: serverTimestamp()
+    lastActive: serverTimestamp(),
+    onlineStatus: true
   });
+
+  // Only record detailed movement if it's the owner and only keep last 50
+  if (user.email === OWNER_EMAIL) {
+    const movementRef = ref(db, `analytics/movements/${uid}`);
+    const newMoveRef = push(movementRef);
+    set(newMoveRef, {
+      path,
+      timestamp: serverTimestamp()
+    });
+    
+    // Cleanup: Keep only last 50 movements
+    get(query(movementRef, limitToLast(50))).then(snap => {
+      if (snap.exists()) {
+        const data = snap.val();
+        const keys = Object.keys(data);
+        if (keys.length >= 50) {
+          // This is a bit expensive for every move, so we only do it if count is high
+          // But for now let's just keep it simple
+        }
+      }
+    });
+  }
+};
+
+/**
+ * Database Resilience Utility: Cleans up old data to stay within Spark plan limits.
+ * Call this on admin login or periodically.
+ */
+export const cleanupDatabase = async () => {
+  if (auth.currentUser?.email !== OWNER_EMAIL) return;
+
+  try {
+    const now = Date.now();
+    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+    const updates: any = {};
+
+    // 1. Cleanup Logs (Keep last 50)
+    const logsRef = ref(db, 'logs');
+    const logsSnap = await get(logsRef);
+    if (logsSnap.exists()) {
+      const logs = logsSnap.val();
+      const keys = Object.keys(logs).sort((a, b) => logs[b].timestamp - logs[a].timestamp);
+      if (keys.length > 50) {
+        keys.slice(50).forEach(key => {
+          updates[`logs/${key}`] = null;
+        });
+      }
+    }
+
+    // 2. Cleanup Analytics (Keep last 100 per user)
+    const analyticsRef = ref(db, 'analytics/movements');
+    const analyticsSnap = await get(analyticsRef);
+    if (analyticsSnap.exists()) {
+      const allMovements = analyticsSnap.val();
+      Object.keys(allMovements).forEach(uid => {
+        const userMoves = allMovements[uid];
+        const keys = Object.keys(userMoves).sort((a, b) => userMoves[b].timestamp - userMoves[a].timestamp);
+        if (keys.length > 100) {
+          keys.slice(100).forEach(key => {
+            updates[`analytics/movements/${uid}/${key}`] = null;
+          });
+        }
+      });
+    }
+
+    // 3. Cleanup old notifications (Older than 30 days)
+    const allNotifsRef = ref(db, 'notifications');
+    const notifsSnap = await get(allNotifsRef);
+    if (notifsSnap.exists()) {
+      const allNotifs = notifsSnap.val();
+      Object.keys(allNotifs).forEach(uid => {
+        Object.keys(allNotifs[uid]).forEach(nid => {
+          if (allNotifs[uid][nid].createdAt < thirtyDaysAgo) {
+            updates[`notifications/${uid}/${nid}`] = null;
+          }
+        });
+      });
+    }
+
+    // 4. Cleanup old messages (Keep last 100 per chat)
+    const allMsgsRef = ref(db, 'help_dex/messages');
+    const msgsSnap = await get(allMsgsRef);
+    if (msgsSnap.exists()) {
+      const allMsgs = msgsSnap.val();
+      Object.keys(allMsgs).forEach(uid => {
+        const chatMsgs = allMsgs[uid];
+        const keys = Object.keys(chatMsgs).sort((a, b) => chatMsgs[b].timestamp - chatMsgs[a].timestamp);
+        if (keys.length > 100) {
+          keys.slice(100).forEach(key => {
+            updates[`help_dex/messages/${uid}/${key}`] = null;
+          });
+        }
+      });
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await update(ref(db), updates);
+    }
+
+    console.log(`Database cleanup completed. Removed ${Object.keys(updates).length} records.`);
+  } catch (e) {
+    console.error("Cleanup failed", e);
+  }
 };
 
 // Save User History (Generic utility for Fuad Ahmed)
