@@ -5,7 +5,7 @@ import {
   Camera, Loader2, Search, ChevronDown, ShieldCheck,
   Filter, Check, Bed, Utensils, Map as MapIcon, Tag, 
   History, MessageSquare, Sparkles, Key, Moon, Calendar,
-  Image as ImageIcon, PlayCircle
+  Image as ImageIcon, PlayCircle, ChevronRight
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -38,6 +38,16 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mobileNavRef.current && activeCategories.length > 0) {
+      const activeBtn = mobileNavRef.current.querySelector(`[data-category="${activeCategories[0]}"]`);
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [activeCategories]);
 
   const toggleCategory = (id: string) => {
     if (['mystays', 'helpdesk'].includes(id)) {
@@ -175,7 +185,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         <div className="text-center mb-10">
           <h2 
-            className={`text-gray-900 text-4xl md:text-6xl font-serif font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            className={`text-gray-900 text-4xl md:text-6xl font-cormorant font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
             onClick={() => isEditMode && onUpdate?.({ title: window.prompt("Edit Title:", config.title) || config.title })}
           >
              {config.title || t.residentialService}
@@ -202,7 +212,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
               <div className="flex flex-col items-start text-left">
                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.selectRoom}</span>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-black text-gray-900 truncate max-w-[140px]">
+                  <p className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
                     {selectedRoomId === 'all' ? t.allRooms : (rooms.find(r => r.id === selectedRoomId)?.title || t.selectRoom)}
                   </p>
                   <ChevronDown size={12} className={`text-gray-300 transition-transform ${showRoomDropdown ? 'rotate-180 text-hotel-primary' : ''}`} />
@@ -211,28 +221,44 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             </div>
 
             {showRoomDropdown && (
-              <div className="absolute top-full left-0 right-0 z-[150] mt-1 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-fade-in max-h-[300px] overflow-y-auto no-scrollbar">
+              <div className="absolute top-full left-0 right-0 lg:w-[400px] z-[150] mt-4 bg-white border border-gray-100 rounded-[2rem] shadow-2xl overflow-hidden animate-scale-in max-h-[350px] overflow-y-auto no-scrollbar p-2">
+                <div className="p-4 border-b border-gray-50 mb-2 sticky top-0 bg-white z-10">
+                   <h4 className="text-[10px] font-black text-hotel-primary uppercase tracking-[0.3em]">{t.selectRoom}</h4>
+                </div>
                 <div 
                   onClick={() => { setSelectedRoomId('all'); setShowRoomDropdown(false); }}
-                  className={`p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center border-b border-gray-50 ${selectedRoomId === 'all' ? 'bg-blue-50/20' : ''}`}
+                  className={`p-4 rounded-2xl hover:bg-gray-50 cursor-pointer flex justify-between items-center transition-all mb-1 ${selectedRoomId === 'all' ? 'bg-hotel-primary/5 border border-hotel-primary/10' : 'border border-transparent'}`}
                 >
-                  <div className="text-left">
-                    <p className="text-[11px] font-black text-gray-900">{t.allRooms}</p>
-                    <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{t.allCategories}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <Sparkles size={18} className="text-hotel-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-medium text-gray-900">{t.allRooms}</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{t.allCategories}</p>
+                    </div>
                   </div>
-                  <Sparkles size={14} className="text-hotel-primary" />
+                  {selectedRoomId === 'all' && <Check size={16} className="text-hotel-primary" />}
                 </div>
                 {rooms.map((room) => (
                   <div 
                     key={room.id}
                     onClick={() => { setSelectedRoomId(room.id); setShowRoomDropdown(false); }}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0 ${selectedRoomId === room.id ? 'bg-blue-50/20' : ''}`}
+                    className={`p-4 rounded-2xl hover:bg-gray-50 cursor-pointer flex justify-between items-center transition-all mb-1 ${selectedRoomId === room.id ? 'bg-hotel-primary/5 border border-hotel-primary/10' : 'border border-transparent'}`}
                   >
-                    <div className="text-left">
-                      <p className="text-[11px] font-black text-gray-900">{room.title}</p>
-                      <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{room.tag}</p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden">
+                        <img src={room.image} className="w-full h-full object-cover" alt={room.title} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-medium text-gray-900">{room.title}</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{room.tag}</p>
+                      </div>
                     </div>
-                    <p className="text-[10px] font-sans font-black text-hotel-primary">৳{formatNumber(room.discountPrice)}</p>
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-hotel-primary">৳{formatNumber(room.discountPrice)}</p>
+                      {selectedRoomId === room.id && <Check size={16} className="text-hotel-primary ml-auto mt-1" />}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -250,7 +276,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             <div className="flex flex-col items-start text-left">
               <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.checkIn}</span>
               <div className="flex items-baseline gap-2">
-                <p className="text-sm font-black text-gray-900">{formatNumber(checkInDisplay.day)} {checkInDisplay.month}</p>
+                <p className="text-sm font-medium text-gray-900">{formatNumber(checkInDisplay.day)} {checkInDisplay.month}</p>
                 <p className="text-[8px] text-gray-400 font-bold uppercase">{checkInDisplay.weekday}</p>
               </div>
             </div>
@@ -267,7 +293,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             <div className="flex flex-col items-start text-left">
               <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{t.checkOut}</span>
               <div className="flex items-baseline gap-2">
-                <p className="text-sm font-black text-gray-900">{formatNumber(checkOutDisplay.day)} {checkOutDisplay.month}</p>
+                <p className="text-sm font-medium text-gray-900">{formatNumber(checkOutDisplay.day)} {checkOutDisplay.month}</p>
                 <p className="text-[8px] text-gray-400 font-bold uppercase">{checkOutDisplay.weekday}</p>
               </div>
             </div>
@@ -288,6 +314,13 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             onClick={() => toggleCategory('all')}
             className="flex items-center gap-3 group transition-all active:scale-95 py-2"
           >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+              activeCategories.includes('all') 
+              ? 'bg-hotel-primary text-white shadow-lg shadow-red-100' 
+              : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100'
+            }`}>
+              <Sparkles size={16} />
+            </div>
             {activeCategories.includes('all') && <Check size={14} className="text-hotel-primary animate-scale-in" />}
             <span className={`text-[11px] font-medium uppercase tracking-[0.2em] transition-all ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
               {t.allCategories}
@@ -296,15 +329,18 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
 
           {shortcuts.map((item) => (
             <React.Fragment key={item.id}>
-              <div className={`w-1 h-1 rounded-full transition-all ${
-                activeCategories.includes(item.id) 
-                ? 'bg-hotel-primary scale-125 shadow-[0_0_8px_rgba(229,57,53,0.4)]' 
-                : 'bg-gray-200'
-              }`}></div>
+              <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
               <button
                 onClick={() => toggleCategory(item.id)}
                 className="flex items-center gap-3 group transition-all active:scale-95 py-2"
               >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                  activeCategories.includes(item.id) 
+                  ? 'bg-hotel-primary text-white shadow-lg shadow-red-100' 
+                  : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100'
+                }`}>
+                  {React.cloneElement(item.icon as React.ReactElement, { size: 16 })}
+                </div>
                 {activeCategories.includes(item.id) && <Check size={14} className="text-hotel-primary animate-scale-in" />}
                 <span className={`text-[11px] font-medium uppercase tracking-[0.2em] transition-all ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
                   {item.label}
@@ -314,36 +350,46 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           ))}
         </div>
 
-        {/* Mobile Category Bar - Modern Editorial Breadcrumb Style */}
+        {/* Mobile Category Bar - Modern Wrap Style */}
         <div className="lg:hidden w-full mt-8 px-4">
-          <div className="flex items-center gap-5 overflow-x-auto no-scrollbar pb-4 mask-fade-right">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <button 
               onClick={() => toggleCategory('all')}
-              className="flex items-center gap-2 shrink-0 group"
+              data-category="all"
+              className="flex items-center gap-2 shrink-0 group transition-all active:scale-95 bg-gray-50 px-3 py-1.5 rounded-full"
             >
-              {activeCategories.includes('all') && <Check size={12} className="text-hotel-primary" />}
-              <span className={`text-[10px] font-medium uppercase tracking-widest transition-colors ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400'}`}>
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                activeCategories.includes('all') 
+                ? 'bg-hotel-primary text-white' 
+                : 'bg-white text-gray-400'
+              }`}>
+                <Sparkles size={8} />
+              </div>
+              {activeCategories.includes('all') && <Check size={8} className="text-hotel-primary" />}
+              <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400'}`}>
                 {t.allCategories}
               </span>
             </button>
             
             {shortcuts.map((item) => (
-              <React.Fragment key={item.id}>
-                <div className={`w-1 h-1 rounded-full shrink-0 transition-all ${
+              <button 
+                key={item.id}
+                onClick={() => toggleCategory(item.id)}
+                data-category={item.id}
+                className="flex items-center gap-2 shrink-0 group transition-all active:scale-95 bg-gray-50 px-3 py-1.5 rounded-full"
+              >
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                   activeCategories.includes(item.id) 
-                  ? 'bg-hotel-primary scale-125' 
-                  : 'bg-gray-300'
-                }`}></div>
-                <button 
-                  onClick={() => toggleCategory(item.id)}
-                  className="flex items-center gap-2 shrink-0 group"
-                >
-                  {activeCategories.includes(item.id) && <Check size={12} className="text-hotel-primary" />}
-                  <span className={`text-[10px] font-medium uppercase tracking-widest transition-colors ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400'}`}>
-                    {item.label}
-                  </span>
-                </button>
-              </React.Fragment>
+                  ? 'bg-hotel-primary text-white' 
+                  : 'bg-white text-gray-400'
+                }`}>
+                  {React.cloneElement(item.icon as React.ReactElement, { size: 8 })}
+                </div>
+                {activeCategories.includes(item.id) && <Check size={8} className="text-hotel-primary" />}
+                <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400'}`}>
+                  {item.label}
+                </span>
+              </button>
             ))}
           </div>
         </div>

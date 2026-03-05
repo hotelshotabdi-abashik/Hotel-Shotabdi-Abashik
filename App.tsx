@@ -137,8 +137,8 @@ const AppContent = () => {
   
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     hero: {
-      title: "Experience Luxury",
-      subtitle: "Provides 24-hour front desk and room services in the heart of Sylhet.",
+      title: "24h Residential Service",
+      subtitle: "Experience Elite Hospitality in Sylhet",
       backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       buttonText: "Book Now",
       locationLabel: "Sylhet HQ District"
@@ -362,9 +362,11 @@ const AppContent = () => {
     if (!isAdmin) return;
     setIsSaving(true);
     try {
-      const configRef = ref(db, 'site-config');
       const finalConfig = configToSave || siteConfig;
-      await update(ref(db), { 'site-config': { ...finalConfig, lastUpdated: Date.now() } });
+      // Senior Architect Fix: Strip non-serializable properties (like React Fiber keys) before saving
+      const cleanConfig = JSON.parse(JSON.stringify(finalConfig));
+      
+      await update(ref(db), { 'site-config': { ...cleanConfig, lastUpdated: Date.now() } });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
       setIsEditMode(false);
       alert("Update Success!");
@@ -467,7 +469,7 @@ const AppContent = () => {
             </div>
             <div className="hidden sm:block">
               <h1 
-                className={`text-sm font-serif font-black text-gray-900 uppercase leading-none transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-1' : ''}`}
+                className={`text-base font-cormorant font-black text-gray-900 uppercase leading-none transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-1' : ''}`}
                 onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleTextEdit('name', siteConfig.name || t.hotelName); } }}
               >
                 {siteConfig.name || t.hotelName}
@@ -506,11 +508,11 @@ const AppContent = () => {
           </div>
         )}
 
-        <nav className="hidden lg:flex items-center gap-10 ml-auto mr-8">
+        <nav className="hidden lg:flex items-center gap-14 ml-auto mr-8">
           <Link 
             to="/" 
             onClick={handleHomeClick}
-            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.home}
           </Link>
@@ -520,25 +522,25 @@ const AppContent = () => {
               if (el) el.scrollIntoView({ behavior: 'smooth' });
               else navigate('/#about');
             }}
-            className="transition-all text-[11px] tracking-widest uppercase font-bold text-gray-400 hover:text-hotel-primary"
+            className="transition-all text-[11px] tracking-widest uppercase font-medium text-gray-400 hover:text-hotel-primary"
           >
             {t.about}
           </button>
           <Link 
             to="/restaurants" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/restaurants' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/restaurants' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.restaurantsTitle}
           </Link>
           <Link 
             to="/guide" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/guide' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/guide' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.guideTitle}
           </Link>
           <Link 
             to="/gallery" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-bold ${location.pathname === '/gallery' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/gallery' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {language === 'EN' ? 'Gallery' : 'গ্যালারি'}
           </Link>
@@ -548,7 +550,7 @@ const AppContent = () => {
               e.preventDefault();
               requireAuth(() => navigate('/helpdesk'));
             }}
-            className={`transition-all text-[11px] tracking-widest uppercase font-bold relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            className={`transition-all text-[11px] tracking-widest uppercase font-medium relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.helpDesk}
             {unreadMessages + (isAdmin ? pendingBookingsCount : 0) > 0 && (
@@ -557,6 +559,8 @@ const AppContent = () => {
               </span>
             )}
           </Link>
+          
+          <div className="h-4 w-[1px] bg-gray-200"></div>
 
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -611,20 +615,18 @@ const AppContent = () => {
               </div>
             )}
           </button>
-          
-          <div className="h-4 w-[1px] bg-gray-200"></div>
+        </nav>
 
+        <div className="flex items-center gap-2 md:gap-4 ml-auto lg:ml-0">
           <button 
             onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
-            className="transition-all text-[11px] tracking-widest uppercase font-black text-hotel-primary hover:bg-hotel-primary/5 flex items-center gap-2 px-3 py-1.5 rounded-xl border border-hotel-primary/10"
+            className="transition-all text-[9px] md:text-[11px] tracking-widest uppercase font-black text-hotel-primary hover:bg-hotel-primary/5 flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-xl border border-hotel-primary/10 shrink-0"
           >
             <span className={language === 'EN' ? 'opacity-100' : 'opacity-30'}>EN</span>
             <span className="text-gray-300">/</span>
             <span className={language === 'BN' ? 'opacity-100' : 'opacity-30'}>BN</span>
           </button>
-        </nav>
 
-        <div className="flex items-center gap-2 md:gap-4">
           {isAdmin && (
             <button onClick={() => setIsEditMode(!isEditMode)} className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
               <Edit3 size={14} /> {isEditMode ? t.liveEditing : t.editWeb}
@@ -675,7 +677,7 @@ const AppContent = () => {
               </div>
             </div>
           ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-xl hover:brightness-110 active:scale-95 transition-all">{t.login}</button>
+            <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase shadow-xl hover:brightness-110 active:scale-95 transition-all shrink-0">{t.login}</button>
           )}
         </div>
       </header>
