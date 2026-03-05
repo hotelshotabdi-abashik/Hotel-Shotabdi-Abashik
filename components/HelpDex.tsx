@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { 
   db, auth, ref, onValue, push, set, update, 
-  createNotification, OWNER_EMAIL, get 
+  createNotification, OWNER_EMAIL, get, query, limitToLast 
 } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { HelpDeskMessage, ChatSession, UserProfile } from '../types';
@@ -151,48 +151,70 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
   };
 
   useEffect(() => {
-    if (!activeUserId) {
+    if (!activeUserId || !user) {
       setMessages([]);
       return;
     }
+    
+    // Optimize: Limit to last 50 messages to save bandwidth
     const msgsRef = ref(db, `help_dex/messages/${activeUserId}`);
-    const unsub = onValue(msgsRef, (snapshot) => {
+    const msgsQuery = query(msgsRef, limitToLast(50));
+    
+    const unsub = onValue(msgsQuery, (snapshot) => {
       if (snapshot.exists()) {
         const rawData = snapshot.val();
         const data = Object.values(rawData) as HelpDeskMessage[];
-        setMessages(data.sort((a, b) => a.timestamp - b.timestamp));
         
+        // Fix [object Object] bug: Ensure text is always a string
+        const sanitizedData = data.map(m => ({
+          ...m,
+          text: typeof m.text === 'object' ? JSON.stringify(m.text) : String(m.text || '')
+        }));
+        
+        setMessages(sanitizedData.sort((a, b) => a.timestamp - b.timestamp));
+        
+        // Fix Unread Loop: Only update if status is not already 'seen'
         const updates: any = {};
         Object.keys(rawData).forEach(key => {
           const msg = rawData[key] as HelpDeskMessage;
-          if (msg.senderId !== user?.uid && msg.status !== 'seen') {
+          // Only mark as seen if it's from the other person
+          if (msg.senderId !== user.uid && msg.status !== 'seen') {
             updates[`help_dex/messages/${activeUserId}/${key}/status`] = 'seen';
           }
         });
         
-        if (Object.keys(updates).length > 0) update(ref(db), updates);
-        if (isAdmin) update(ref(db, `help_dex/active_chats/${activeUserId}`), { unreadCount: 0 });
+        if (Object.keys(updates).length > 0) {
+          update(ref(db), updates).catch(err => console.error("Read receipt error:", err));
+        }
+        
+        if (isAdmin) {
+          update(ref(db, `help_dex/active_chats/${activeUserId}`), { unreadCount: 0 })
+            .catch(err => console.error("Session update error:", err));
+        }
 
-        // Mark chat notifications as read
-        const notificationsRef = ref(db, `notifications/${user?.uid}`);
+        // Mark chat notifications as read (Optimized)
+        const notificationsRef = ref(db, `notifications/${user.uid}`);
         get(notificationsRef).then(snap => {
           if (snap.exists()) {
             const notifs = snap.val();
             const notifUpdates: any = {};
             Object.keys(notifs).forEach(key => {
               if (notifs[key].type === 'chat_message' && !notifs[key].read) {
-                notifUpdates[`notifications/${user?.uid}/${key}/read`] = true;
+                notifUpdates[`notifications/${user.uid}/${key}/read`] = true;
               }
             });
             if (Object.keys(notifUpdates).length > 0) update(ref(db), notifUpdates);
           }
-        });
+        }).catch(err => console.error("Notification update error:", err));
       } else {
         setMessages([]);
       }
     });
-    return () => unsub();
-  }, [activeUserId, isAdmin, user?.uid]);
+
+    return () => {
+      unsub(); // Modular SDK way to disconnect
+    };
+  }, [activeUserId, isAdmin, user]);
 
   const handleAutoAnswer = async (question: string, answer: string) => {
     if (!user || !activeUserId || loading) return;
@@ -464,8 +486,14 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl }) => {
                    <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
                       <div className={`max-w-[90%] md:max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                         {!isOwn && <span className="text-[9px] font-black text-hotel-primary uppercase tracking-widest mb-1.5 px-2">{msg.senderName}</span>}
-                        <div className={`p-4 md:p-5 px-6 text-[14px] md:text-[15px] leading-relaxed shadow-sm ${isOwn ? 'bg-hotel-primary text-white rounded-[1.8rem] rounded-tr-none shadow-lg shadow-red-50' : isBot ? 'bg-gray-900 text-white rounded-[1.8rem] rounded-tl-none' : 'bg-white text-gray-800 rounded-[1.8rem] rounded-tl-none border border-gray-100 shadow-sm'}`}>
-                          {String(msg.text)}
+                        <div className={`p-4 md:p-5 px-6 text-[14px] md:text-[15px] leading-relaxed shadow-sm ${
+                          isOwn 
+                            ? 'bg-hotel-primary text-white rounded-[1.8rem] rounded-tr-none shadow-lg shadow-red-50' 
+                            : isBot 
+                              ? 'bg-gray-900 text-white rounded-[1.8rem] rounded-tl-none border-2 border-hotel-primary/20' 
+                              : 'bg-white text-gray-800 rounded-[1.8rem] rounded-tl-none border border-gray-100 shadow-sm'
+                        }`}>
+                          {typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text)}
                         </div>
                         <div className="flex items-center gap-2 mt-2 px-2">
                            <span className="text-[8px] font-bold text-gray-300 uppercase">
