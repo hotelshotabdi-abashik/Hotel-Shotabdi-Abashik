@@ -2,10 +2,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Camera, Loader2, Search, Bed, Utensils, Map as MapIcon, 
-  Calendar, Users, ChevronDown, Moon, ShieldCheck, Key,
-  Tag, MessageSquare, History, Sparkles, MapPin, ExternalLink, Filter,
-  Check, CheckCheck
+  Camera, Loader2, Search, ChevronDown, ShieldCheck,
+  Filter, Check, Bed, Utensils, Map as MapIcon, Tag, 
+  History, MessageSquare, Sparkles, Key, Moon, Calendar,
+  Image as ImageIcon, PlayCircle
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -19,11 +19,11 @@ interface HeroProps {
   onUpdate?: (config: Partial<HeroConfig>) => void;
   onImageUpload?: (file: File) => Promise<string>;
   requireAuth?: (action: () => void) => void;
-  activeCategory: string;
-  onCategoryChange: (id: string) => void;
+  activeCategories: string[];
+  onCategoriesChange: (ids: string[]) => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, requireAuth, activeCategory, onCategoryChange }) => {
+const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, requireAuth, activeCategories, onCategoriesChange }) => {
   const navigate = useNavigate();
   const t = translations[language];
   
@@ -44,7 +44,24 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
       scrollToSection(id);
       return;
     }
-    onCategoryChange(id);
+
+    if (id === 'all') {
+      onCategoriesChange(['all']);
+      return;
+    }
+
+    let next = [...activeCategories];
+    if (next.includes('all')) {
+      next = [id];
+    } else {
+      if (next.includes(id)) {
+        next = next.filter(x => x !== id);
+        if (next.length === 0) next = ['all'];
+      } else {
+        next.push(id);
+      }
+    }
+    onCategoriesChange(next);
   };
 
   const scrollToSection = (id: string) => {
@@ -119,26 +136,23 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   };
 
   const formatDateLabel = (dateStr: string) => {
+    if (!dateStr) return { day: '--', month: '---', weekday: '---' };
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return { day: '--', month: '---', weekday: '---' };
     const day = date.getDate();
     const month = date.toLocaleString('default', { month: 'short' });
     const weekday = date.toLocaleString('default', { weekday: 'short' });
     return { day, month, weekday };
   };
 
-  const tabs = [
-    { id: 'hotel', label: t.bookStay, icon: <Bed size={16} />, path: '/rooms' },
-    { id: 'restaurants', label: t.restaurants, icon: <Utensils size={16} />, path: '/restaurants' },
-    { id: 'guide', label: t.touristGuide, icon: <MapIcon size={16} />, path: '/guide' }
-  ];
-
   const shortcuts = [
-    { id: 'rooms', label: t.ourRooms, icon: <Bed size={18} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'offers', label: t.offers, icon: <Tag size={18} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
-    { id: 'restaurants', label: t.dining, icon: <Utensils size={18} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { id: 'guide', label: t.guide, icon: <MapIcon size={18} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
-    { id: 'mystays', label: t.history, icon: <History size={18} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 'helpdesk', label: t.support, icon: <MessageSquare size={18} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { id: 'rooms', label: t.ourRooms, icon: <Bed size={22} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'offers', label: t.offers, icon: <Tag size={22} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
+    { id: 'restaurants', label: t.dining, icon: <Utensils size={22} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'guide', label: t.guide, icon: <MapIcon size={22} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
+    { id: 'gallery', label: language === 'EN' ? 'Gallery' : 'গ্যালারি', icon: <ImageIcon size={22} />, path: '/gallery', color: 'text-pink-600', bg: 'bg-pink-50' },
+    { id: 'mystays', label: t.history, icon: <History size={22} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { id: 'helpdesk', label: t.support, icon: <MessageSquare size={22} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId);
@@ -268,20 +282,20 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           </button>
         </div>
 
-        {/* Categories / Shortcuts below search - Vertical Layout */}
-        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-start gap-12">
+        {/* Categories / Shortcuts below search - Modern Restaurant Style */}
+        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-start gap-10">
           <button 
             onClick={() => toggleCategory('all')}
             className="flex flex-col items-center gap-3 group transition-all active:scale-95"
           >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border-2 ${
-              activeCategory === 'all' 
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all border-2 ${
+              activeCategories.includes('all') 
               ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-110' 
               : 'bg-white text-gray-400 border-gray-100 group-hover:border-hotel-primary group-hover:text-hotel-primary'
             }`}>
-              <Sparkles size={24} />
+              <Sparkles size={28} />
             </div>
-            <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
+            <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategories.includes('all') ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
               {t.allCategories}
             </span>
           </button>
@@ -292,14 +306,14 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
               onClick={() => toggleCategory(item.id)}
               className="flex flex-col items-center gap-3 group transition-all active:scale-95"
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border-2 ${
-                activeCategory === item.id 
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all border-2 ${
+                activeCategories.includes(item.id) 
                 ? 'bg-hotel-primary text-white border-hotel-primary shadow-xl shadow-red-100 scale-110' 
                 : 'bg-white text-gray-400 border-gray-100 group-hover:border-hotel-primary group-hover:text-hotel-primary'
               }`}>
-                {React.cloneElement(item.icon as React.ReactElement, { size: 24 })}
+                {item.icon}
               </div>
-              <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategory === item.id ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${activeCategories.includes(item.id) ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-900'}`}>
                 {item.label}
               </span>
             </button>
@@ -333,16 +347,18 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                 <button 
                   onClick={() => { toggleCategory('all'); setShowMobileFilters(false); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                    activeCategory === 'all' 
+                    activeCategories.includes('all') 
                     ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
                     : 'bg-white border-gray-100 text-gray-500'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <Sparkles size={18} />
+                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+                      <Sparkles size={18} />
+                    </div>
                     <span className="text-sm font-black uppercase tracking-widest">{t.allCategories}</span>
                   </div>
-                  {activeCategory === 'all' && <Check size={18} strokeWidth={3} />}
+                  {activeCategories.includes('all') && <Check size={18} strokeWidth={3} />}
                 </button>
 
                 {shortcuts.map((item) => (
@@ -350,16 +366,18 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                     key={item.id}
                     onClick={() => { toggleCategory(item.id); setShowMobileFilters(false); }}
                     className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                      activeCategory === item.id 
+                      activeCategories.includes(item.id) 
                       ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
                       : 'bg-white border-gray-100 text-gray-500'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      {item.icon}
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+                        {item.icon}
+                      </div>
                       <span className="text-sm font-black uppercase tracking-widest">{item.label}</span>
                     </div>
-                    {activeCategory === item.id && <Check size={18} strokeWidth={3} />}
+                    {activeCategories.includes(item.id) && <Check size={18} strokeWidth={3} />}
                   </button>
                 ))}
               </div>

@@ -19,6 +19,7 @@ import MyStays from './components/MyStays';
 import Footer from './components/Footer';
 import PublicProfile from './components/PublicProfile';
 import SchemaOrg from './components/SchemaOrg';
+import GallerySection from './components/Gallery';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -674,6 +675,7 @@ const AppContent = () => {
             <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
+            <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
@@ -698,9 +700,11 @@ const AppContent = () => {
 };
 
 const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImageUpload, requireAuth }: any) => {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategories, setActiveCategories] = useState(['all']);
   const t = (translations as any)[language];
   
+  const isVisible = (id: string) => activeCategories.includes('all') || activeCategories.includes(id);
+
   return (
     <>
       <Hero 
@@ -711,31 +715,38 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         onUpdate={(h: any) => setSiteConfig((prev: any) => ({...prev, hero: {...prev.hero, ...h}}))} 
         onImageUpload={handleImageUpload} 
         requireAuth={requireAuth}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
+        activeCategories={activeCategories}
+        onCategoriesChange={setActiveCategories}
       />
       
-      {(activeCategory === 'all' || activeCategory === 'offers') && (
+      {isVisible('offers') && (
         <div id="offers">
           <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />
         </div>
       )}
       
-      {(activeCategory === 'all' || activeCategory === 'rooms') && (
+      {isVisible('rooms') && (
         <div id="rooms">
           <RoomGrid rooms={siteConfig.rooms} onBook={(room: any) => requireAuth(() => {})} isEditMode={isEditMode} language={language} onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />
         </div>
       )}
       
-      {(activeCategory === 'all' || activeCategory === 'restaurants') && (
+      {isVisible('restaurants') && (
         <div id="restaurants">
           <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />
         </div>
       )}
       
-      {(activeCategory === 'all' || activeCategory === 'guide') && (
+      {isVisible('guide') && (
         <div id="guide">
           <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />
+        </div>
+      )}
+
+      {isVisible('gallery') && (
+        <div id="gallery">
+          {/* Gallery will be implemented in a separate component */}
+          <GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} />
         </div>
       )}
     </>

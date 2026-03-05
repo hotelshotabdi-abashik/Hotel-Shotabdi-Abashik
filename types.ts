@@ -140,6 +140,14 @@ export interface AppNotification {
   createdAt: number;
 }
 
+export interface GalleryItem {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  title?: string;
+  createdAt: number;
+}
+
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
