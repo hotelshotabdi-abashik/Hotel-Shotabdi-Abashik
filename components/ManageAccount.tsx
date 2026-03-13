@@ -28,12 +28,12 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
   });
 
   useEffect(() => {
-    const lastUpdate = profile.lastUpdated || profile.createdAt || 0;
+    const lastUpdate = profile.lastUpdated || 0;
     const now = Date.now();
     const thirtyMinutesMs = 30 * 60 * 1000;
     const diff = now - lastUpdate;
     
-    if (diff < thirtyMinutesMs) {
+    if (lastUpdate > 0 && diff < thirtyMinutesMs) {
       const remainingMs = thirtyMinutesMs - diff;
       const mins = Math.ceil(remainingMs / (1000 * 60));
       setPendingMinutes(mins);
@@ -50,13 +50,18 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
     setError('');
     
     try {
-      const normalizedUsername = form.username.toLowerCase().trim().replace(/\s/g, '');
+      const { legalName, username, phone, guardianPhone, nidNumber } = form;
+      if (!legalName || !username || !phone || !guardianPhone || !nidNumber || !nidPreview) {
+        throw new Error('All identity fields and NID photo are required to maintain registry integrity');
+      }
+
+      const normalizedUsername = username.toLowerCase().trim().replace(/\s/g, '');
       if (normalizedUsername !== profile.username) {
         const isUnique = await checkUsernameUnique(normalizedUsername, profile.uid);
         if (!isUnique) throw new Error('Username already claimed');
       }
-      if (form.nidNumber.length < 10 || form.nidNumber.length > 17) {
-        throw new Error(`Invalid NID: ${form.nidNumber.length} digits (Must be 10-17)`);
+      if (nidNumber.length < 10 || nidNumber.length > 17) {
+        throw new Error(`Invalid NID: ${nidNumber.length} digits (Must be 10-17)`);
       }
 
       const timestamp = Date.now();
@@ -145,7 +150,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Identity</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name (full name)</label>
                   <input 
                     type="text" 
                     disabled={isLocked}

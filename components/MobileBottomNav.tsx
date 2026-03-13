@@ -43,12 +43,12 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
   }, [location.pathname]);
 
   const navItems = [
-    { id: 'home', path: '/', label: t.home, icon: <Home size={20} /> },
-    { id: 'offers', path: '/offers', label: t.exclusiveOffers, icon: <Tag size={20} /> },
-    { id: 'rooms', path: '/rooms', label: t.ourLuxuryRooms, icon: <Bed size={20} /> },
-    { id: 'restaurants', path: '/restaurants', label: t.restaurantsTitle, icon: <Utensils size={20} /> },
-    { id: 'guide', path: '/guide', label: t.guideTitle, icon: <Map size={20} /> },
-    { id: 'gallery', path: '/gallery', label: language === 'EN' ? 'Gallery' : 'গ্যালারি', icon: <ImageIcon size={20} /> },
+    { id: 'home', path: '/', label: t.home, icon: <Home size={18} /> },
+    { id: 'offers', path: '/offers', label: t.exclusiveOffers, icon: <Tag size={18} /> },
+    { id: 'rooms', path: '/rooms', label: t.ourLuxuryRooms, icon: <Bed size={18} /> },
+    { id: 'restaurants', path: '/restaurants', label: t.restaurantsTitle, icon: <Utensils size={18} /> },
+    { id: 'guide', path: '/guide', label: t.guideTitle, icon: <Map size={18} /> },
+    { id: 'gallery', path: '/gallery', label: language === 'EN' ? 'Gallery' : 'গ্যালারি', icon: <ImageIcon size={18} /> },
   ];
 
   const getRoleLabel = () => {
@@ -70,7 +70,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
         {/* Horizontal Scroll Container */}
         <div 
           ref={scrollContainerRef}
-          className="flex items-center justify-start overflow-x-auto no-scrollbar py-3 pl-4 pr-16 scroll-smooth snap-x snap-mandatory"
+          className="flex items-center justify-start overflow-x-auto no-scrollbar py-2.5 pl-3 pr-12 scroll-smooth snap-x snap-mandatory"
           style={{ 
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
@@ -85,14 +85,14 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
                 to={item.path}
                 ref={isActive ? (activeItemRef as any) : null}
                 onClick={item.path === '/' ? handleHomeClick : undefined}
-                className={`flex flex-col items-center justify-center px-5 py-1.5 rounded-2xl transition-all duration-300 flex-shrink-0 snap-center ${
+                className={`flex flex-col items-center justify-center px-3.5 py-1 rounded-2xl transition-all duration-300 flex-shrink-0 snap-center ${
                   isActive ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400'
                 }`}
               >
                 <div className={`relative transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
                   {item.icon}
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-tight mt-1.5 whitespace-nowrap transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                <span className={`text-[9px] font-black uppercase tracking-tight mt-1 whitespace-nowrap transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
                   {item.label}
                 </span>
               </Link>
@@ -100,31 +100,31 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
           })}
 
           {/* Separator */}
-          <div className="w-[1px] h-8 bg-gray-100 mx-4 shrink-0 snap-center"></div>
+          <div className="w-[1px] h-6 bg-gray-100 mx-2 shrink-0 snap-center"></div>
 
           {/* Dynamic Admin/Profile/Login Button */}
           {isAdmin ? (
             <Link
               to="/admin"
               ref={location.pathname === '/admin' ? (activeItemRef as any) : null}
-              className={`flex flex-col items-center justify-center px-5 py-1.5 rounded-2xl transition-all duration-300 flex-shrink-0 snap-center relative ${
+              className={`flex flex-col items-center justify-center px-3.5 py-1 rounded-2xl transition-all duration-300 flex-shrink-0 snap-center relative ${
                 location.pathname === '/admin' ? 'bg-amber-50 text-amber-600' : 'text-amber-500'
               }`}
             >
               <div className={`transition-transform duration-300 ${location.pathname === '/admin' ? 'scale-110' : ''}`}>
-                <LayoutDashboard size={20} />
+                <LayoutDashboard size={18} />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-tight mt-1.5 whitespace-nowrap">
+              <span className="text-[9px] font-black uppercase tracking-tight mt-1 whitespace-nowrap">
                 {getRoleLabel()}
               </span>
             </Link>
           ) : (
             <button
               onClick={user ? toggleProfile : openAuth}
-              className="flex flex-col items-center justify-center px-5 py-1.5 rounded-2xl transition-all duration-300 flex-shrink-0 snap-center relative text-hotel-primary"
+              className="flex flex-col items-center justify-center px-3.5 py-1 rounded-2xl transition-all duration-300 flex-shrink-0 snap-center relative text-hotel-primary"
             >
               {user ? (
-                <div className={`w-6 h-6 rounded-lg overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
+                <div className={`w-5 h-5 rounded-lg overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
                    <img 
                       src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
                       alt="Profile" 
@@ -132,11 +132,11 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
                     />
                 </div>
               ) : (
-                <div className="p-1">
-                  <LogIn size={20} />
+                <div className="p-0.5">
+                  <LogIn size={18} />
                 </div>
               )}
-              <span className="text-[10px] font-black uppercase tracking-tight mt-1.5 whitespace-nowrap">
+              <span className="text-[9px] font-black uppercase tracking-tight mt-1 whitespace-nowrap">
                 {user ? (language === 'EN' ? 'Me' : 'আমি') : t.login}
               </span>
             </button>

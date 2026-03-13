@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "SiteConfig": {
+      "title": "Site Configuration",
+      "description": "Global settings for the hotel website",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "backgroundImage": { "type": "string" },
+        "lastUpdated": { "type": "number" }
+      }
+    },
+    "Profile": {
+      "title": "User Profile",
+      "description": "User identity and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "manager", "guest"] }
+      }
+    }
+  },
+  "firestore": {
+    "/site-config/{configId}": {
+      "schema": "SiteConfig",
+      "description": "Global site configuration"
+    },
+    "/profiles/{uid}": {
+      "schema": "Profile",
+      "description": "User profiles"
+    }
+  }
+}

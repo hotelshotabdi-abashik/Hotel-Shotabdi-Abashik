@@ -33,24 +33,20 @@ import {
 // Fix: Using @firebase/messaging to ensure proper modular function resolution and background messaging support
 import { getMessaging, getToken, onMessage } from "@firebase/messaging";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAk6x2Mt9IqmQftA5YI-wBbPEP9KBH2wFQ",
-  authDomain: "hotel-shotabdi.firebaseapp.com",
-  databaseURL: "https://hotel-shotabdi-default-rtdb.asia-southeast1.firebasedatabase.app/",
-  projectId: "hotel-shotabdi",
-  storageBucket: "hotel-shotabdi.firebasestorage.app",
-  messagingSenderId: "682102275681",
-  appId: "1:682102275681:web:f9362e8a87daed0736b420",
-  measurementId: "G-BEMY9J3Z0M"
-};
+import firebaseConfig from "../firebase-applet-config.json";
 
+// Senior Architect Note: Using the newly provisioned project 'Shotabdi Abashik Test'
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getDatabase(app);
+
+// Realtime Database URL for the new project
+const databaseURL = `https://${firebaseConfig.projectId}-default-rtdb.asia-southeast1.firebasedatabase.app/`;
+export const db = getDatabase(app, databaseURL);
+
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
-export const VAPID_KEY = "uQlADdOxjQ7QLMhQew2uYE-9LYVr9R9m73dzKlRVwSs";
+export const VAPID_KEY = "BMYSFivUjrkvc9y3v3f5xulgbXY0wXtPKl7HSco62Vky4icfBopDXzWBXZ73x2n3T5R_2iX5JoiCz3fY7yUCemk";
 
 // Check if current user is Admin (Owner only)
 export const isAdminUser = async (uid: string) => {

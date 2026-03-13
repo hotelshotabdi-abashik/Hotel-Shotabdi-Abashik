@@ -34,11 +34,17 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
 
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('hotel');
-  const [selectedRoomId, setSelectedRoomId] = useState('all');
+  const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id || '');
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
   const mobileNavRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (rooms.length > 0 && (!selectedRoomId || selectedRoomId === 'all')) {
+      setSelectedRoomId(rooms[0].id);
+    }
+  }, [rooms, selectedRoomId]);
 
   useEffect(() => {
     if (mobileNavRef.current && activeCategories.length > 0) {
@@ -128,7 +134,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
     const isHome = window.location.pathname === '/';
     
     if (isHome) {
-      const targetId = selectedRoomId === 'all' ? 'rooms' : selectedRoomId;
+      const targetId = selectedRoomId;
       const element = document.getElementById(targetId);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -170,7 +176,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section id="hero-section" className="relative min-h-[550px] md:h-[450px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white pt-12 md:pt-0 pb-0">
+    <section id="hero-section" className="relative min-h-[480px] md:h-[450px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white pt-6 md:pt-0 pb-0">
       {isEditMode && (
         <div className="absolute top-4 right-4 md:right-10 z-20">
           <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
@@ -183,15 +189,15 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <h2 
-            className={`text-gray-900 text-4xl md:text-6xl font-cormorant font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            className={`text-gray-900 text-3xl md:text-6xl font-cormorant font-black mb-1 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
             onClick={() => isEditMode && onUpdate?.({ title: window.prompt("Edit Title:", config.title) || config.title })}
           >
              {config.title || t.residentialService}
           </h2>
           <p 
-            className={`text-gray-500 text-xs md:text-sm font-medium tracking-widest uppercase transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            className={`text-gray-500 text-[10px] md:text-sm font-medium tracking-widest uppercase transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
             onClick={() => isEditMode && onUpdate?.({ subtitle: window.prompt("Edit Subtitle:", config.subtitle) || config.subtitle })}
           >
             {config.subtitle || t.eliteHospitality}
@@ -199,7 +205,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
         </div>
 
         {/* Refined Hotel Search Bar */}
-        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch overflow-hidden p-1.5 border border-gray-100 mb-8">
+        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch overflow-hidden p-1.5 border border-gray-100 mb-6">
           
           <div className="relative flex-[1.2] border-b lg:border-b-0 lg:border-r border-gray-100">
             <div 
@@ -224,21 +230,6 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
               <div className="absolute top-full left-0 right-0 lg:w-[400px] z-[150] mt-4 bg-white border border-gray-100 rounded-[2rem] shadow-2xl overflow-hidden animate-scale-in max-h-[350px] overflow-y-auto no-scrollbar p-2">
                 <div className="p-4 border-b border-gray-50 mb-2 sticky top-0 bg-white z-10">
                    <h4 className="text-[10px] font-black text-hotel-primary uppercase tracking-[0.3em]">{t.selectRoom}</h4>
-                </div>
-                <div 
-                  onClick={() => { setSelectedRoomId('all'); setShowRoomDropdown(false); }}
-                  className={`p-4 rounded-2xl hover:bg-gray-50 cursor-pointer flex justify-between items-center transition-all mb-1 ${selectedRoomId === 'all' ? 'bg-hotel-primary/5 border border-hotel-primary/10' : 'border border-transparent'}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                      <Sparkles size={18} className="text-hotel-primary" />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-xs font-medium text-gray-900">{t.allRooms}</p>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{t.allCategories}</p>
-                    </div>
-                  </div>
-                  {selectedRoomId === 'all' && <Check size={16} className="text-hotel-primary" />}
                 </div>
                 {rooms.map((room) => (
                   <div 
@@ -350,48 +341,20 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           ))}
         </div>
 
-        {/* Mobile Category Bar - Modern Wrap Style */}
-        <div className="lg:hidden w-full mt-8 px-4">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button 
-              onClick={() => toggleCategory('all')}
-              data-category="all"
-              className="flex items-center gap-2 shrink-0 group transition-all active:scale-95 bg-gray-50 px-3 py-1.5 rounded-full"
-            >
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
-                activeCategories.includes('all') 
-                ? 'bg-hotel-primary text-white' 
-                : 'bg-white text-gray-400'
-              }`}>
-                <Sparkles size={8} />
-              </div>
-              {activeCategories.includes('all') && <Check size={8} className="text-hotel-primary" />}
-              <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400'}`}>
-                {t.allCategories}
-              </span>
-            </button>
-            
-            {shortcuts.map((item) => (
-              <button 
-                key={item.id}
-                onClick={() => toggleCategory(item.id)}
-                data-category={item.id}
-                className="flex items-center gap-2 shrink-0 group transition-all active:scale-95 bg-gray-50 px-3 py-1.5 rounded-full"
-              >
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
-                  activeCategories.includes(item.id) 
-                  ? 'bg-hotel-primary text-white' 
-                  : 'bg-white text-gray-400'
-                }`}>
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 8 })}
-                </div>
-                {activeCategories.includes(item.id) && <Check size={8} className="text-hotel-primary" />}
-                <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400'}`}>
-                  {item.label}
-                </span>
-              </button>
-            ))}
-          </div>
+        {/* Mobile Filter Button - Replaces the wrap bar for a cleaner look */}
+        <div className="lg:hidden w-full mt-6 px-4 flex justify-center">
+          <button 
+            onClick={() => setShowMobileFilters(true)}
+            className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 px-6 py-3 rounded-full transition-all active:scale-95 border border-gray-100 shadow-sm"
+          >
+            <div className="w-6 h-6 bg-hotel-primary rounded-full flex items-center justify-center text-white">
+              <Filter size={12} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">
+              {activeCategories.includes('all') ? t.allCategories : `${activeCategories.length} ${t.filter}`}
+            </span>
+            <ChevronRight size={14} className="text-gray-400" />
+          </button>
         </div>
 
         {/* Mobile Filter Modal - Keep as fallback or for advanced filters if needed */}

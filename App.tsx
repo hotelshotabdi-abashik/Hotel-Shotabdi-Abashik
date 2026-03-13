@@ -118,6 +118,7 @@ const AppContent = () => {
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
@@ -295,7 +296,8 @@ const AppContent = () => {
       if (heroSection) {
         const rect = heroSection.getBoundingClientRect();
         // If the bottom of the hero section is above the top of the viewport
-        setShowStickyCategories(rect.bottom < 80);
+        // Senior Architect: Disabled sticky categories to prevent button spamming as requested
+        setShowStickyCategories(false);
       }
     };
     window.addEventListener('scroll', handleScroll);
@@ -308,6 +310,7 @@ const AppContent = () => {
       setIsAdmin(false);
       return;
     }
+    setIsProfileLoading(true);
     try {
       const data = await syncUserProfile(u);
       setProfile(data);
@@ -322,6 +325,8 @@ const AppContent = () => {
     } catch (error) { 
       console.warn("Profile Sync Issue", error);
       setIsAdmin(false);
+    } finally {
+      setIsProfileLoading(false);
     }
   }, []);
 
@@ -363,8 +368,29 @@ const AppContent = () => {
     setIsSaving(true);
     try {
       const finalConfig = configToSave || siteConfig;
-      // Senior Architect Fix: Strip non-serializable properties (like React Fiber keys) before saving
-      const cleanConfig = JSON.parse(JSON.stringify(finalConfig));
+      
+      // Senior Architect Fix: Robust recursive sanitization to remove non-serializable properties 
+      // and invalid Firebase keys (like React Fiber internal keys)
+      const sanitizeKeys = (obj: any): any => {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(sanitizeKeys);
+        
+        const sanitized: any = {};
+        Object.keys(obj).forEach(key => {
+          // Firebase keys cannot contain ., #, $, /, [, ] or be empty
+          // We also strip React internal keys starting with __
+          const isValidKey = key.length > 0 && 
+                            !key.startsWith('__') &&
+                            !/[.#$/[\]]/.test(key);
+          
+          if (isValidKey) {
+            sanitized[key] = sanitizeKeys(obj[key]);
+          }
+        });
+        return sanitized;
+      };
+
+      const cleanConfig = sanitizeKeys(JSON.parse(JSON.stringify(finalConfig)));
       
       await update(ref(db), { 'site-config': { ...cleanConfig, lastUpdated: Date.now() } });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
@@ -418,7 +444,7 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
-  const isProfileIncomplete = user && profile && (!profile.legalName || !profile.nidImageUrl);
+  const isProfileIncomplete = user && profile && !profile.isComplete && user.email !== OWNER_EMAIL;
   
   const getDisplayNameWithRole = () => {
     const name = profile?.legalName || user?.displayName || 'Resident';
@@ -439,7 +465,7 @@ const AppContent = () => {
       <RouteMetadata siteConfig={siteConfig} />
       <SchemaOrg />
       
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 md:px-10 h-[72px] md:h-[88px] flex items-center">
         {siteConfig.announcement && (
           <div 
             className={`absolute top-0 left-0 right-0 bg-hotel-primary text-white text-[8px] font-black uppercase tracking-[0.3em] py-1 text-center transition-all ${isEditMode ? 'hover:bg-red-700 cursor-pointer' : ''}`}
@@ -448,7 +474,7 @@ const AppContent = () => {
             {siteConfig.announcement}
           </div>
         )}
-        <div className="flex items-center gap-8 mt-2">
+        <div className="flex items-center gap-8 mt-2 shrink-0">
           <Link to="/" onClick={handleHomeClick} className="flex items-center gap-4 group">
             <div className="relative">
               <img 
@@ -683,12 +709,6 @@ const AppContent = () => {
       </header>
       
       <main className="flex-1 relative w-full flex flex-col pt-[72px] md:pt-[88px] pb-32 lg:pb-0">
-        {isProfileIncomplete && (
-          <div className="bg-amber-500 text-white py-3 px-6 text-center z-[70] relative flex items-center justify-center gap-3 shadow-lg">
-             <AlertTriangle size={16} className="shrink-0 animate-bounce" />
-             <p className="font-black text-[10px] uppercase tracking-widest">{t.identityIncomplete} <button onClick={() => setIsManageAccountOpen(true)} className="underline ml-1">{t.finishOnboarding}</button></p>
-          </div>
-        )}
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
             <Route path="/" element={<HomeView siteConfig={siteConfig} isEditMode={isEditMode} language={language} setSiteConfig={setSiteConfig} handleImageUpload={handleImageUpload} requireAuth={requireAuth} />} />
@@ -712,6 +732,15 @@ const AppContent = () => {
           </div>
         )}
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        {isProfileLoading && (
+          <div className="fixed inset-0 z-[2000] bg-white flex items-center justify-center">
+            <div className="text-center">
+               <Loader2 className="animate-spin text-hotel-primary mx-auto mb-4" size={48} />
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Synchronizing Registry...</p>
+            </div>
+          </div>
+        )}
+        {isProfileIncomplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
         {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
         {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={handleImageUpload} />}
         <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} language={language} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />

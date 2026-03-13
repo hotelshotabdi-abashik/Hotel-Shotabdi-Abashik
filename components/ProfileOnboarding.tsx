@@ -107,7 +107,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name (full name)</label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
                   <input type="text" placeholder="Official NID Name" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5" value={form.legalName} onChange={e => setForm({...form, legalName: e.target.value})} />
