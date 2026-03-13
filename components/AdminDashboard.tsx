@@ -5,11 +5,11 @@ import {
   Users, User, Calendar, Search, CheckCircle2, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
-  MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw
+  MapPin, UserCheck, Key, Shield, X,  Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get, query, limitToLast } from '../services/firebase';
+import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get, query, limitToLast, set } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
-import { UserProfile, Booking } from '../types';
+import { UserProfile, Booking, SiteConfig, HelpDeskNumber } from '../types';
 
 import { translations, Language } from '../translations';
 
@@ -22,7 +22,13 @@ interface AuditLog {
   timestamp: number;
 }
 
-const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
+interface AdminProps {
+  language: Language;
+  siteConfig: SiteConfig;
+  setSiteConfig: React.Dispatch<React.SetStateAction<SiteConfig>>;
+}
+
+const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteConfig }) => {
   const t = translations[language];
   
   const formatNumber = (num: number | string) => {
@@ -33,7 +39,7 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
   const currentUser = auth.currentUser;
   const isOwner = currentUser?.email === OWNER_EMAIL;
   
-  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data'>('bookings');
+  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data' | 'settings'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -47,6 +53,12 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
   const [rejectionReason, setRejectionReason] = useState('Registry verification failed');
   const [actionLoading, setActionLoading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Help Desk Settings State
+  const [helpDeskNumbers, setHelpDeskNumbers] = useState<HelpDeskNumber[]>(siteConfig.helpDeskNumbers || [
+    { number: "+880177425702", labelEn: "Primary Support", labelBn: "প্রাথমিক সহায়তা" }
+  ]);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -250,13 +262,13 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
           </div>
         </div>
         <div className="flex gap-2">
-          {['bookings', 'users', 'data'].map((tab) => (
+          {['bookings', 'users', 'data', 'settings'].map((tab) => (
             <button 
               key={tab} 
               onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} 
               className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab ? 'bg-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
             >
-              {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : t.data}
+              {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : tab === 'data' ? t.data : t.settings}
             </button>
           ))}
         </div>
@@ -355,85 +367,191 @@ const AdminDashboard: React.FC<{ language: Language }> = ({ language }) => {
 
         {activeTab === 'data' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
-             <div className="lg:col-span-4 space-y-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-                   <div>
-                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Statistics</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                         <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Accepted</p>
-                            <p className="text-2xl font-sans font-black text-green-600 leading-none">{acceptedCount}</p>
-                         </div>
-                         <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rejected</p>
-                            <p className="text-2xl font-sans font-black text-red-600 leading-none">{rejectedCount}</p>
-                         </div>
-                      </div>
-                      <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                         <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest mb-1">Pending Sync</p>
-                         <p className="text-2xl font-sans font-black text-amber-700 leading-none">{pendingCount}</p>
-                      </div>
-                   </div>
-                </div>
-             </div>
+            <div className="lg:col-span-4 space-y-6">
+               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+                  <div>
+                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Statistics</h4>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Accepted</p>
+                           <p className="text-2xl font-sans font-black text-green-600 leading-none">{acceptedCount}</p>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rejected</p>
+                           <p className="text-2xl font-sans font-black text-red-600 leading-none">{rejectedCount}</p>
+                        </div>
+                     </div>
+                     <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                        <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest mb-1">Pending Sync</p>
+                        <p className="text-2xl font-sans font-black text-amber-700 leading-none">{pendingCount}</p>
+                     </div>
+                  </div>
+               </div>
+            </div>
 
-             <div className="lg:col-span-8">
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
-                   <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                         <Activity size={18} className="text-hotel-primary" />
-                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Live User Movements</h4>
-                       </div>
-                       <span className="text-[9px] font-bold text-gray-400 uppercase">{movements.length} entries</span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                       {movements.map((m, idx) => (
-                         <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-hotel-primary font-black text-[10px]">
-                                 {m.userName.charAt(0)}
-                               </div>
-                               <div>
-                                  <p className="text-[10px] font-black text-gray-900">{m.userName}</p>
-                                  <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Visited: {m.path}</p>
-                               </div>
-                            </div>
-                            <span className="text-[8px] font-bold text-gray-300">{new Date(m.timestamp).toLocaleTimeString()}</span>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
-                    <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                       <div className="flex items-center gap-3">
-                          <ClipboardCheck size={18} className="text-hotel-primary" />
-                          <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs</h4>
+            <div className="lg:col-span-8">
+               <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
+                  <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                     <div className="flex items-center gap-3">
+                        <Activity size={18} className="text-hotel-primary" />
+                        <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Live User Movements</h4>
                       </div>
-                      <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase">{movements.length} entries</span>
                    </div>
                    <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                      {logs.map((log) => (
-                        <div key={log.id} className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 flex gap-5 items-start">
-                           <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
-                              {/* Fix: Included missing RefreshCw icon from lucide-react */}
-                              {log.action.includes('BOOKING') ? <ClipboardCheck size={18} className="text-green-600" /> : log.action.includes('ROLE') ? <Shield size={18} className="text-blue-600" /> : <RefreshCw size={18} className="text-amber-600" />}
-                           </div>
-                           <div className="min-w-0 flex-1">
-                              <div className="flex justify-between items-start mb-1">
-                                 <h5 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter truncate">{log.action.replace('_', ' ')}</h5>
-                                 <span className="text-[8px] font-bold text-gray-400 whitespace-nowrap ml-2">{new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                      {movements.map((m, idx) => (
+                        <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
+                           <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-hotel-primary font-black text-[10px]">
+                                {m.userName.charAt(0)}
                               </div>
-                              <p className="text-[12px] text-gray-600 leading-relaxed font-medium mb-2">{log.details}</p>
-                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Actor: {log.actorName}</p>
+                              <div>
+                                 <p className="text-[10px] font-black text-gray-900">{m.userName}</p>
+                                 <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Visited: {m.path}</p>
+                              </div>
                            </div>
+                           <span className="text-[8px] font-bold text-gray-300">{new Date(m.timestamp).toLocaleTimeString()}</span>
                         </div>
                       ))}
                    </div>
                 </div>
-             </div>
+
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
+                   <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                         <ClipboardCheck size={18} className="text-hotel-primary" />
+                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs</h4>
+                     </div>
+                     <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
+                     {logs.map((log) => (
+                       <div key={log.id} className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 flex gap-5 items-start">
+                          <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                             {/* Fix: Included missing RefreshCw icon from lucide-react */}
+                             {log.action.includes('BOOKING') ? <ClipboardCheck size={18} className="text-green-600" /> : log.action.includes('ROLE') ? <Shield size={18} className="text-blue-600" /> : <RefreshCw size={18} className="text-amber-600" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                             <div className="flex justify-between items-start mb-1">
+                                <h5 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter truncate">{log.action.replace('_', ' ')}</h5>
+                                <span className="text-[8px] font-bold text-gray-400 whitespace-nowrap ml-2">{new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                             </div>
+                             <p className="text-[12px] text-gray-600 leading-relaxed font-medium mb-2">{log.details}</p>
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Actor: {log.actorName}</p>
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
           </div>
         )}
+
+        {activeTab === 'settings' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-hotel-primary/10 rounded-2xl flex items-center justify-center text-hotel-primary">
+                    <Settings size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Help Desk Configuration</h3>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Manage live contact numbers</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setHelpDeskNumbers([...helpDeskNumbers, { number: '', labelEn: '', labelBn: '' }])}
+                  className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
+                >
+                  <Plus size={16} /> Add Number
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {helpDeskNumbers.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 items-end">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                      <div className="relative">
+                        <PhoneCall size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input 
+                          type="text" 
+                          placeholder="+880..." 
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:border-hotel-primary"
+                          value={item.number}
+                          onChange={(e) => {
+                            const next = [...helpDeskNumbers];
+                            next[idx].number = e.target.value;
+                            setHelpDeskNumbers(next);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Label (English)</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Reception" 
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-hotel-primary"
+                        value={item.labelEn}
+                        onChange={(e) => {
+                          const next = [...helpDeskNumbers];
+                          next[idx].labelEn = e.target.value;
+                          setHelpDeskNumbers(next);
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Label (Bengali)</label>
+                      <input 
+                        type="text" 
+                        placeholder="যেমন: রিসেপশন" 
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-hotel-primary"
+                        value={item.labelBn}
+                        onChange={(e) => {
+                          const next = [...helpDeskNumbers];
+                          next[idx].labelBn = e.target.value;
+                          setHelpDeskNumbers(next);
+                        }}
+                      />
+                    </div>
+                    <button 
+                      onClick={() => setHelpDeskNumbers(helpDeskNumbers.filter((_, i) => i !== idx))}
+                      className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 pt-8 border-t border-gray-100 flex justify-end">
+                <button 
+                  onClick={async () => {
+                    setIsSavingSettings(true);
+                    try {
+                      const updatedConfig = { ...siteConfig, helpDeskNumbers };
+                      await set(ref(db, 'site-config'), updatedConfig);
+                      setSiteConfig(updatedConfig);
+                      await createAdminLog('SETTINGS_UPDATE', 'Updated Help Desk contact numbers');
+                      alert("Settings updated successfully!");
+                    } catch (err) {
+                      alert("Failed to save settings.");
+                    } finally {
+                      setIsSavingSettings(false);
+                    }
+                  }}
+                  disabled={isSavingSettings}
+                  className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 flex items-center gap-3 hover:brightness-110 active:scale-95 transition-all"
+                >
+                  {isSavingSettings ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save Configuration</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {selectedBooking && createPortal(

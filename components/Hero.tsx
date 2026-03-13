@@ -176,7 +176,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section id="hero-section" className="relative min-h-[480px] md:h-[450px] flex flex-col items-center justify-center px-4 md:px-10 w-full overflow-hidden bg-white pt-6 md:pt-0 pb-0">
+    <section id="hero-section" className="relative min-h-[480px] md:h-[450px] flex flex-col items-center justify-center px-4 md:px-10 w-full bg-white pt-6 md:pt-0 pb-0">
       {isEditMode && (
         <div className="absolute top-4 right-4 md:right-10 z-20">
           <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
@@ -205,7 +205,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
         </div>
 
         {/* Refined Hotel Search Bar */}
-        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch overflow-hidden p-1.5 border border-gray-100 mb-6">
+        <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row items-stretch p-1.5 border border-gray-100 mb-6">
           
           <div className="relative flex-[1.2] border-b lg:border-b-0 lg:border-r border-gray-100">
             <div 

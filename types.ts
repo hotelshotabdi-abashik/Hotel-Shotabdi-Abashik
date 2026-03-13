@@ -62,6 +62,12 @@ export interface Offer {
   isRecommended?: boolean;
 }
 
+export interface HelpDeskNumber {
+  number: string;
+  labelEn: string;
+  labelBn: string;
+}
+
 export interface SiteConfig {
   hero: HeroConfig;
   rooms: Room[];
@@ -70,6 +76,7 @@ export interface SiteConfig {
   offers: Offer[];
   announcement: string;
   logoUrl?: string;
+  helpDeskNumbers?: HelpDeskNumber[];
   lastUpdated: number;
   socialLinks?: {
     facebook: string;
@@ -135,7 +142,7 @@ export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'booking_update' | 'system' | 'chat_message';
+  type: 'booking_update' | 'system';
   read: boolean;
   createdAt: number;
 }
@@ -151,25 +158,4 @@ export interface GalleryItem {
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
-}
-
-export interface HelpDeskMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderPhoto: string;
-  text: string;
-  timestamp: number;
-  role: 'guest' | 'admin' | 'owner' | 'manager';
-  status?: 'sent' | 'seen';
-}
-
-export interface ChatSession {
-  userId: string;
-  userName: string;
-  userEmail: string;
-  userPhoto: string;
-  lastMessage: string;
-  lastTimestamp: number;
-  unreadCount: number;
 }

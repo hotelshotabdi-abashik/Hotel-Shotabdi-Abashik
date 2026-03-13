@@ -120,7 +120,6 @@ const AppContent = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -180,22 +179,6 @@ const AppContent = () => {
   useEffect(() => {
     if (user) {
       trackUserMovement(user.uid, location.pathname);
-      
-      if (location.pathname === '/helpdesk') {
-        const notificationsRef = ref(db, `notifications/${user.uid}`);
-        get(notificationsRef).then(snap => {
-          if (snap.exists()) {
-            const notifs = snap.val();
-            const updates: any = {};
-            Object.keys(notifs).forEach(key => {
-              if (notifs[key].type === 'chat_message' && !notifs[key].read) {
-                updates[`notifications/${user.uid}/${key}/read`] = true;
-              }
-            });
-            if (Object.keys(updates).length > 0) update(ref(db), updates);
-          }
-        });
-      }
     }
   }, [location.pathname, user]);
 
@@ -224,30 +207,11 @@ const AppContent = () => {
     return () => unsub();
   }, [user]);
 
-  // Real-time Unread Messages Sync
+  // Real-time Data Sync
   useEffect(() => {
-    if (!user) { setUnreadMessages(0); setPendingBookingsCount(0); return; }
+    if (!user) { setPendingBookingsCount(0); return; }
     
     if (isAdmin) {
-      // Admin listens to all active chats for unread counts
-      const chatsRef = ref(db, 'help_dex/active_chats');
-      const unsubChats = onValue(chatsRef, (snap) => {
-        if (snap.exists()) {
-          const chats = Object.values(snap.val()) as any[];
-          const totalUnread = chats.reduce((acc, chat) => acc + (chat.unreadCount || 0), 0);
-          
-          // If on helpdesk, we assume admin is seeing the chats
-          if (location.pathname === '/helpdesk') {
-            setUnreadMessages(0);
-          } else {
-            if (totalUnread > unreadMessages) playNotificationSound();
-            setUnreadMessages(totalUnread);
-          }
-        } else {
-          setUnreadMessages(0);
-        }
-      });
-
       // Admin listens to new bookings
       const bookingsRef = ref(db, 'bookings');
       const unsubBookings = onValue(bookingsRef, (snap) => {
@@ -261,32 +225,7 @@ const AppContent = () => {
         }
       });
 
-      return () => { unsubChats(); unsubBookings(); };
-    } else {
-      // Guest listens to their own chat session for unread flag or count
-      const chatRef = ref(db, `help_dex/active_chats/${user.uid}`);
-      const unsub = onValue(chatRef, (snap) => {
-        if (snap.exists()) {
-          const chat = snap.val();
-          // If on helpdesk, guest is seeing the chat
-          if (location.pathname === '/helpdesk') {
-            setUnreadMessages(0);
-            return;
-          }
-
-          const msgsRef = ref(db, `help_dex/messages/${user.uid}`);
-          const msgsQuery = query(msgsRef, limitToLast(50));
-          onValue(msgsQuery, (mSnap) => {
-            if (mSnap.exists()) {
-              const msgs = Object.values(mSnap.val()) as any[];
-              const unseen = msgs.filter(m => m.senderId !== user.uid && m.status !== 'seen').length;
-              if (unseen > unreadMessages) playNotificationSound();
-              setUnreadMessages(unseen);
-            }
-          });
-        }
-      });
-      return () => unsub();
+      return () => { unsubBookings(); };
     }
   }, [user, isAdmin]);
 
@@ -511,7 +450,7 @@ const AppContent = () => {
         </div>
 
         {showStickyCategories && (
-          <div className="hidden xl:flex items-center gap-8 animate-fade-in ml-16">
+          <div className="hidden xl:flex items-center gap-8 animate-fade-in ml-auto">
             {[
               { id: 'rooms', label: t.ourLuxuryRooms },
               { id: 'offers', label: t.exclusiveOffers },
@@ -534,7 +473,7 @@ const AppContent = () => {
           </div>
         )}
 
-        <nav className="hidden lg:flex items-center gap-14 ml-auto mr-8">
+        <nav className="hidden lg:flex items-center gap-10 ml-auto xl:ml-10">
           <Link 
             to="/" 
             onClick={handleHomeClick}
@@ -579,9 +518,9 @@ const AppContent = () => {
             className={`transition-all text-[11px] tracking-widest uppercase font-medium relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
           >
             {t.helpDesk}
-            {unreadMessages + (isAdmin ? pendingBookingsCount : 0) > 0 && (
+            {isAdmin && pendingBookingsCount > 0 && (
               <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white shadow-sm">
-                {formatNumber(unreadMessages + (isAdmin ? pendingBookingsCount : 0))}
+                {formatNumber(pendingBookingsCount)}
               </span>
             )}
           </Link>
@@ -683,9 +622,9 @@ const AppContent = () => {
                           <div className="flex items-center gap-3">
                             <UserIcon size={18} className="shrink-0" /> {t.manageIdentity}
                           </div>
-                          {(unreadCount + unreadMessages) > 0 && (
+                          {unreadCount > 0 && (
                             <span className="bg-hotel-primary text-white text-[8px] px-1.5 py-0.5 rounded-full">
-                              {formatNumber(unreadCount + unreadMessages)}
+                              {formatNumber(unreadCount)}
                             </span>
                           )}
                         </button>
@@ -717,10 +656,10 @@ const AppContent = () => {
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
             <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} />} />
-            <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} />} />
+            <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} language={language} siteConfig={siteConfig} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
-            <Route path="/admin" element={isAdmin ? <AdminDashboard language={language} /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">{t.unauthorized}</div>} />
+            <Route path="/admin" element={isAdmin ? <AdminDashboard language={language} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">{t.unauthorized}</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />
             <Route path="/termsofservice" element={<TermsOfService />} />
           </Routes>
