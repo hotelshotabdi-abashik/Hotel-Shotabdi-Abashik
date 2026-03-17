@@ -392,11 +392,23 @@ const AppContent = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to get upload URL");
+        if (response.status === 405) {
+          throw new Error("Upload API not found on this domain. Please use the AI Studio Shared URL for the full-stack version of the app.");
+        }
+        
+        let errorMessage = "Failed to get upload URL";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If not JSON, use status text
+          errorMessage = `Server error: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const { signedUrl, uploadUrl, publicUrl, useWorker } = await response.json();
+      const data = await response.json();
+      const { signedUrl, uploadUrl, publicUrl, useWorker } = data;
 
       // 2. Upload directly to R2 (or via Worker Proxy)
       const destinationUrl = useWorker ? uploadUrl : signedUrl;
