@@ -18,12 +18,13 @@ interface HeroProps {
   language: Language;
   onUpdate?: (config: Partial<HeroConfig>) => void;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
   requireAuth?: (action: () => void) => void;
   activeCategories: string[];
   onCategoriesChange: (ids: string[]) => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, requireAuth, activeCategories, onCategoriesChange }) => {
+const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, onUpdate, onImageUpload, onImageDelete, requireAuth, activeCategories, onCategoriesChange }) => {
   const navigate = useNavigate();
   const t = translations[language];
   
@@ -121,7 +122,14 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
     if (file && onImageUpload) {
       setIsUploading(true);
       try {
+        const oldImage = config.backgroundImage;
         const url = await onImageUpload(file);
+        
+        // Delete old image if it was an R2 URL
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+
         onUpdate?.({ backgroundImage: url });
       } finally {
         setIsUploading(false);

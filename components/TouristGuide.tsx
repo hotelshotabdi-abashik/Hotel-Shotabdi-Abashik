@@ -11,9 +11,10 @@ interface Props {
   language: Language;
   onUpdate?: (tg: Attraction[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, language, onUpdate, onImageUpload }) => {
+const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, language, onUpdate, onImageUpload, onImageDelete }) => {
   const [visibleCount, setVisibleCount] = useState(12);
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadingId, setUploadingId] = useState<number | null>(null);
@@ -48,7 +49,16 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
     if (file && onImageUpload) {
       setUploadingId(id);
       try {
+        const spot = displayList.find(r => r.id === id);
+        const oldImage = spot?.image;
+        
         const url = await onImageUpload(file);
+        
+        // Delete old image if it was an R2 URL
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+
         const updated = displayList.map(r => r.id === id ? { ...r, image: url } : r);
         onUpdate?.(updated);
       } catch (err: any) {
@@ -64,8 +74,12 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
     onUpdate?.(updated);
   };
 
-  const deleteSpot = (id: number) => {
+  const deleteSpot = async (id: number) => {
     if (window.confirm("Delete this attraction permanently?")) {
+      const spot = displayList.find(r => r.id === id);
+      if (spot?.image && onImageDelete && spot.image.includes('r2.dev')) {
+        await onImageDelete(spot.image);
+      }
       onUpdate?.(displayList.filter(r => r.id !== id));
     }
   };

@@ -16,9 +16,10 @@ interface Props {
   onClaim?: (offer: Offer) => void;
   onUpdate?: (offers: Offer[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, claimedOfferId, onClaim, onUpdate, onImageUpload }) => {
+const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, claimedOfferId, onClaim, onUpdate, onImageUpload, onImageDelete }) => {
   const [activeSettingsId, setActiveSettingsId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const swiperRef = useRef<any>(null);
@@ -62,8 +63,12 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, c
     };
   }, [sortedOffers, isEditMode]);
 
-  const deleteOffer = (id: string) => {
+  const deleteOffer = async (id: string) => {
     if (window.confirm("Delete this offer permanently?")) {
+      const offer = offers.find(o => o.id === id);
+      if (offer?.mediaUrl && onImageDelete && offer.mediaUrl.includes('r2.dev')) {
+        await onImageDelete(offer.mediaUrl);
+      }
       onUpdate?.(offers.filter(o => o.id !== id));
     }
   };
@@ -106,7 +111,16 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, c
     if (file && onImageUpload) {
       setIsUploading(true);
       try {
+        const offer = offers.find(o => o.id === id);
+        const oldMedia = offer?.mediaUrl;
+        
         const url = await onImageUpload(file);
+        
+        // Delete old media if it was an R2 URL
+        if (oldMedia && onImageDelete && oldMedia.includes('r2.dev')) {
+          await onImageDelete(oldMedia);
+        }
+
         const updated = offers.map(o => o.id === id ? { 
           ...o, 
           mediaUrl: url, 

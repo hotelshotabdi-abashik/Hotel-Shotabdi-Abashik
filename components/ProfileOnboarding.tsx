@@ -6,13 +6,16 @@ import { db, set, ref, checkUsernameUnique, serverTimestamp } from '../services/
 interface Props {
   user: any;
   onComplete: () => void;
+  onImageUpload: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
+const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, onImageDelete }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [nidPreview, setNidPreview] = useState('');
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [form, setForm] = useState({
     legalName: '',
@@ -22,17 +25,31 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
     nidNumber: '',
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 1024 * 1024) {
-        setError('Image size must be under 1MB for secure processing');
-        return;
+    if (file && onImageUpload) {
+      setIsUploading(true);
+      setError('');
+      try {
+        const url = await onImageUpload(file);
+        setNidPreview(url);
+      } catch (err: any) {
+        setError('Image upload failed. Please try again.');
+      } finally {
+        setIsUploading(false);
       }
-      const reader = new FileReader();
-      reader.onloadend = () => setNidPreview(reader.result as string);
-      reader.readAsDataURL(file);
     }
+  };
+
+  const handleImageRemove = async () => {
+    if (nidPreview && onImageDelete && nidPreview.includes('r2.dev')) {
+      try {
+        await onImageDelete(nidPreview);
+      } catch (err) {
+        console.error("Failed to delete from R2:", err);
+      }
+    }
+    setNidPreview('');
   };
 
   const validate = async () => {
@@ -170,14 +187,14 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete }) => {
                         <p className="text-[10px] text-green-600/60 font-medium">Verified Aspect Ratio</p>
                       </div>
                     </div>
-                    <button onClick={() => setNidPreview('')} className="p-3 bg-white rounded-xl text-red-500 shadow-sm border border-gray-100 hover:bg-red-50 transition-all"><X size={16} /></button>
+                    <button onClick={handleImageRemove} className="p-3 bg-white rounded-xl text-red-500 shadow-sm border border-gray-100 hover:bg-red-50 transition-all"><X size={16} /></button>
                   </div>
                 ) : (
                   <div className="text-center py-2">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-3 shadow-sm border border-gray-50">
-                      <Camera size={24} />
+                      {isUploading ? <Loader2 size={24} className="animate-spin text-hotel-primary" /> : <Camera size={24} />}
                     </div>
-                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Upload NID Front Side</p>
+                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{isUploading ? 'Uploading Scan...' : 'Upload NID Front Side'}</p>
                     <p className="text-[9px] text-gray-400/60 mt-1 font-medium italic">Full Document View Required</p>
                   </div>
                 )}

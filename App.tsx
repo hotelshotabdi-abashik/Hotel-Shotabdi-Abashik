@@ -361,7 +361,14 @@ const AppContent = () => {
     if (!file) return;
     setIsLogoSpinning(true);
     try {
+      const oldUrl = siteConfig.logoUrl;
       const url = await handleImageUpload(file);
+      
+      // Delete old logo if it was an R2 URL
+      if (oldUrl && oldUrl.includes('r2.dev')) {
+        await handleImageDelete(oldUrl);
+      }
+
       setSiteConfig(prev => ({ ...prev, logoUrl: url }));
       setTimeout(() => setIsLogoSpinning(false), 2000);
     } catch (err) {
@@ -371,29 +378,67 @@ const AppContent = () => {
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (!file) {
-        reject(new Error("No file selected."));
-        return;
+    try {
+      if (!file) throw new Error("No file selected.");
+      
+      // 1. Get pre-signed URL from our server
+      const response = await fetch('/api/upload/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to get upload URL");
       }
 
-      if (file.size > 10 * 1024 * 1024) {
-        reject(new Error("File too large. Max 10MB allowed for Base64 storage."));
-        return;
+      const { signedUrl, publicUrl } = await response.json();
+
+      // 2. Upload directly to R2 using the pre-signed URL
+      const uploadResponse = await fetch(signedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload to storage");
       }
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result;
-        if (typeof base64 !== 'string') {
-          reject(new Error("Failed to convert image to data."));
-          return;
-        }
-        resolve(base64);
-      };
-      reader.onerror = () => reject(new Error("Error reading file."));
-      reader.readAsDataURL(file);
-    });
+
+      return publicUrl;
+    } catch (error: any) {
+      console.error("R2 Upload Error:", error);
+      throw error;
+    }
+  };
+
+  const handleImageDelete = async (imageUrl: string) => {
+    try {
+      // Extract key from public URL
+      // Assuming publicUrl is something like https://pub-xxx.r2.dev/uploads/123-file.png
+      const url = new URL(imageUrl);
+      const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+
+      const response = await fetch('/api/upload/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete from storage");
+      }
+
+      return true;
+    } catch (error: any) {
+      console.error("R2 Delete Error:", error);
+      return false;
+    }
   };
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
@@ -665,12 +710,12 @@ const AppContent = () => {
       <main className="flex-1 relative w-full flex flex-col pt-[72px] md:pt-[88px] pb-32 lg:pb-0">
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<HomeView siteConfig={siteConfig} isEditMode={isEditMode} language={language} setSiteConfig={setSiteConfig} handleImageUpload={handleImageUpload} requireAuth={requireAuth} />} />
-            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />} />
-            <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} />} />
+            <Route path="/" element={<HomeView siteConfig={siteConfig} isEditMode={isEditMode} language={language} setSiteConfig={setSiteConfig} handleImageUpload={handleImageUpload} handleImageDelete={handleImageDelete} requireAuth={requireAuth} />} />
+            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} language={language} siteConfig={siteConfig} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
@@ -694,16 +739,16 @@ const AppContent = () => {
             </div>
           </div>
         )}
-        {isProfileIncomplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} />}
-        {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} />}
-        {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={handleImageUpload} />}
+        {isProfileIncomplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />}
+        {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />}
+        {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />}
         <MobileBottomNav user={user} profile={profile} isAdmin={isAdmin} language={language} openAuth={() => setIsAuthModalOpen(true)} toggleProfile={() => setIsManageAccountOpen(true)} />
       </main>
     </div>
   );
 };
 
-const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImageUpload, requireAuth }: any) => {
+const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImageUpload, handleImageDelete, requireAuth }: any) => {
   const [activeCategories, setActiveCategories] = useState(['all']);
   const t = (translations as any)[language];
   
@@ -718,6 +763,7 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         language={language} 
         onUpdate={(h: any) => setSiteConfig((prev: any) => ({...prev, hero: {...prev.hero, ...h}}))} 
         onImageUpload={handleImageUpload} 
+        onImageDelete={handleImageDelete}
         requireAuth={requireAuth}
         activeCategories={activeCategories}
         onCategoriesChange={setActiveCategories}
@@ -725,36 +771,35 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
       
       {isVisible('offers') && (
         <div id="offers">
-          <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} />
+          <ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />
         </div>
       )}
       
       {isVisible('rooms') && (
         <div id="rooms">
-          <RoomGrid rooms={siteConfig.rooms} onBook={(room: any) => requireAuth(() => {})} isEditMode={isEditMode} language={language} onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} />
+          <RoomGrid rooms={siteConfig.rooms} onBook={(room: any) => requireAuth(() => {})} isEditMode={isEditMode} language={language} onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />
         </div>
       )}
       
       {isVisible('restaurants') && (
         <div id="restaurants">
-          <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} />
+          <NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />
         </div>
       )}
       
       {isVisible('guide') && (
         <div id="guide">
-          <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} />
+          <TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />
         </div>
       )}
 
       {isVisible('gallery') && (
         <div id="gallery">
           <GallerySection 
-            items={siteConfig.gallery || []} 
             isEditMode={isEditMode} 
             language={language} 
-            onUpdate={(items: any) => setSiteConfig((prev: any) => ({...prev, gallery: items}))}
             onImageUpload={handleImageUpload} 
+            onImageDelete={handleImageDelete}
           />
         </div>
       )}

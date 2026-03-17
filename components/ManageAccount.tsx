@@ -8,9 +8,11 @@ interface Props {
   profile: UserProfile;
   onClose: () => void;
   onUpdate: () => void;
+  onImageUpload: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
+const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpload, onImageDelete }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -18,6 +20,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
   const [isLocked, setIsLocked] = useState(false);
   const [nidPreview, setNidPreview] = useState(profile.nidImageUrl);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [form, setForm] = useState({ 
     legalName: profile.legalName || '',
@@ -87,6 +90,28 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNidUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsUploading(true);
+      try {
+        const oldUrl = nidPreview;
+        const url = await onImageUpload(file);
+        
+        // Delete old NID if it was an R2 URL
+        if (oldUrl && onImageDelete && oldUrl.includes('r2.dev')) {
+          await onImageDelete(oldUrl);
+        }
+
+        setNidPreview(url);
+      } catch (err: any) {
+        alert("ID upload failed.");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -215,16 +240,10 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate }) => {
                     </div>
                     {!isLocked && (
                       <div className="relative border-2 border-dashed border-gray-100 rounded-2xl p-4 bg-gray-50/50 hover:bg-white hover:border-hotel-primary/30 transition-all cursor-pointer overflow-hidden text-center">
-                        <input type="file" accept="image/*" onChange={(e) => {
-                           const file = e.target.files?.[0];
-                           if (file) {
-                             const reader = new FileReader();
-                             reader.onloadend = () => setNidPreview(reader.result as string);
-                             reader.readAsDataURL(file);
-                           }
-                        }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                        <input type="file" accept="image/*" onChange={handleNidUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                         <div className="flex items-center justify-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                          <Camera size={16} className="text-hotel-primary" /> Replace Identity Scan
+                          {isUploading ? <Loader2 size={16} className="animate-spin text-hotel-primary" /> : <Camera size={16} className="text-hotel-primary" />}
+                          {isUploading ? 'Uploading Scan...' : 'Replace Identity Scan'}
                         </div>
                       </div>
                     )}

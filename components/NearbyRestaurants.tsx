@@ -10,9 +10,10 @@ interface Props {
   language: Language;
   onUpdate?: (res: Restaurant[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, language, onUpdate, onImageUpload }) => {
+const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, language, onUpdate, onImageUpload, onImageDelete }) => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,7 +52,16 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
     if (file && onImageUpload) {
       setUploadingId(id);
       try {
+        const res = displayList.find(r => r.id === id);
+        const oldImage = res?.image;
+        
         const url = await onImageUpload(file);
+        
+        // Delete old image if it was an R2 URL
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+
         const updated = displayList.map(r => r.id === id ? { ...r, image: url } : r);
         onUpdate?.(updated);
       } catch (err: any) {
@@ -67,8 +77,12 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
     onUpdate?.(updated);
   };
 
-  const deleteRes = (id: number) => {
+  const deleteRes = async (id: number) => {
     if (window.confirm("Remove this place from the list?")) {
+      const res = displayList.find(r => r.id === id);
+      if (res?.image && onImageDelete && res.image.includes('r2.dev')) {
+        await onImageDelete(res.image);
+      }
       onUpdate?.(displayList.filter(r => r.id !== id));
     }
   };

@@ -17,9 +17,10 @@ interface Props {
   activeDiscount: number;
   onClose: () => void;
   onImageUpload: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }) => {
+const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, onImageDelete }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [step, setStep] = useState(1);
@@ -91,7 +92,14 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
     if (file) {
       setUploadingGuestIndex(idx);
       try {
+        const oldUrl = guests[idx].nidImageUrl;
         const url = await onImageUpload(file);
+        
+        // Delete old NID if it was an R2 URL
+        if (oldUrl && onImageDelete && oldUrl.includes('r2.dev')) {
+          await onImageDelete(oldUrl);
+        }
+
         handleGuestChange(idx, 'nidImageUrl', url);
       } catch (err) {
         alert("ID upload failed.");
@@ -99,6 +107,14 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
         setUploadingGuestIndex(null);
       }
     }
+  };
+
+  const handleNidDelete = async (idx: number) => {
+    const url = guests[idx].nidImageUrl;
+    if (url && onImageDelete && url.includes('r2.dev')) {
+      await onImageDelete(url);
+    }
+    handleGuestChange(idx, 'nidImageUrl', '');
   };
 
   const submitBooking = async () => {
@@ -323,7 +339,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload }
                                                </div>
                                             </div>
                                             {idx !== 0 && (
-                                              <button onClick={(e) => { e.stopPropagation(); handleGuestChange(idx, 'nidImageUrl', ''); }} className="text-[8px] font-black text-red-500 uppercase mt-1">Replace</button>
+                                              <button onClick={(e) => { e.stopPropagation(); handleNidDelete(idx); }} className="text-[8px] font-black text-red-500 uppercase mt-1">Replace</button>
                                             )}
                                          </div>
                                       ) : (

@@ -15,9 +15,10 @@ interface GalleryProps {
   isEditMode?: boolean;
   language: Language;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageUpload }) => {
+const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageUpload, onImageDelete }) => {
   const t = translations[language];
   const user = auth.currentUser;
   const isAdmin = user?.email === OWNER_EMAIL;
@@ -84,12 +85,18 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (item: GalleryItem, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm("Delete this item from gallery?")) return;
     
     try {
-      await remove(ref(db, `gallery/${id}`));
+      // 1. Delete from R2 if onImageDelete is provided
+      if (onImageDelete) {
+        await onImageDelete(item.url);
+      }
+      
+      // 2. Delete from Realtime Database
+      await remove(ref(db, `gallery/${item.id}`));
     } catch (error) {
       console.error("Delete failed", error);
     }
@@ -182,7 +189,7 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
                     </div>
                     {isAdmin && isEditMode && (
                       <button 
-                        onClick={(e) => handleDelete(item.id, e)}
+                        onClick={(e) => handleDelete(item, e)}
                         className="p-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
                       >
                         <Trash2 size={14} />

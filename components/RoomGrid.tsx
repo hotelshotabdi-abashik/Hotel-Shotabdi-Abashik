@@ -14,6 +14,7 @@ interface RoomGridProps {
   onBook?: (room: Room) => void;
   onUpdate?: (rooms: Room[]) => void;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (url: string) => Promise<boolean>;
 }
 
 const RoomDescription: React.FC<{ text: string; language: Language }> = ({ text = "", language }) => {
@@ -56,7 +57,7 @@ const RoomDescription: React.FC<{ text: string; language: Language }> = ({ text 
   );
 };
 
-const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = false, isEditMode, language, onBook, onUpdate, onImageUpload }) => {
+const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = false, isEditMode, language, onBook, onUpdate, onImageUpload, onImageDelete }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const location = useLocation();
@@ -104,7 +105,16 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
     if (file && onImageUpload) {
       setUploadingId(roomId);
       try {
+        const room = rooms.find(r => r.id === roomId);
+        const oldImage = room?.image;
+        
         const url = await onImageUpload(file);
+        
+        // Delete old image if it was an R2 URL
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+
         const updated = rooms.map(r => r.id === roomId ? { ...r, image: url } : r);
         onUpdate?.(updated);
       } catch (err: any) {
@@ -120,8 +130,12 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
     onUpdate?.(updated);
   };
 
-  const deleteRoom = (id: string) => {
+  const deleteRoom = async (id: string) => {
     if (window.confirm("Delete this room category?")) {
+      const room = rooms.find(r => r.id === id);
+      if (room?.image && onImageDelete && room.image.includes('r2.dev')) {
+        await onImageDelete(room.image);
+      }
       onUpdate?.(rooms.filter(r => r.id !== id));
     }
   };
