@@ -47,7 +47,7 @@ import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_
 import { translations, Language } from './translations';
 
 const API_BASE_URL = window.location.hostname.includes('pages.dev') 
-  ? 'https://ais-pre-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app/' 
+  ? 'https://ais-pre-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app' 
   : '';
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
@@ -386,36 +386,47 @@ const AppContent = () => {
       if (!file) throw new Error("No file selected.");
       
       // 1. Get pre-signed URL from our server
-      const response = await fetch(`${API_BASE_URL}api/upload/presigned`, {
+      console.log("Requesting pre-signed URL...");
+      const response = await fetch(`${API_BASE_URL}/api/upload/presigned`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: file.name,
           contentType: file.type
-        })
+        }),
+        mode: 'cors'
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to get upload URL");
+        const errorData = await response.json().catch(() => ({ error: 'Unknown server error' }));
+        console.error("Server error getting pre-signed URL:", errorData);
+        throw new Error(errorData.error || "Failed to get upload URL");
       }
 
       const { signedUrl, publicUrl } = await response.json();
+      console.log("Got pre-signed URL, starting upload to R2...");
 
       // 2. Upload directly to R2 using the pre-signed URL
       const uploadResponse = await fetch(signedUrl, {
         method: 'PUT',
         body: file,
-        headers: { 'Content-Type': file.type }
+        headers: { 'Content-Type': file.type },
+        mode: 'cors'
       });
 
       if (!uploadResponse.ok) {
-        throw new Error("Failed to upload to storage");
+        const errorText = await uploadResponse.text().catch(() => 'No error body');
+        console.error("R2 Upload failed with status:", uploadResponse.status, errorText);
+        throw new Error(`Upload to storage failed: ${uploadResponse.statusText}`);
       }
 
+      console.log("Upload successful:", publicUrl);
       return publicUrl;
     } catch (error: any) {
-      console.error("R2 Upload Error:", error);
+      console.error("Detailed Upload Error:", error);
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        throw new Error("Network error: Please check your internet connection and CORS settings.");
+      }
       throw error;
     }
   };
@@ -427,7 +438,7 @@ const AppContent = () => {
       const url = new URL(imageUrl);
       const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
 
-      const response = await fetch(`${API_BASE_URL}api/upload/delete`, {
+      const response = await fetch(`${API_BASE_URL}/api/upload/delete`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key })
