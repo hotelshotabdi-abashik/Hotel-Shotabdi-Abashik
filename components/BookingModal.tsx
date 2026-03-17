@@ -333,7 +333,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                                       {guest.nidImageUrl ? (
                                          <div className="flex flex-col items-center gap-2">
                                             <div className="w-24 h-16 rounded-xl overflow-hidden border-2 border-white shadow-lg bg-gray-100 relative">
-                                               <img src={guest.nidImageUrl} className="w-full h-full object-contain" />
+                                               <img src={guest.nidImageUrl} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                                   <Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={14} />
                                                </div>
@@ -396,7 +396,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4">
             <X size={32} />
           </button>
-          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" />
+          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" referrerPolicy="no-referrer" />
         </div>
       )}
     </>

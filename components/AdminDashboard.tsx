@@ -285,7 +285,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
           <div key={booking.id} onClick={() => setSelectedBooking(booking)} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between cursor-pointer hover:shadow-2xl transition-all group">
             <div className="flex items-center gap-5">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg bg-gray-50 flex items-center justify-center">
-                {booking.guests?.[0]?.nidImageUrl ? <img src={booking.guests[0].nidImageUrl} className="w-full h-full object-cover" /> : <User className="text-gray-300" />}
+                {booking.guests?.[0]?.nidImageUrl ? <img src={booking.guests[0].nidImageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <User className="text-gray-300" />}
               </div>
               <div>
                 <h3 className="text-base font-black text-gray-900">{booking.userName}</h3>
@@ -320,7 +320,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
           <div key={user.uid} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between group overflow-hidden">
             <div className="flex items-center gap-5 min-w-0">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg shrink-0">
-                <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} />
+                <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
               </div>
               <div className="min-w-0">
                 <h3 className="text-base font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>
@@ -598,7 +598,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
               {(siteConfig.touristGuides || []).map((spot, idx) => (
                 <div key={spot.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden group flex flex-col">
                   <div className="relative h-48 overflow-hidden">
-                    <img src={spot.image} alt={spot.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <img src={spot.image} alt={spot.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                        <button 
                         onClick={() => {
@@ -803,7 +803,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
                                 </div>
                                 <div className="flex items-center gap-3 text-[11px] font-mono font-black text-gray-900 bg-gray-50 p-3 rounded-xl border border-gray-100"><IdCard size={14} className="text-hotel-primary" /> NID: {guest.nidNumber || 'UNSUBMITTED'}</div>
                                 {guest.nidImageUrl && (
-                                   <div className="mt-4"><div onClick={() => setLightboxUrl(guest.nidImageUrl)} className="w-full aspect-video rounded-[1.5rem] overflow-hidden shadow-md border-2 border-white bg-gray-100 relative group cursor-zoom-in"><img src={guest.nidImageUrl} className="w-full h-full object-contain" /><div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center"><Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={24} /></div></div></div>
+                                   <div className="mt-4"><div onClick={() => setLightboxUrl(guest.nidImageUrl)} className="w-full aspect-video rounded-[1.5rem] overflow-hidden shadow-md border-2 border-white bg-gray-100 relative group cursor-zoom-in"><img src={guest.nidImageUrl} className="w-full h-full object-contain" referrerPolicy="no-referrer" /><div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center"><Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={24} /></div></div></div>
                                 )}
                              </div>
                           </div>
@@ -820,7 +820,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
       {lightboxUrl && (
         <div className="fixed inset-0 z-[10001] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4 transition-colors"><X size={32} /></button>
-          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Document Full View" />
+          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Document Full View" referrerPolicy="no-referrer" />
         </div>
       )}
     </div>

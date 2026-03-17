@@ -177,7 +177,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
                   <div className="flex items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                       <div className="relative group cursor-zoom-in" onClick={() => setIsLightboxOpen(true)}>
-                        <img src={nidPreview} className="w-24 h-16 rounded-xl object-contain border-2 border-white shadow-xl bg-gray-100" alt="NID Preview" />
+                        <img src={nidPreview} className="w-24 h-16 rounded-xl object-contain border-2 border-white shadow-xl bg-gray-100" alt="NID Preview" referrerPolicy="no-referrer" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-colors flex items-center justify-center">
                           <Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={12} />
                         </div>
@@ -213,7 +213,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4">
             <X size={32} />
           </button>
-          <img src={nidPreview} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" />
+          <img src={nidPreview} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" referrerPolicy="no-referrer" />
         </div>
       )}
     </>

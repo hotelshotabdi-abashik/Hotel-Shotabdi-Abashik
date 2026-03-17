@@ -30,7 +30,7 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', 
         {/* Header */}
         <div className="p-10 md:p-16 text-center border-b border-gray-50 bg-gray-50/30">
           <div className="w-24 h-24 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 flex items-center justify-center p-5 mx-auto mb-8 animate-bounce-slow">
-            <img src={logoUrl} className="w-full h-full object-contain" alt="Logo" />
+            <img src={logoUrl} className="w-full h-full object-contain" alt="Logo" referrerPolicy="no-referrer" />
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-black text-gray-900 tracking-tight mb-4">
             {language === 'EN' ? 'Help Desk & Support' : 'হেল্প ডেস্ক ও সাপোর্ট'}

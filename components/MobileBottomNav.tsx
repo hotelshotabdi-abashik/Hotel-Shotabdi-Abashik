@@ -91,6 +91,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
                     src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=E53935&color=fff`} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
                   />
               </div>
             ) : (

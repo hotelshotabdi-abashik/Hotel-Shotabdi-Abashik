@@ -11,8 +11,23 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+const allowedOrigins = [
+  'https://hotelshotabdiabashik.pages.dev',
+  'https://ais-dev-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app',
+  'https://ais-pre-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: true, // Allow all origins for now to fix CORS issues, or use a function
+  origin: (origin, callback) => {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

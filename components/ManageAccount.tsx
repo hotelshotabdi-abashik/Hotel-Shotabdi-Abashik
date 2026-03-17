@@ -127,7 +127,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
           <div className="p-8 md:p-10 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/40">
             <div className="flex items-center gap-5">
               <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md">
-                <img src={profile.photoURL} className="w-full h-full object-cover" alt="User" />
+                <img src={profile.photoURL} className="w-full h-full object-cover" alt="User" referrerPolicy="no-referrer" />
               </div>
               <div>
                 <h2 className="text-2xl font-serif font-black text-gray-900 tracking-tight">Account Vault</h2>
@@ -255,7 +255,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
                   >
                     {nidPreview ? (
                       <>
-                        <img src={nidPreview} className="w-full h-full object-contain" alt="NID Document" />
+                        <img src={nidPreview} className="w-full h-full object-contain" alt="NID Document" referrerPolicy="no-referrer" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                           <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
                         </div>
@@ -303,7 +303,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4">
             <X size={32} />
           </button>
-          <img src={nidPreview} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" />
+          <img src={nidPreview} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" referrerPolicy="no-referrer" />
         </div>
       )}
     </>

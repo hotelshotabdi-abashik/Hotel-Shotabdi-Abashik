@@ -57,10 +57,10 @@ const PublicProfile: React.FC = () => {
       <div className="max-w-4xl mx-auto bg-white rounded-[3rem] shadow-2xl border border-gray-100 overflow-hidden animate-fade-in">
         <div className="bg-hotel-primary p-12 text-white text-center relative">
           <div className="absolute top-8 left-8">
-            <img src={globalLogo} className="w-10 h-10 object-contain brightness-0 invert opacity-20" />
+            <img src={globalLogo} className="w-10 h-10 object-contain brightness-0 invert opacity-20" referrerPolicy="no-referrer" />
           </div>
           <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white/20 shadow-2xl mx-auto mb-6">
-             <img src={profile.photoURL} className="w-full h-full object-cover" alt={`${profile.legalName} Resident`} />
+             <img src={profile.photoURL} className="w-full h-full object-cover" alt={`${profile.legalName} Resident`} referrerPolicy="no-referrer" />
           </div>
           <h1 className="text-3xl md:text-5xl font-serif font-black tracking-tight">{profile.legalName}</h1>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-70 mt-2">Verified Hotel Resident</p>
