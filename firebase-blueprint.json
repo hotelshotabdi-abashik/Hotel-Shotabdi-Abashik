@@ -7,7 +7,12 @@
       "properties": {
         "title": { "type": "string" },
         "subtitle": { "type": "string" },
-        "backgroundImage": { "type": "string" },
+        "heroImage": { "type": "string" },
+        "roomsImage": { "type": "string" },
+        "offersImage": { "type": "string" },
+        "restaurantImage": { "type": "string" },
+        "touristImage": { "type": "string" },
+        "aboutImage": { "type": "string" },
         "lastUpdated": { "type": "number" }
       }
     },

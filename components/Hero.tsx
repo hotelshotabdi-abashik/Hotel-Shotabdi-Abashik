@@ -184,13 +184,27 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const checkOutDisplay = formatDateLabel(checkOut);
 
   return (
-    <section id="hero-section" className="relative min-h-[480px] md:h-[450px] flex flex-col items-center justify-center px-4 md:px-10 w-full bg-white pt-6 md:pt-0 pb-0">
+    <section 
+      id="hero-section" 
+      className="relative min-h-[480px] md:h-[600px] flex flex-col items-center justify-center px-4 md:px-10 w-full pt-6 md:pt-0 pb-0 overflow-hidden"
+    >
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src={config.backgroundImage || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} 
+          className="w-full h-full object-cover" 
+          alt="Hero Background"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-white/80 md:bg-white/60 backdrop-blur-[2px]"></div>
+      </div>
+
       {isEditMode && (
         <div className="absolute top-4 right-4 md:right-10 z-20">
           <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
             <input type="file" className="hidden" onChange={handleImageChange} />
-            {isUploading ? <Loader2 className="animate-spin text-hotel-primary" size={14} /> : <Camera size={14} className="text-hotel-primary" />}
-            <span className="text-[9px] font-black uppercase tracking-widest text-gray-700">Update Canvas</span>
+            {isUploading ? <Loader2 className="animate-spin text-hotel-primary" size={14} /> : <ImageIcon size={14} className="text-hotel-primary" />}
+            <span className="text-[9px] font-black uppercase tracking-widest text-gray-700">Change Hero Image</span>
           </label>
         </div>
       )}

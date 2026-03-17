@@ -7,22 +7,45 @@ import { translations, Language } from '../translations';
 
 interface Props {
   touristGuides: Attraction[];
+  headerImage?: string;
   isEditMode?: boolean;
   language: Language;
   onUpdate?: (tg: Attraction[]) => void;
+  onUpdateHeader?: (url: string) => void;
   onImageUpload?: (file: File) => Promise<string>;
   onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, language, onUpdate, onImageUpload, onImageDelete }) => {
+const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEditMode, language, onUpdate, onUpdateHeader, onImageUpload, onImageDelete }) => {
   const [visibleCount, setVisibleCount] = useState(12);
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const t = translations[language];
 
   const formatNumber = (num: number | string) => {
     if (language === 'EN') return String(num);
     return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
+  const handleHeaderImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsHeaderUploading(true);
+      try {
+        const oldImage = headerImage;
+        const url = await onImageUpload(file);
+        
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+        onUpdateHeader?.(url);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
+      } finally {
+        setIsHeaderUploading(false);
+      }
+    }
   };
 
   const displayList = touristGuides.length > 0 ? touristGuides : SYLHET_ATTRACTIONS;
@@ -101,6 +124,23 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
 
   return (
     <section id="guide" className="bg-gray-50/50 min-h-screen w-full scroll-mt-24">
+      {headerImage && (
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8">
+          <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden group shadow-xl">
+            <img src={headerImage} className="w-full h-full object-cover" alt="Guide Header" referrerPolicy="no-referrer" />
+            <div className="absolute inset-0 bg-black/20"></div>
+            {isEditMode && (
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
+                  <input type="file" className="hidden" onChange={handleHeaderImageChange} />
+                  {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-8 md:pb-12 text-center">
         <header>
           <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600 mb-4 md:mb-6 shadow-sm mx-auto">

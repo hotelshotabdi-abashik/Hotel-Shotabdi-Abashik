@@ -7,12 +7,14 @@ import { translations, Language } from '../translations';
 
 interface RoomGridProps {
   rooms: Room[];
+  headerImage?: string;
   activeDiscount?: number;
   isBookingDisabled?: boolean;
   isEditMode?: boolean;
   language: Language;
   onBook?: (room: Room) => void;
   onUpdate?: (rooms: Room[]) => void;
+  onUpdateHeader?: (url: string) => void;
   onImageUpload?: (file: File) => Promise<string>;
   onImageDelete?: (url: string) => Promise<boolean>;
 }
@@ -57,11 +59,32 @@ const RoomDescription: React.FC<{ text: string; language: Language }> = ({ text 
   );
 };
 
-const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = false, isEditMode, language, onBook, onUpdate, onImageUpload, onImageDelete }) => {
+const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], headerImage, isBookingDisabled = false, isEditMode, language, onBook, onUpdate, onUpdateHeader, onImageUpload, onImageDelete }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const location = useLocation();
   const t = translations[language];
+
+  const handleHeaderImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsHeaderUploading(true);
+      try {
+        const oldImage = headerImage;
+        const url = await onImageUpload(file);
+        
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+        onUpdateHeader?.(url);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
+      } finally {
+        setIsHeaderUploading(false);
+      }
+    }
+  };
 
   const formatNumber = (num: number | string) => {
     if (language === 'EN') return String(num);
@@ -159,6 +182,21 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], isBookingDisabled = fal
 
   return (
     <section id="rooms" className="max-w-7xl mx-auto pt-10 md:pt-20 pb-20 md:pb-28 px-4 md:px-6 bg-white w-full scroll-mt-24">
+      {headerImage && (
+        <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden mb-12 group shadow-xl">
+          <img src={headerImage} className="w-full h-full object-cover" alt="Rooms Header" referrerPolicy="no-referrer" />
+          <div className="absolute inset-0 bg-black/20"></div>
+          {isEditMode && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
+                <input type="file" className="hidden" onChange={handleHeaderImageChange} />
+                {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
+                <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
+              </label>
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4">
         <header className="max-w-3xl text-center md:text-left mx-auto md:mx-0">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-3">

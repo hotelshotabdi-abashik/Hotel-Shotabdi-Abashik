@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ChevronRight, Plus, Trash2, Camera, 
+  ChevronRight, Plus, Trash2, Camera, RefreshCw,
   Tag, Settings2, ShieldCheck, X, CheckCircle2, Loader2, CalendarRange, Star
 } from 'lucide-react';
 import { Offer } from '../types';
@@ -10,20 +10,43 @@ import { translations, Language } from '../translations';
 
 interface Props {
   offers: Offer[];
+  headerImage?: string;
   isEditMode?: boolean;
   language: Language;
   claimedOfferId?: string | null;
   onClaim?: (offer: Offer) => void;
   onUpdate?: (offers: Offer[]) => void;
+  onUpdateHeader?: (url: string) => void;
   onImageUpload?: (file: File) => Promise<string>;
   onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, claimedOfferId, onClaim, onUpdate, onImageUpload, onImageDelete }) => {
+const ExclusiveOffers: React.FC<Props> = ({ offers = [], headerImage, isEditMode, language, claimedOfferId, onClaim, onUpdate, onUpdateHeader, onImageUpload, onImageDelete }) => {
   const [activeSettingsId, setActiveSettingsId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const swiperRef = useRef<any>(null);
   const t = translations[language];
+
+  const handleHeaderImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsHeaderUploading(true);
+      try {
+        const oldImage = headerImage;
+        const url = await onImageUpload(file);
+        
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+        onUpdateHeader?.(url);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
+      } finally {
+        setIsHeaderUploading(false);
+      }
+    }
+  };
 
   // Sort offers: recommended first
   const sortedOffers = useMemo(() => {
@@ -139,6 +162,23 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, c
 
   return (
     <section id="offers" className="py-24 bg-white overflow-hidden relative scroll-mt-24">
+      {headerImage && (
+        <div className="max-w-7xl mx-auto px-6 mb-12">
+          <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden group shadow-xl">
+            <img src={headerImage} className="w-full h-full object-cover" alt="Offers Header" referrerPolicy="no-referrer" />
+            <div className="absolute inset-0 bg-black/20"></div>
+            {isEditMode && (
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
+                  <input type="file" className="hidden" onChange={handleHeaderImageChange} />
+                  {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-end mb-16">
           <div className="max-w-xl">

@@ -6,22 +6,45 @@ import { translations, Language } from '../translations';
 
 interface Props {
   restaurants: Restaurant[];
+  headerImage?: string;
   isEditMode?: boolean;
   language: Language;
   onUpdate?: (res: Restaurant[]) => void;
+  onUpdateHeader?: (url: string) => void;
   onImageUpload?: (file: File) => Promise<string>;
   onImageDelete?: (url: string) => Promise<boolean>;
 }
 
-const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, language, onUpdate, onImageUpload, onImageDelete }) => {
+const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], headerImage, isEditMode, language, onUpdate, onUpdateHeader, onImageUpload, onImageDelete }) => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const t = translations[language];
 
   const formatNumber = (num: number | string) => {
     if (language === 'EN') return String(num);
     return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
+  };
+
+  const handleHeaderImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsHeaderUploading(true);
+      try {
+        const oldImage = headerImage;
+        const url = await onImageUpload(file);
+        
+        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
+          await onImageDelete(oldImage);
+        }
+        onUpdateHeader?.(url);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
+      } finally {
+        setIsHeaderUploading(false);
+      }
+    }
   };
 
   const displayList = restaurants;
@@ -107,6 +130,21 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
 
   return (
     <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in scroll-mt-24">
+      {headerImage && (
+        <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden mb-12 group">
+          <img src={headerImage} className="w-full h-full object-cover" alt="Dining Header" referrerPolicy="no-referrer" />
+          <div className="absolute inset-0 bg-black/20"></div>
+          {isEditMode && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
+                <input type="file" className="hidden" onChange={handleHeaderImageChange} />
+                {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
+                <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
+              </label>
+            </div>
+          )}
+        </div>
+      )}
       <div className="mb-12 text-center flex flex-col items-center">
         <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">{t.sylhetDining}</span>
         <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">{t.restaurantsTitle}</h2>
