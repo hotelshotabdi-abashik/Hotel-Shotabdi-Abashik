@@ -88,6 +88,10 @@
           ".write": "auth != null && auth.uid === $uid"
         }
       }
+    },
+    "gallery": {
+      ".read": true,
+      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
     }
   }
 }

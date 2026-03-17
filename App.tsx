@@ -46,6 +46,10 @@ import {
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
 import { translations, Language } from './translations';
 
+const API_BASE_URL = window.location.hostname.includes('pages.dev') 
+  ? 'https://ais-dev-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app' 
+  : '';
+
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -382,7 +386,7 @@ const AppContent = () => {
       if (!file) throw new Error("No file selected.");
       
       // 1. Get pre-signed URL from our server
-      const response = await fetch('/api/upload/presigned', {
+      const response = await fetch(`${API_BASE_URL}/api/upload/presigned`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -423,7 +427,7 @@ const AppContent = () => {
       const url = new URL(imageUrl);
       const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
 
-      const response = await fetch('/api/upload/delete', {
+      const response = await fetch(`${API_BASE_URL}/api/upload/delete`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key })
