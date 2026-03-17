@@ -141,7 +141,7 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], isEditMode, lang
         {filteredList.slice(0, visibleItems).map((res) => (
           <article key={res.id} className="group bg-white rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col relative h-full">
             <div className="h-32 md:h-48 relative overflow-hidden shrink-0">
-              <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={`Dining at ${res.name} - ${res.cuisine} in Sylhet near Hotel Shotabdi`} />
+              <img src={res.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={`Dining at ${res.name} - ${res.cuisine} in Sylhet near Hotel Shotabdi`} referrerPolicy="no-referrer" />
               
               <div className="absolute top-2 md:top-4 left-2 md:left-4 flex flex-col gap-1.5">
                 {res.isRecommended && (

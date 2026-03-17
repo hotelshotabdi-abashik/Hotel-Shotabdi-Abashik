@@ -55,6 +55,7 @@ const Footer: React.FC<FooterProps> = ({ isEditMode, language, logoUrl, socialLi
               alt="Hotel Shotabdi Abashik Logo"
               draggable="false"
               style={{ pointerEvents: 'none' }}
+              referrerPolicy="no-referrer"
             />
             <div>
               <h1 className="text-lg font-cormorant font-black text-gray-900 tracking-wider uppercase leading-none notranslate">Hotel Shotabdi</h1>

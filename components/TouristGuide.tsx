@@ -144,6 +144,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], isEditMode, languag
                   src={spot.image} 
                   alt={`${spot.name} - Tourist Attraction in Sylhet near Hotel Shotabdi Residential`} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                  referrerPolicy="no-referrer"
                 />
                 
                 <div className="absolute top-2 right-2 md:top-4 md:right-4 flex flex-col items-end gap-1.5">

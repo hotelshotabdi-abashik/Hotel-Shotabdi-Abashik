@@ -247,7 +247,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden">
-                        <img src={room.image} className="w-full h-full object-cover" alt={room.title} />
+                        <img src={room.image} className="w-full h-full object-cover" alt={room.title} referrerPolicy="no-referrer" />
                       </div>
                       <div className="text-left">
                         <p className="text-xs font-medium text-gray-900">{room.title}</p>

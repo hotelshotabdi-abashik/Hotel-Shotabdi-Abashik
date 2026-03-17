@@ -47,7 +47,7 @@ import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_
 import { translations, Language } from './translations';
 
 const API_BASE_URL = window.location.hostname.includes('pages.dev') 
-  ? 'https://ais-dev-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app' 
+  ? 'https://ais-pre-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app/' 
   : '';
 
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
@@ -386,7 +386,7 @@ const AppContent = () => {
       if (!file) throw new Error("No file selected.");
       
       // 1. Get pre-signed URL from our server
-      const response = await fetch(`${API_BASE_URL}/api/upload/presigned`, {
+      const response = await fetch(`${API_BASE_URL}api/upload/presigned`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -427,7 +427,7 @@ const AppContent = () => {
       const url = new URL(imageUrl);
       const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
 
-      const response = await fetch(`${API_BASE_URL}/api/upload/delete`, {
+      const response = await fetch(`${API_BASE_URL}api/upload/delete`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key })
@@ -484,6 +484,7 @@ const AppContent = () => {
                 src={currentLogo} 
                 className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform ${isLogoSpinning ? 'animate-spin-once' : ''} ${isEditMode ? 'cursor-pointer hover:opacity-50' : ''}`} 
                 alt="Logo"
+                referrerPolicy="no-referrer"
                 onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleLogoEdit(); } }}
               />
               {isEditMode && isAdmin && (
@@ -666,7 +667,12 @@ const AppContent = () => {
             <div className="flex items-center gap-2 md:gap-4">
               <div className="relative" ref={dropdownRef}>
                 <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
-                  <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="Profile" />
+                  <img 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
+                    className="w-full h-full object-cover" 
+                    alt="Profile"
+                    referrerPolicy="no-referrer"
+                  />
                 </button>
                 {isProfileMenuOpen && (
                   <div className="absolute right-0 top-full mt-4 w-72 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">

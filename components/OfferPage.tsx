@@ -34,7 +34,7 @@ const OfferPage: React.FC<Props> = ({ offers, onClaim }) => {
         {offer.mediaType === 'video' ? (
           <video src={offer.mediaUrl} className="w-full h-full object-cover" muted loop autoPlay />
         ) : (
-          <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} />
+          <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} referrerPolicy="no-referrer" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
         

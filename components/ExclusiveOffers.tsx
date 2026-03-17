@@ -163,7 +163,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, c
                   {offer.mediaType === 'video' ? (
                     <video src={offer.mediaUrl} className="w-full h-full object-cover" muted loop autoPlay />
                   ) : (
-                    <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} />
+                    <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} referrerPolicy="no-referrer" />
                   )}
                   
                   <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
@@ -351,7 +351,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], isEditMode, language, c
                        {activeOffer.mediaType === 'video' ? (
                          <video src={activeOffer.mediaUrl} className="w-full h-full object-cover" muted loop autoPlay />
                        ) : (
-                         <img src={activeOffer.mediaUrl} className="w-full h-full object-cover" alt="Asset Preview" />
+                         <img src={activeOffer.mediaUrl} className="w-full h-full object-cover" alt="Asset Preview" referrerPolicy="no-referrer" />
                        )}
                        {isUploading && (
                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white gap-3">

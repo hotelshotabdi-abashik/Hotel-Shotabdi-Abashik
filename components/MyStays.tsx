@@ -275,7 +275,7 @@ const MyStays: React.FC<MyStaysProps> = ({ profile, logoUrl }) => {
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4">
             <X size={32} />
           </button>
-          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" />
+          <img src={lightboxUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" alt="Full NID Scan" referrerPolicy="no-referrer" />
         </div>
       )}
     </>
