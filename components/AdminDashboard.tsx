@@ -5,12 +5,13 @@ import {
   Users, User, Calendar, Search, CheckCircle2, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
-  MapPin, UserCheck, Key, Shield, X,  Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall
+  MapPin, UserCheck, Key, Shield, X,  Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star
 } from 'lucide-react';
 import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get, query, limitToLast, set } from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking, SiteConfig, HelpDeskNumber } from '../types';
 
+import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from '../constants';
 import { translations, Language } from '../translations';
 
 interface AuditLog {
@@ -39,7 +40,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const currentUser = auth.currentUser;
   const isOwner = currentUser?.email === OWNER_EMAIL;
   
-  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data' | 'settings'>('bookings');
+  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data' | 'settings' | 'guide'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -262,13 +263,13 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
           </div>
         </div>
         <div className="flex gap-2">
-          {['bookings', 'users', 'data', 'settings'].map((tab) => (
+          {['bookings', 'users', 'data', 'settings', 'guide'].map((tab) => (
             <button 
               key={tab} 
               onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} 
               className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab ? 'bg-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
             >
-              {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : tab === 'data' ? t.data : t.settings}
+              {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : tab === 'data' ? t.data : tab === 'settings' ? t.settings : t.touristGuide}
             </button>
           ))}
         </div>
@@ -548,6 +549,171 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
                   {isSavingSettings ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save Configuration</>}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'guide' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h3 className="text-2xl font-serif font-black text-gray-900">Manage Tourist Guides</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Add, edit, or remove local attractions for guests.</p>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <button 
+                  onClick={() => {
+                    if (window.confirm("This will replace all current guides with the 30 default entries. Continue?")) {
+                      setSiteConfig(prev => ({ ...prev, touristGuides: SYLHET_ATTRACTIONS }));
+                      createAdminLog('GUIDE_RESET', 'Reset tourist guides to 30 defaults');
+                    }
+                  }}
+                  className="bg-amber-50 text-amber-600 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95"
+                >
+                  Reset to 30 Defaults
+                </button>
+                <button 
+                  onClick={() => {
+                    const newItem = {
+                      id: Date.now(),
+                      name: "New Attraction",
+                      subtitle: "Category",
+                      distance: "5.0 km",
+                      description: "A short but engaging description of this local treasure.",
+                      image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80",
+                      mapUrl: "",
+                      phone: "",
+                      isRecommended: false
+                    };
+                    setSiteConfig(prev => ({ ...prev, touristGuides: [newItem, ...(prev.touristGuides || [])] }));
+                  }}
+                  className="bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl hover:bg-gray-800 transition-all active:scale-95"
+                >
+                  <Plus size={16} /> Add New Place
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(siteConfig.touristGuides || []).map((spot, idx) => (
+                <div key={spot.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden group flex flex-col">
+                  <div className="relative h-48 overflow-hidden">
+                    <img src={spot.image} alt={spot.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                       <button 
+                        onClick={() => {
+                          const url = window.prompt("Enter Image URL:", spot.image);
+                          if (url) {
+                            const updated = [...(siteConfig.touristGuides || [])];
+                            updated[idx] = { ...updated[idx], image: url };
+                            setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                          }
+                        }}
+                        className="bg-white p-3 rounded-2xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-xl"
+                       >
+                         <RefreshCw size={18} />
+                       </button>
+                       <button 
+                        onClick={() => {
+                          const updated = [...(siteConfig.touristGuides || [])];
+                          updated[idx] = { ...updated[idx], isRecommended: !updated[idx].isRecommended };
+                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                        }}
+                        className={`p-3 rounded-2xl transition-all shadow-xl ${spot.isRecommended ? 'bg-amber-400 text-gray-900' : 'bg-white text-gray-400 hover:text-amber-400'}`}
+                       >
+                         <Star size={18} fill={spot.isRecommended ? "currentColor" : "none"} />
+                       </button>
+                    </div>
+                  </div>
+                  <div className="p-8 space-y-5 flex-1 flex flex-col">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Place Name</label>
+                      <input 
+                        className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl px-4 py-3 text-sm font-black text-gray-900 outline-none transition-all"
+                        value={spot.name}
+                        onChange={(e) => {
+                          const updated = [...(siteConfig.touristGuides || [])];
+                          updated[idx] = { ...updated[idx], name: e.target.value };
+                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Category / Subtitle</label>
+                      <input 
+                        className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl px-4 py-3 text-[10px] font-black text-blue-600 uppercase tracking-widest outline-none transition-all"
+                        value={spot.subtitle}
+                        onChange={(e) => {
+                          const updated = [...(siteConfig.touristGuides || [])];
+                          updated[idx] = { ...updated[idx], subtitle: e.target.value };
+                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5 flex-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                      <textarea 
+                        className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl p-4 h-28 text-xs font-bold text-gray-500 outline-none resize-none transition-all leading-relaxed"
+                        value={spot.description}
+                        onChange={(e) => {
+                          const updated = [...(siteConfig.touristGuides || [])];
+                          updated[idx] = { ...updated[idx], description: e.target.value };
+                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                        }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Distance</label>
+                        <input 
+                          className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl px-4 py-3 text-xs font-bold outline-none transition-all"
+                          value={spot.distance}
+                          placeholder="e.g. 5.0 km"
+                          onChange={(e) => {
+                            const updated = [...(siteConfig.touristGuides || [])];
+                            updated[idx] = { ...updated[idx], distance: e.target.value };
+                            setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button 
+                          onClick={() => {
+                            if (window.confirm("Delete this attraction?")) {
+                              const updated = (siteConfig.touristGuides || []).filter(s => s.id !== spot.id);
+                              setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
+                            }
+                          }}
+                          className="w-full bg-red-50 text-red-600 py-3 rounded-xl hover:bg-red-100 transition-all flex items-center justify-center"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 pt-8 border-t border-gray-100 flex justify-end">
+              <button 
+                onClick={async () => {
+                  setIsSavingSettings(true);
+                  try {
+                    await set(ref(db, 'site-config'), siteConfig);
+                    await createAdminLog('GUIDE_UPDATE', 'Updated tourist guide listings');
+                    alert("Tourist guides updated successfully!");
+                  } catch (err) {
+                    alert("Failed to save tourist guides.");
+                  } finally {
+                    setIsSavingSettings(false);
+                  }
+                }}
+                disabled={isSavingSettings}
+                className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 flex items-center gap-3 hover:brightness-110 active:scale-95 transition-all"
+              >
+                {isSavingSettings ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save Guide Changes</>}
+              </button>
             </div>
           </div>
         )}

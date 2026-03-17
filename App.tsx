@@ -147,6 +147,7 @@ const AppContent = () => {
     offers: [],
     restaurants: SYLHET_RESTAURANTS,
     touristGuides: SYLHET_ATTRACTIONS,
+    gallery: [],
     announcement: "25% OFF DISCOUNT",
     logoUrl: LOGO_ICON_URL,
     lastUpdated: 0,
@@ -329,7 +330,21 @@ const AppContent = () => {
         return sanitized;
       };
 
-      const cleanConfig = sanitizeKeys(JSON.parse(JSON.stringify(finalConfig)));
+      // Senior Architect: Use a safer way to stringify to avoid circular references
+      const safeStringify = (obj: any) => {
+        const cache = new Set();
+        return JSON.stringify(obj, (key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) {
+              return; // Discard circular reference
+            }
+            cache.add(value);
+          }
+          return value;
+        });
+      };
+
+      const cleanConfig = sanitizeKeys(JSON.parse(safeStringify(finalConfig)));
       
       await update(ref(db), { 'site-config': { ...cleanConfig, lastUpdated: Date.now() } });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
@@ -369,8 +384,8 @@ const AppContent = () => {
       
       const reader = new FileReader();
       reader.onload = (event) => {
-        const base64 = event.target?.result as string;
-        if (!base64) {
+        const base64 = event.target?.result;
+        if (typeof base64 !== 'string') {
           reject(new Error("Failed to convert image to data."));
           return;
         }
@@ -734,8 +749,13 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
 
       {isVisible('gallery') && (
         <div id="gallery">
-          {/* Gallery will be implemented in a separate component */}
-          <GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} />
+          <GallerySection 
+            items={siteConfig.gallery || []} 
+            isEditMode={isEditMode} 
+            language={language} 
+            onUpdate={(items: any) => setSiteConfig((prev: any) => ({...prev, gallery: items}))}
+            onImageUpload={handleImageUpload} 
+          />
         </div>
       )}
     </>
