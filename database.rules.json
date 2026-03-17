@@ -1,6 +1,16 @@
 {
   "rules": {
+    ".read": false,
+    ".write": false,
     "site-config": {
+      ".read": true,
+      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+    },
+    "gallery": {
+      ".read": true,
+      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
+    },
+    "rooms": {
       ".read": true,
       ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
     },
@@ -88,10 +98,6 @@
           ".write": "auth != null && auth.uid === $uid"
         }
       }
-    },
-    "gallery": {
-      ".read": true,
-      ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || auth.token.email === 'hotelshotabdiabashik@gmail.com')"
     }
   }
 }

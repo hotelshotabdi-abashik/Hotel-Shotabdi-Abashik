@@ -11,7 +11,13 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: true, // Allow all origins for now to fix CORS issues, or use a function
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+app.options('*', cors()); // Explicitly handle preflight requests
 app.use(express.json({ limit: '50mb' }));
 
 // R2 Configuration
