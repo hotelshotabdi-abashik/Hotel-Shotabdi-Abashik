@@ -19,8 +19,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: 'https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png',
-    badge: 'https://pub-c35a446ba9db4c89b71a674f0248f02a.r2.dev/Fuad%20Editing%20Zone%20Assets/ICON-01.png'
+    icon: 'https://pub-9f3e455c1df04b5b98df165c6987ccca.r2.dev/Logo/shotabdi%20logo.png',
+    badge: 'https://pub-9f3e455c1df04b5b98df165c6987ccca.r2.dev/Logo/shotabdi%20logo.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

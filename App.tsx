@@ -46,10 +46,6 @@ import {
 import { ROOMS_DATA, SYLHET_RESTAURANTS, SYLHET_ATTRACTIONS, LOGO_ICON_URL, NAV_ITEMS } from './constants';
 import { translations, Language } from './translations';
 
-const API_BASE_URL = window.location.hostname.includes('pages.dev') 
-  ? 'https://ais-pre-blgznhf3uml4ku3wa2twuf-16417103426.asia-southeast1.run.app' 
-  : '';
-
 const RouteMetadata = ({ siteConfig }: { siteConfig: SiteConfig }) => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -386,47 +382,37 @@ const AppContent = () => {
       if (!file) throw new Error("No file selected.");
       
       // 1. Get pre-signed URL from our server
-      console.log("Requesting pre-signed URL...");
-      const response = await fetch(`${API_BASE_URL}/api/upload/presigned`, {
+      const response = await fetch('/api/upload/presigned', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: file.name,
           contentType: file.type
-        }),
-        mode: 'cors'
+        })
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown server error' }));
-        console.error("Server error getting pre-signed URL:", errorData);
-        throw new Error(errorData.error || "Failed to get upload URL");
+        const error = await response.json();
+        throw new Error(error.error || "Failed to get upload URL");
       }
 
-      const { signedUrl, publicUrl } = await response.json();
-      console.log("Got pre-signed URL, starting upload to R2...");
+      const { signedUrl, uploadUrl, publicUrl, useWorker } = await response.json();
 
-      // 2. Upload directly to R2 using the pre-signed URL
-      const uploadResponse = await fetch(signedUrl, {
+      // 2. Upload directly to R2 (or via Worker Proxy)
+      const destinationUrl = useWorker ? uploadUrl : signedUrl;
+      const uploadResponse = await fetch(destinationUrl, {
         method: 'PUT',
         body: file,
-        headers: { 'Content-Type': file.type },
-        mode: 'cors'
+        headers: { 'Content-Type': file.type }
       });
 
       if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text().catch(() => 'No error body');
-        console.error("R2 Upload failed with status:", uploadResponse.status, errorText);
-        throw new Error(`Upload to storage failed: ${uploadResponse.statusText}`);
+        throw new Error("Failed to upload to storage");
       }
 
-      console.log("Upload successful:", publicUrl);
       return publicUrl;
     } catch (error: any) {
-      console.error("Detailed Upload Error:", error);
-      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-        throw new Error("Network error: Please check your internet connection and CORS settings.");
-      }
+      console.error("R2 Upload Error:", error);
       throw error;
     }
   };
@@ -438,7 +424,7 @@ const AppContent = () => {
       const url = new URL(imageUrl);
       const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
 
-      const response = await fetch(`${API_BASE_URL}/api/upload/delete`, {
+      const response = await fetch('/api/upload/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key })
@@ -495,7 +481,6 @@ const AppContent = () => {
                 src={currentLogo} 
                 className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform ${isLogoSpinning ? 'animate-spin-once' : ''} ${isEditMode ? 'cursor-pointer hover:opacity-50' : ''}`} 
                 alt="Logo"
-                referrerPolicy="no-referrer"
                 onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleLogoEdit(); } }}
               />
               {isEditMode && isAdmin && (
@@ -678,12 +663,7 @@ const AppContent = () => {
             <div className="flex items-center gap-2 md:gap-4">
               <div className="relative" ref={dropdownRef}>
                 <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
-                  <img 
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
-                    className="w-full h-full object-cover" 
-                    alt="Profile"
-                    referrerPolicy="no-referrer"
-                  />
+                  <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="Profile" />
                 </button>
                 {isProfileMenuOpen && (
                   <div className="absolute right-0 top-full mt-4 w-72 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
