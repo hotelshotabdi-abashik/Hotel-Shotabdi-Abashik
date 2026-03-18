@@ -46,7 +46,7 @@ export const db = getDatabase(app, databaseURL);
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
-export const VAPID_KEY = "BMYSFivUjrkvc9y3v3f5xulgbXY0wXtPKl7HSco62Vky4icfBopDXzWBXZ73x2n3T5R_2iX5JoiCz3fY7yUCemk";
+export const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "BMYSFivUjrkvc9y3v3f5xulgbXY0wXtPKl7HSco62Vky4icfBopDXzWBXZ73x2n3T5R_2iX5JoiCz3fY7yUCemk";
 
 // Check if current user is Admin (Owner only)
 export const isAdminUser = async (uid: string) => {
