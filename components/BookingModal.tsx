@@ -170,7 +170,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
 
   const modalContent = (
     <>
-      <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4 overflow-hidden">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
         <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
         
         <div className="relative bg-white w-full max-w-4xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-fade-in">

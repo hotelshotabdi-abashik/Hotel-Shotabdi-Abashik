@@ -754,7 +754,7 @@ const AppContent = () => {
         )}
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         {isProfileLoading && (
-          <div className="fixed inset-0 z-[2000] bg-white flex items-center justify-center">
+          <div className="fixed inset-0 z-[10002] bg-white flex items-center justify-center">
             <div className="text-center">
                <Loader2 className="animate-spin text-hotel-primary mx-auto mb-4" size={48} />
                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Synchronizing Registry...</p>

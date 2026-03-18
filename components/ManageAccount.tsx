@@ -121,7 +121,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
 
   return (
     <>
-      <div className="fixed inset-0 z-[1100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
         <div className="bg-white/95 backdrop-blur-2xl w-full max-w-2xl rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col max-h-[90vh] border border-white/40 ring-1 ring-black/5">
           
           <div className="p-8 md:p-10 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/40">
@@ -299,7 +299,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
 
       {/* Lightbox for NID */}
       {isLightboxOpen && nidPreview && (
-        <div className="fixed inset-0 z-[250] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4">
             <X size={32} />
           </button>

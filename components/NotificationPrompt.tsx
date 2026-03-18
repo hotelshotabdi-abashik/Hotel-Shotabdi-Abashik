@@ -9,7 +9,7 @@ interface Props {
 
 const NotificationPrompt: React.FC<Props> = ({ onAccept, onDecline }) => {
   return (
-    <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl border border-gray-100 ring-1 ring-black/5">
         <div className="bg-hotel-primary p-8 text-white text-center relative">
           <button onClick={onDecline} className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors">

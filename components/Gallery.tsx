@@ -205,11 +205,11 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
 
       {/* Lightbox Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-10">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 md:p-10">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setSelectedItem(null)}></div>
           <button 
             onClick={() => setSelectedItem(null)}
-            className="absolute top-6 right-6 md:top-10 md:right-10 z-[310] p-4 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
+            className="absolute top-6 right-6 md:top-10 md:right-10 z-[10001] p-4 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
           >
             <X size={24} />
           </button>

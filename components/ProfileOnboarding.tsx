@@ -99,7 +99,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
 
   return (
     <>
-      <div className="fixed inset-0 z-[200] bg-white overflow-y-auto">
+      <div className="fixed inset-0 z-[9999] bg-white overflow-y-auto">
         <div className="max-w-xl mx-auto px-6 py-12 md:py-20 animate-fade-in">
           <div className="text-center mb-10">
             <div className="w-20 h-20 bg-hotel-primary/10 rounded-[2rem] flex items-center justify-center text-hotel-primary mx-auto mb-6 shadow-inner ring-1 ring-hotel-primary/20">
@@ -209,7 +209,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
       </div>
 
       {isLightboxOpen && nidPreview && (
-        <div className="fixed inset-0 z-[250] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
           <button className="absolute top-10 right-10 text-white/60 hover:text-white p-4">
             <X size={32} />
           </button>

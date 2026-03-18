@@ -267,7 +267,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], headerImage, isEditMode
       </div>
 
       {activeSettingsId && isEditMode && activeOffer && (
-        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in overflow-hidden">
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in overflow-hidden">
           <div className="bg-white/95 backdrop-blur-3xl w-full max-w-5xl rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col max-h-[90vh] border border-white/20 overflow-hidden ring-1 ring-white/10">
             <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <div className="flex items-center gap-5">

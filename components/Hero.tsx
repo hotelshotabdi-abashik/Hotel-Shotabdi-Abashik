@@ -339,7 +339,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
 
         {/* Mobile Filter Modal - Keep as fallback or for advanced filters if needed */}
         {showMobileFilters && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center px-6 lg:hidden">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-6 lg:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)}></div>
             <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
