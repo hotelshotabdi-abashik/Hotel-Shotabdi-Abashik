@@ -130,21 +130,6 @@ const NearbyRestaurants: React.FC<Props> = ({ restaurants = [], headerImage, isE
 
   return (
     <section id="restaurants" className="max-w-7xl mx-auto px-4 pt-8 md:pt-12 pb-12 md:pb-20 w-full animate-fade-in scroll-mt-24">
-      {headerImage && (
-        <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden mb-12 group">
-          <img src={headerImage} className="w-full h-full object-cover" alt="Dining Header" referrerPolicy="no-referrer" />
-          <div className="absolute inset-0 bg-black/20"></div>
-          {isEditMode && (
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
-                <input type="file" className="hidden" onChange={handleHeaderImageChange} />
-                {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
-                <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
-              </label>
-            </div>
-          )}
-        </div>
-      )}
       <div className="mb-12 text-center flex flex-col items-center">
         <span className="text-hotel-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3 block">{t.sylhetDining}</span>
         <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 mb-4 tracking-tighter">{t.restaurantsTitle}</h2>

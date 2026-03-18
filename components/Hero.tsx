@@ -33,7 +33,6 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
     return String(num).split('').map(char => t.numbers[char as keyof typeof t.numbers] || char).join('');
   };
 
-  const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('hotel');
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id || '');
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
@@ -117,26 +116,6 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && onImageUpload) {
-      setIsUploading(true);
-      try {
-        const oldImage = config.backgroundImage;
-        const url = await onImageUpload(file);
-        
-        // Delete old image if it was an R2 URL
-        if (oldImage && onImageDelete && oldImage.includes('r2.dev')) {
-          await onImageDelete(oldImage);
-        }
-
-        onUpdate?.({ backgroundImage: url });
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  };
-
   const handleSearch = () => {
     // If we are on the home page, just scroll. Otherwise navigate.
     const isHome = window.location.pathname === '/';
@@ -186,29 +165,8 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   return (
     <section 
       id="hero-section" 
-      className="relative min-h-[480px] md:h-[600px] flex flex-col items-center justify-center px-4 md:px-10 w-full pt-6 md:pt-0 pb-0 overflow-hidden"
+      className="relative min-h-[480px] md:min-h-[600px] flex flex-col items-center justify-center px-4 md:px-10 w-full pt-6 md:pt-0 pb-0 bg-gray-50/50"
     >
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={config.backgroundImage || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} 
-          className="w-full h-full object-cover" 
-          alt="Hero Background"
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-white/80 md:bg-white/60 backdrop-blur-[2px]"></div>
-      </div>
-
-      {isEditMode && (
-        <div className="absolute top-4 right-4 md:right-10 z-20">
-          <label className="flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-2xl border border-gray-100 cursor-pointer hover:bg-white transition-all transform hover:scale-105 active:scale-95">
-            <input type="file" className="hidden" onChange={handleImageChange} />
-            {isUploading ? <Loader2 className="animate-spin text-hotel-primary" size={14} /> : <ImageIcon size={14} className="text-hotel-primary" />}
-            <span className="text-[9px] font-black uppercase tracking-widest text-gray-700">Change Hero Image</span>
-          </label>
-        </div>
-      )}
-
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
         <div className="text-center mb-6">

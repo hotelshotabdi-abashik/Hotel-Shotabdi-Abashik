@@ -25,23 +25,23 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', 
   ];
 
   return (
-    <div className="max-w-4xl mx-auto min-h-[calc(100vh-88px)] flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full bg-white rounded-[3rem] shadow-[0_30px_100px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden animate-scale-in">
+    <div className="max-w-4xl mx-auto flex flex-col items-center justify-center px-6 py-6 md:py-10">
+      <div className="w-full bg-white rounded-[2.5rem] shadow-[0_20px_80px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden animate-scale-in">
         {/* Header */}
-        <div className="p-10 md:p-16 text-center border-b border-gray-50 bg-gray-50/30">
-          <div className="w-24 h-24 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 flex items-center justify-center p-5 mx-auto mb-8 animate-bounce-slow">
+        <div className="p-8 md:p-12 text-center border-b border-gray-50 bg-gray-50/30">
+          <div className="w-20 h-20 bg-white rounded-[2rem] shadow-xl border border-gray-50 flex items-center justify-center p-4 mx-auto mb-6 animate-bounce-slow">
             <img src={logoUrl} className="w-full h-full object-contain" alt="Logo" referrerPolicy="no-referrer" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-black text-gray-900 tracking-tight mb-4">
+          <h2 className="text-2xl md:text-3xl font-serif font-black text-gray-900 tracking-tight mb-3">
             {language === 'EN' ? 'Help Desk & Support' : 'হেল্প ডেস্ক ও সাপোর্ট'}
           </h2>
-          <p className="text-sm text-gray-500 font-medium max-w-md mx-auto leading-relaxed">
+          <p className="text-[11px] text-gray-500 font-medium max-w-md mx-auto leading-relaxed">
             {language === 'EN' 
               ? 'Our dedicated team is available 24/7 to assist you with your stay, bookings, and inquiries.' 
               : 'আমাদের নিবেদিত দল আপনার অবস্থান, বুকিং এবং জিজ্ঞাসায় সহায়তা করার জন্য ২৪/৭ উপলব্ধ।'}
           </p>
           
-          <div className="flex flex-wrap justify-center gap-4 mt-8">
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-100 shadow-sm">
               <Clock size={14} className="text-hotel-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">24/7 Available</span>
@@ -54,19 +54,19 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', 
         </div>
 
         {/* Contact Cards */}
-        <div className="p-10 md:p-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6">
           {contactNumbers.map((contact, idx) => (
-            <div key={idx} className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100 hover:border-hotel-primary/20 transition-all group">
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-hotel-primary shadow-sm border border-gray-50">
-                  <Headphones size={20} />
+            <div key={idx} className="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 hover:border-hotel-primary/20 transition-all group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-hotel-primary shadow-sm border border-gray-50">
+                  <Headphones size={18} />
                 </div>
-                <span className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.2em] bg-hotel-primary/5 px-3 py-1 rounded-full">
+                <span className="text-[8px] font-black text-hotel-primary uppercase tracking-[0.2em] bg-hotel-primary/5 px-2 py-1 rounded-full">
                   {language === 'EN' ? contact.labelEn : contact.labelBn}
                 </span>
               </div>
               
-              <h3 className="text-2xl font-black text-gray-900 mb-8 tracking-tight font-mono">
+              <h3 className="text-xl font-black text-gray-900 mb-6 tracking-tight font-mono">
                 {contact.number}
               </h3>
 

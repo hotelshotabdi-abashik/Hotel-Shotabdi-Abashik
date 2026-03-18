@@ -182,26 +182,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], headerImage, isBookingD
 
   return (
     <section id="rooms" className="max-w-7xl mx-auto pt-10 md:pt-20 pb-20 md:pb-28 px-4 md:px-6 bg-white w-full scroll-mt-24">
-      {headerImage && (
-        <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden mb-12 group shadow-xl">
-          <img src={headerImage} className="w-full h-full object-cover" alt="Rooms Header" referrerPolicy="no-referrer" />
-          <div className="absolute inset-0 bg-black/20"></div>
-          {isEditMode && (
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
-                <input type="file" className="hidden" onChange={handleHeaderImageChange} />
-                {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
-                <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
-              </label>
-            </div>
-          )}
-        </div>
-      )}
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4">
         <header className="max-w-3xl text-center md:text-left mx-auto md:mx-0">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-3">
-            <Zap size={10} fill="currentColor" /> {t.premierUnits}
-          </div>
           <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter mb-4">{t.ourLuxuryRooms}</h2>
           <p className="text-gray-400 text-xs md:text-lg leading-relaxed font-light px-2 md:px-0">
             Handpicked residential comfort at <span className="text-hotel-primary font-black underline decoration-1 underline-offset-4">{t.exclusiveRates}</span>.

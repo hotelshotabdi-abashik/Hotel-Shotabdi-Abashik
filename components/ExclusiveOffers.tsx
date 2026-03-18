@@ -162,23 +162,6 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], headerImage, isEditMode
 
   return (
     <section id="offers" className="py-24 bg-white overflow-hidden relative scroll-mt-24">
-      {headerImage && (
-        <div className="max-w-7xl mx-auto px-6 mb-12">
-          <div className="relative w-full h-48 md:h-80 rounded-[2.5rem] overflow-hidden group shadow-xl">
-            <img src={headerImage} className="w-full h-full object-cover" alt="Offers Header" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 bg-black/20"></div>
-            {isEditMode && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
-                  <input type="file" className="hidden" onChange={handleHeaderImageChange} />
-                  {isHeaderUploading ? <RefreshCw size={18} className="animate-spin text-hotel-primary" /> : <Camera size={18} className="text-hotel-primary" />}
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change Section Image</span>
-                </label>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-end mb-16">
           <div className="max-w-xl">
