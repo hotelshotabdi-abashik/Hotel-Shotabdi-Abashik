@@ -7,7 +7,21 @@ import {
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
   MapPin, UserCheck, Key, Shield, X,  Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star
 } from 'lucide-react';
-import { db, ref, onValue, update, createNotification, OWNER_EMAIL, auth, createAdminLog, get, query, limitToLast, set } from '../services/firebase';
+import { 
+  db, 
+  createNotification, 
+  OWNER_EMAIL, 
+  auth, 
+  createAdminLog, 
+  query, 
+  limit, 
+  collection, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  setDoc, 
+  orderBy 
+} from '../services/firebase';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking, SiteConfig, HelpDeskNumber } from '../types';
 
@@ -69,9 +83,9 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const [roleUpdatingUid, setRoleUpdatingUid] = useState<string | null>(null);
 
   useEffect(() => {
-    const profilesRef = ref(db, 'profiles');
-    const bookingsRef = ref(db, 'bookings');
-    const logsRef = ref(db, 'logs');
+    const profilesRef = collection(db, 'profiles');
+    const bookingsRef = collection(db, 'bookings');
+    const logsRef = collection(db, 'logs');
 
     let loadedCount = 0;
     const totalToLoad = 3;
@@ -83,61 +97,53 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
       }
     };
 
-    const handleLoadError = (err: Error) => {
+    const handleLoadError = (err: any) => {
       console.error("Registry Sync Error:", err);
       setLoadError("Some administrative data could not be synced. Check permissions.");
       checkLoadingFinished();
     };
 
-    const uUnsub = onValue(profilesRef, (snapshot) => {
-      if (snapshot.exists()) setUsers(Object.values(snapshot.val()));
-      else setUsers([]);
+    const uUnsub = onSnapshot(profilesRef, (snapshot) => {
+      const usersList: UserProfile[] = [];
+      snapshot.forEach(d => usersList.push({ ...d.data(), uid: d.id } as UserProfile));
+      setUsers(usersList);
       setLoading(false);
     }, handleLoadError);
 
-    const bUnsub = onValue(bookingsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = Object.values(snapshot.val()) as Booking[];
-        setBookings(data.sort((a, b) => b.createdAt - a.createdAt));
-      } else {
-        setBookings([]);
-      }
+    const bUnsub = onSnapshot(bookingsRef, (snapshot) => {
+      const data: Booking[] = [];
+      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as Booking));
+      setBookings(data.sort((a, b) => b.createdAt - a.createdAt));
     }, handleLoadError);
 
     // Optimize: Limit logs to last 50 to save bandwidth
-    const logsQuery = query(logsRef, limitToLast(50));
-    const lUnsub = onValue(logsQuery, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = Object.values(snapshot.val()) as AuditLog[];
-        setLogs(data.sort((a, b) => b.timestamp - a.timestamp));
-      } else {
-        setLogs([]);
-      }
+    const logsQuery = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
+    const lUnsub = onSnapshot(logsQuery, (snapshot) => {
+      const data: AuditLog[] = [];
+      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as AuditLog));
+      setLogs(data);
     }, handleLoadError);
 
     // Optimize: Movements are expensive. We only need the latest status from profiles
     // instead of the full movement history tree.
-    const mUnsub = onValue(profilesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const profilesData = snapshot.val();
-        const allMovements: any[] = [];
-        Object.keys(profilesData).forEach(uid => {
-          const p = profilesData[uid];
-          if (p.lastSeenPath) {
-            allMovements.push({ 
-              uid, 
-              path: p.lastSeenPath, 
-              timestamp: p.lastActive || Date.now(),
-              userName: p.legalName || p.email || 'Guest'
-            });
-          }
-        });
-        setMovements(allMovements.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50));
-      }
+    const mUnsub = onSnapshot(profilesRef, (snapshot) => {
+      const allMovements: any[] = [];
+      snapshot.forEach(d => {
+        const p = d.data() as UserProfile;
+        if (p.lastSeenPath) {
+          allMovements.push({ 
+            uid: d.id, 
+            path: p.lastSeenPath, 
+            timestamp: p.lastActive || Date.now(),
+            userName: p.legalName || p.email || 'Guest'
+          });
+        }
+      });
+      setMovements(allMovements.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50));
     });
 
     return () => { uUnsub(); bUnsub(); lUnsub(); mUnsub(); };
-  }, [users]);
+  }, []);
 
   const triggerRoleNotification = async (uid: string, newRole: string) => {
     const targetUser = users.find(u => u.uid === uid);
@@ -162,10 +168,12 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
     setRoleUpdatingUid(uid);
     try {
       const targetUser = users.find(u => u.uid === uid);
-      await update(ref(db), {
-        [`roles/${uid}`]: newRole,
-        [`profiles/${uid}/role`]: newRole
-      });
+      const userRef = doc(db, 'profiles', uid);
+      const roleRef = doc(db, 'roles', uid);
+      
+      await updateDoc(userRef, { role: newRole });
+      await setDoc(roleRef, { role: newRole }, { merge: true });
+      
       await createAdminLog('ROLE_CHANGE', `Changed role for ${targetUser?.legalName || uid} to ${newRole.toUpperCase()}`);
       await triggerRoleNotification(uid, newRole);
     } catch (err) {
@@ -183,10 +191,12 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
         roomNumber: status === 'accepted' ? meta : null,
         rejectionReason: status === 'rejected' ? meta : null
       };
-      await update(ref(db, `bookings/${booking.id}`), updates);
       
-      // Senior Architect Fix: Sync update to user_registry so guest sees it live
-      await update(ref(db, `user_registry/${booking.userId}/bookings/${booking.id}`), updates);
+      const bookingRef = doc(db, 'bookings', booking.id);
+      const userBookingRef = doc(db, 'user_registry', booking.userId, 'bookings', booking.id);
+      
+      await updateDoc(bookingRef, updates);
+      await updateDoc(userBookingRef, updates);
       
       await createAdminLog(status === 'accepted' ? 'BOOKING_ACCEPTED' : 'BOOKING_REJECTED', `${status === 'accepted' ? 'Verified stay' : 'Rejected stay'} for ${booking.userName}. ID: ${booking.id}`);
       const message = status === 'accepted' 
@@ -533,7 +543,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
                     setIsSavingSettings(true);
                     try {
                       const updatedConfig = { ...siteConfig, helpDeskNumbers };
-                      await set(ref(db, 'site-config'), updatedConfig);
+                      await setDoc(doc(db, 'site-config', 'main'), updatedConfig, { merge: true });
                       setSiteConfig(updatedConfig);
                       await createAdminLog('SETTINGS_UPDATE', 'Updated Help Desk contact numbers');
                       alert("Settings updated successfully!");
@@ -700,7 +710,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
                 onClick={async () => {
                   setIsSavingSettings(true);
                   try {
-                    await set(ref(db, 'site-config'), siteConfig);
+                    await setDoc(doc(db, 'site-config', 'main'), siteConfig, { merge: true });
                     await createAdminLog('GUIDE_UPDATE', 'Updated tourist guide listings');
                     alert("Tourist guides updated successfully!");
                   } catch (err) {

@@ -1,9 +1,23 @@
-
-// Senior Architect Note for Fuad Ahmed: 
-// Acknowledging Fuad as the lead developer building this site for the hotel owner.
-// This file manages the core registry synchronization and identity vault for Hotel Shotabdi Residential.
-
 import { initializeApp } from "firebase/app";
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  addDoc, 
+  onSnapshot, 
+  deleteDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  serverTimestamp,
+  getDocs,
+  writeBatch,
+  increment
+} from "firebase/firestore";
 import { 
   getAuth, 
   onAuthStateChanged, 
@@ -12,286 +26,275 @@ import {
   signInWithPopup,
   signInWithCredential,
 } from "firebase/auth";
-
-// Fix: Using @firebase/database to ensure proper modular function resolution in environments where top-level exports might be masked
-import { 
-  getDatabase, 
-  ref, 
-  set, 
-  get, 
-  update,
-  push,
-  onValue,
-  remove,
-  serverTimestamp,
-  onDisconnect,
-  query,
-  limitToLast,
-  orderByChild
-} from "@firebase/database";
-
-// Fix: Using @firebase/messaging to ensure proper modular function resolution and background messaging support
-import { getMessaging, getToken, onMessage } from "@firebase/messaging";
-
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import firebaseConfig from "../firebase-applet-config.json";
+
+export { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  addDoc, 
+  onSnapshot, 
+  deleteDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  serverTimestamp,
+  getDocs,
+  writeBatch,
+  increment,
+  onAuthStateChanged, 
+  signOut, 
+  GoogleAuthProvider, 
+  signInWithPopup,
+  signInWithCredential,
+};
 
 // Senior Architect Note: Using the newly provisioned project 'Shotabdi Abashik Test'
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-
-// Realtime Database URL for the new project
-const databaseURL = `https://${firebaseConfig.projectId}-default-rtdb.asia-southeast1.firebasedatabase.app/`;
-export const db = getDatabase(app, databaseURL);
+export const db = getFirestore(app);
 
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 export const OWNER_EMAIL = "hotelshotabdiabashik@gmail.com";
 export const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "BMYSFivUjrkvc9y3v3f5xulgbXY0wXtPKl7HSco62Vky4icfBopDXzWBXZ73x2n3T5R_2iX5JoiCz3fY7yUCemk";
 
+// Error Handling Spec for Firestore Permissions
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+export const playNotificationSound = () => {
+  try {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {}
+};
+
 // Check if current user is Admin (Owner only)
 export const isAdminUser = async (uid: string) => {
-  const roleRef = ref(db, `roles/${uid}`);
-  const snapshot = await get(roleRef);
-  return snapshot.exists() && snapshot.val() === 'owner';
+  try {
+    const roleDoc = await getDoc(doc(db, "roles", uid));
+    return roleDoc.exists() && roleDoc.data()?.role === 'owner';
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `roles/${uid}`);
+    return false;
+  }
 };
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Track Online Status
-export const trackPresence = (uid: string) => {
-  const statusRef = ref(db, `profiles/${uid}/onlineStatus`);
-  set(statusRef, true);
-  onDisconnect(statusRef).set(false);
-};
-
-// Notification Sound Utility
-export const playNotificationSound = () => {
-  try {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audio.volume = 0.5;
-    audio.play().catch(e => console.warn("Audio play blocked by browser policy"));
-  } catch (e) {
-    console.error("Audio error", e);
-  }
-};
-
-// Track User Movement (Optimized for Free Plan)
-export const trackUserMovement = (uid: string, path: string) => {
+// Track User Movement (Optimized for Firestore)
+export const trackUserMovement = async (uid: string, path: string) => {
   const user = auth.currentUser;
   if (!user) return;
 
-  // Update last active status (1 write instead of 2+push)
-  update(ref(db, `profiles/${uid}`), {
-    lastSeenPath: path,
-    lastActive: serverTimestamp(),
-    onlineStatus: true
-  });
+  try {
+    await updateDoc(doc(db, "profiles", uid), {
+      lastSeenPath: path,
+      lastActive: serverTimestamp(),
+      onlineStatus: true
+    });
 
-  // Only record detailed movement if it's the owner and only keep last 50
-  if (user.email === OWNER_EMAIL) {
-    const movementRef = ref(db, `analytics/movements/${uid}`);
-    const newMoveRef = push(movementRef);
-    set(newMoveRef, {
-      path,
-      timestamp: serverTimestamp()
-    });
-    
-    // Cleanup: Keep only last 50 movements
-    get(query(movementRef, limitToLast(50))).then(snap => {
-      if (snap.exists()) {
-        const data = snap.val();
-        const keys = Object.keys(data);
-        if (keys.length >= 50) {
-          // This is a bit expensive for every move, so we only do it if count is high
-          // But for now let's just keep it simple
-        }
-      }
-    });
+    if (user.email === OWNER_EMAIL) {
+      await addDoc(collection(db, "analytics", uid, "movements"), {
+        path,
+        timestamp: serverTimestamp()
+      });
+    }
+  } catch (error) {
+    // Silent fail for movement tracking to not interrupt UX
+    console.warn("Movement tracking failed", error);
   }
 };
 
-/**
- * Database Resilience Utility: Cleans up old data to stay within Spark plan limits.
- * Call this on admin login or periodically.
- */
+// Database Resilience Utility: Cleans up old data to stay within Spark plan limits.
 export const cleanupDatabase = async () => {
   if (auth.currentUser?.email !== OWNER_EMAIL) return;
 
   try {
-    const now = Date.now();
-    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
-    const updates: any = {};
-
-    // 1. Cleanup Logs (Keep last 50)
-    const logsRef = ref(db, 'logs');
-    const logsSnap = await get(logsRef);
-    if (logsSnap.exists()) {
-      const logs = logsSnap.val();
-      const keys = Object.keys(logs).sort((a, b) => logs[b].timestamp - logs[a].timestamp);
-      if (keys.length > 50) {
-        keys.slice(50).forEach(key => {
-          updates[`logs/${key}`] = null;
-        });
-      }
+    // Firestore cleanup is more complex due to lack of bulk delete in client SDK
+    // We'll implement a simple version for logs
+    const logsQuery = query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(100));
+    const logsSnap = await getDocs(logsQuery);
+    if (logsSnap.size > 50) {
+      const batch = writeBatch(db);
+      logsSnap.docs.slice(50).forEach(d => batch.delete(d.ref));
+      await batch.commit();
     }
-
-    // 2. Cleanup Analytics (Keep last 100 per user)
-    const analyticsRef = ref(db, 'analytics/movements');
-    const analyticsSnap = await get(analyticsRef);
-    if (analyticsSnap.exists()) {
-      const allMovements = analyticsSnap.val();
-      Object.keys(allMovements).forEach(uid => {
-        const userMoves = allMovements[uid];
-        const keys = Object.keys(userMoves).sort((a, b) => userMoves[b].timestamp - userMoves[a].timestamp);
-        if (keys.length > 100) {
-          keys.slice(100).forEach(key => {
-            updates[`analytics/movements/${uid}/${key}`] = null;
-          });
-        }
-      });
-    }
-
-    // 3. Cleanup old notifications (Older than 30 days)
-    const allNotifsRef = ref(db, 'notifications');
-    const notifsSnap = await get(allNotifsRef);
-    if (notifsSnap.exists()) {
-      const allNotifs = notifsSnap.val();
-      Object.keys(allNotifs).forEach(uid => {
-        Object.keys(allNotifs[uid]).forEach(nid => {
-          if (allNotifs[uid][nid].createdAt < thirtyDaysAgo) {
-            updates[`notifications/${uid}/${nid}`] = null;
-          }
-        });
-      });
-    }
-
-    // 4. Cleanup old messages (Keep last 100 per chat)
-    const allMsgsRef = ref(db, 'help_dex/messages');
-    const msgsSnap = await get(allMsgsRef);
-    if (msgsSnap.exists()) {
-      const allMsgs = msgsSnap.val();
-      Object.keys(allMsgs).forEach(uid => {
-        const chatMsgs = allMsgs[uid];
-        const keys = Object.keys(chatMsgs).sort((a, b) => chatMsgs[b].timestamp - chatMsgs[a].timestamp);
-        if (keys.length > 100) {
-          keys.slice(100).forEach(key => {
-            updates[`help_dex/messages/${uid}/${key}`] = null;
-          });
-        }
-      });
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await update(ref(db), updates);
-    }
-
-    console.log(`Database cleanup completed. Removed ${Object.keys(updates).length} records.`);
+    console.log("Database cleanup completed.");
   } catch (e) {
     console.error("Cleanup failed", e);
   }
 };
 
-// Save User History (Generic utility for Fuad Ahmed)
+// Save User History
 export const saveUserHistory = async (uid: string, type: string, data: any) => {
-  const historyRef = ref(db, `history/${uid}/${type}`);
-  const newEntryRef = push(historyRef);
-  const entry = {
-    ...data,
-    id: newEntryRef.key,
-    timestamp: serverTimestamp()
-  };
-  await set(newEntryRef, entry);
-  
-  // Also sync to user_registry for easy guest access
-  await update(ref(db, `user_registry/${uid}/history/${type}/${newEntryRef.key}`), entry);
-  
-  return newEntryRef.key;
+  try {
+    const historyRef = collection(db, "history", uid, type);
+    const docRef = await addDoc(historyRef, {
+      ...data,
+      timestamp: serverTimestamp()
+    });
+    
+    // Also sync to user_registry
+    await setDoc(doc(db, "user_registry", uid, "history", type, docRef.id), {
+      ...data,
+      id: docRef.id,
+      timestamp: serverTimestamp()
+    });
+    
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, `history/${uid}/${type}`);
+  }
 };
 
-// Save to User Registry (Dedicated node for guest-accessible history)
+// Save to User Registry
 export const saveToRegistry = async (uid: string, path: string, data: any) => {
-  const registryRef = ref(db, `user_registry/${uid}/${path}`);
-  if (path.includes('/')) {
-    // If it's a specific item update
-    await update(registryRef, { ...data, lastUpdated: serverTimestamp() });
-  } else {
-    // If it's a list push
-    const newRef = push(registryRef);
-    await set(newRef, { ...data, id: newRef.key, timestamp: serverTimestamp() });
-    return newRef.key;
-  }
-};
-
-// Fix: Added checkUsernameUnique to verify if a handle is available or owned by the current user
-export const checkUsernameUnique = async (username: string, uid: string) => {
-  const usernameRef = ref(db, `usernames/${username.toLowerCase()}`);
-  const snapshot = await get(usernameRef);
-  if (!snapshot.exists()) return true;
-  return snapshot.val() === uid;
-};
-
-// Fix: Added deleteUserProfile to allow administrative account removal while cleaning up registry handles
-export const deleteUserProfile = async (uid: string) => {
-  const profileRef = ref(db, `profiles/${uid}`);
-  const snap = await get(profileRef);
-  if (snap.exists()) {
-    const data = snap.val();
-    if (data.username) {
-      await remove(ref(db, `usernames/${data.username.toLowerCase()}`));
+  try {
+    const parts = path.split('/');
+    if (parts.length % 2 === 0) {
+      // Specific document update
+      await setDoc(doc(db, "user_registry", uid, ...parts), {
+        ...data,
+        lastUpdated: serverTimestamp()
+      }, { merge: true });
+    } else {
+      // Collection push
+      const docRef = await addDoc(collection(db, "user_registry", uid, ...parts), {
+        ...data,
+        timestamp: serverTimestamp()
+      });
+      return docRef.id;
     }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `user_registry/${uid}/${path}`);
   }
-  await remove(profileRef);
-  await remove(ref(db, `roles/${uid}`));
-  await remove(ref(db, `notifications/${uid}`));
-  await remove(ref(db, `help_dex/messages/${uid}`));
-  await remove(ref(db, `help_dex/active_chats/${uid}`));
-  await remove(ref(db, `user_registry/${uid}`));
-  await remove(ref(db, `history/${uid}`));
 };
 
-/**
- * Registry Audit Log: Tracks critical administrative actions.
- */
+// Check if a handle is available
+export const checkUsernameUnique = async (username: string, uid: string) => {
+  try {
+    const usernameDoc = await getDoc(doc(db, "usernames", username.toLowerCase()));
+    if (!usernameDoc.exists()) return true;
+    return usernameDoc.data()?.uid === uid;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `usernames/${username}`);
+    return false;
+  }
+};
+
+// Delete User Profile
+export const deleteUserProfile = async (uid: string) => {
+  try {
+    const profileDoc = await getDoc(doc(db, "profiles", uid));
+    if (profileDoc.exists()) {
+      const data = profileDoc.data();
+      if (data?.username) {
+        await deleteDoc(doc(db, "usernames", data.username.toLowerCase()));
+      }
+    }
+    await deleteDoc(doc(db, "profiles", uid));
+    await deleteDoc(doc(db, "roles", uid));
+    // Subcollections need recursive deletion which is not supported in client SDK
+    // We'll just delete the main docs for now
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `profiles/${uid}`);
+  }
+};
+
+// Registry Audit Log
 export const createAdminLog = async (action: string, details: string) => {
   const user = auth.currentUser;
   if (!user) return;
   
-  const logRef = push(ref(db, 'logs'));
-  return set(logRef, {
-    id: logRef.key,
-    actorId: user.uid,
-    actorName: user.displayName || user.email,
-    action,
-    details,
-    timestamp: Date.now()
-  });
+  try {
+    await addDoc(collection(db, "logs"), {
+      actorId: user.uid,
+      actorName: user.displayName || user.email,
+      action,
+      details,
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, "logs");
+  }
 };
 
 export const syncUserProfile = async (user: any) => {
   if (!user) return null;
-  const userRef = ref(db, `profiles/${user.uid}`);
-  const roleRef = ref(db, `roles/${user.uid}`);
+  const userRef = doc(db, "profiles", user.uid);
+  const roleRef = doc(db, "roles", user.uid);
   const now = Date.now();
   
   try {
-    const [profileSnap, roleSnap] = await Promise.all([get(userRef), get(roleRef)]);
-    let role = roleSnap.exists() ? roleSnap.val() : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
+    const [profileSnap, roleSnap] = await Promise.all([getDoc(userRef), getDoc(roleRef)]);
+    let role = roleSnap.exists() ? roleSnap.data()?.role : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
     
-    // Senior Architect Fix: Ensure owner role is explicitly set in the roles node
     if (user.email === OWNER_EMAIL) {
       if (role !== 'owner') {
-        await set(roleRef, 'owner');
+        await setDoc(roleRef, { role: 'owner' }, { merge: true });
         role = 'owner';
       }
     } else if (role === 'manager') {
-      // Demote manager to guest as per new requirements
-      await set(roleRef, 'guest');
+      await setDoc(roleRef, { role: 'guest' }, { merge: true });
       role = 'guest';
     }
     
-    trackPresence(user.uid);
-
     if (!profileSnap.exists()) {
       const freshProfile = {
         uid: user.uid,
@@ -308,53 +311,31 @@ export const syncUserProfile = async (user: any) => {
         nidImageUrl: '',
         role: role
       };
-      await set(userRef, freshProfile);
+      await setDoc(userRef, freshProfile);
       return freshProfile;
     } else {
-      const data = profileSnap.val();
-      await update(userRef, { lastLogin: now, role: role });
+      const data = profileSnap.data();
+      await updateDoc(userRef, { lastLogin: now, role: role });
       return { ...data, lastLogin: now, role: role };
     }
   } catch (e) {
+    console.error("Sync profile failed", e);
     return null;
   }
 };
 
 export const createNotification = async (userId: string, notification: any) => {
-  const notificationsRef = ref(db, `notifications/${userId}`);
-  const newNotificationRef = push(notificationsRef);
-  const data = {
-    ...notification,
-    id: newNotificationRef.key,
-    read: false,
-    createdAt: Date.now()
-  };
-  await set(newNotificationRef, data);
-  
-  // Also log to history and registry for persistence
-  await saveUserHistory(userId, 'notifications', { title: notification.title, type: notification.type });
-  await saveToRegistry(userId, `notifications/${newNotificationRef.key}`, data);
-  
-  return data;
-};
-
-export { 
-  onAuthStateChanged, 
-  signOut, 
-  signInWithPopup, 
-  signInWithCredential, 
-  GoogleAuthProvider, 
-  ref, 
-  get, 
-  set, 
-  update, 
-  push,
-  remove,
-  onValue,
-  serverTimestamp,
-  onMessage,
-  onDisconnect,
-  query,
-  limitToLast,
-  orderByChild
+  try {
+    const docRef = await addDoc(collection(db, "notifications", userId, "items"), {
+      ...notification,
+      read: false,
+      createdAt: Date.now()
+    });
+    
+    const data = { ...notification, id: docRef.id, read: false, createdAt: Date.now() };
+    await saveUserHistory(userId, 'notifications', { title: notification.title, type: notification.type });
+    return data;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, `notifications/${userId}`);
+  }
 };

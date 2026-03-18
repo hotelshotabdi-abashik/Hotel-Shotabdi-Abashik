@@ -27,15 +27,19 @@ import {
   syncUserProfile,
   OWNER_EMAIL,
   db,
-  ref,
-  onValue,
-  update,
-  get,
+  onSnapshot,
+  doc,
+  collection,
+  updateDoc,
+  getDoc,
   createAdminLog,
   playNotificationSound,
   trackUserMovement,
   query,
-  limitToLast
+  limit,
+  orderBy,
+  where,
+  writeBatch
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Room } from './types';
 import { 
@@ -172,11 +176,11 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    const configRef = ref(db, 'site-config');
-    const unsubscribe = onValue(configRef, (snapshot) => {
+    const configRef = doc(db, 'site-config', 'main');
+    const unsubscribe = onSnapshot(configRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.val();
-        setSiteConfig(prev => !isSaving ? { ...prev, ...data } : prev);
+        const data = snapshot.data();
+        setSiteConfig(prev => !isSaving ? { ...prev, ...data } : prev as SiteConfig);
       }
     });
     return () => unsubscribe();
@@ -190,25 +194,21 @@ const AppContent = () => {
 
   useEffect(() => {
     if (!user) { setNotifications([]); return; }
-    const notificationsRef = ref(db, `notifications/${user.uid}`);
+    const notificationsRef = collection(db, 'notifications', user.uid, 'items');
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(10));
     let initialLoad = true;
-    const unsub = onValue(notificationsRef, (snap) => {
-      if (snap.exists()) {
-        const list = Object.values(snap.val()) as AppNotification[];
-        const sorted = list.sort((a, b) => b.createdAt - a.createdAt);
-        
-        // Play sound for new unread notifications after initial load
-        if (!initialLoad) {
-          const hasNewUnread = sorted.some(n => !n.read && n.createdAt > (notifications[0]?.createdAt || 0));
-          if (hasNewUnread) playNotificationSound();
-        }
-        
-        setNotifications(sorted);
-        initialLoad = false;
-      } else {
-        setNotifications([]);
-        initialLoad = false;
+    const unsub = onSnapshot(q, (snap) => {
+      const list: AppNotification[] = [];
+      snap.forEach(d => list.push({ ...d.data(), id: d.id } as AppNotification));
+      
+      // Play sound for new unread notifications after initial load
+      if (!initialLoad) {
+        const hasNewUnread = list.some(n => !n.read && n.createdAt > (notifications[0]?.createdAt || 0));
+        if (hasNewUnread) playNotificationSound();
       }
+      
+      setNotifications(list);
+      initialLoad = false;
     });
     return () => unsub();
   }, [user]);
@@ -219,16 +219,12 @@ const AppContent = () => {
     
     if (isAdmin) {
       // Admin listens to new bookings
-      const bookingsRef = ref(db, 'bookings');
-      const unsubBookings = onValue(bookingsRef, (snap) => {
-        if (snap.exists()) {
-          const bookingsList = Object.values(snap.val()) as any[];
-          const pending = bookingsList.filter(b => b.status === 'pending').length;
-          if (pending > pendingBookingsCount) playNotificationSound();
-          setPendingBookingsCount(pending);
-        } else {
-          setPendingBookingsCount(0);
-        }
+      const bookingsRef = collection(db, 'bookings');
+      const q = query(bookingsRef, where('status', '==', 'pending'));
+      const unsubBookings = onSnapshot(q, (snap) => {
+        const pending = snap.size;
+        if (pending > pendingBookingsCount) playNotificationSound();
+        setPendingBookingsCount(pending);
       });
 
       return () => { unsubBookings(); };
@@ -351,7 +347,8 @@ const AppContent = () => {
 
       const cleanConfig = sanitizeKeys(JSON.parse(safeStringify(finalConfig)));
       
-      await update(ref(db), { 'site-config': { ...cleanConfig, lastUpdated: Date.now() } });
+      const configRef = doc(db, 'site-config', 'main');
+      await updateDoc(configRef, { ...cleanConfig, lastUpdated: Date.now() });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
       setIsEditMode(false);
       alert("Update Success!");
@@ -624,9 +621,14 @@ const AppContent = () => {
                   {unreadCount > 0 && (
                     <button 
                       onClick={async () => {
-                        const updates: any = {};
-                        notifications.forEach(n => { if (!n.read) updates[`notifications/${user.uid}/${n.id}/read`] = true; });
-                        await update(ref(db), updates);
+                        const batch = writeBatch(db);
+                        notifications.forEach(n => { 
+                          if (!n.read) {
+                            const nRef = doc(db, 'notifications', user.uid, 'items', n.id);
+                            batch.update(nRef, { read: true });
+                          }
+                        });
+                        await batch.commit();
                       }}
                       className="text-[8px] font-black text-hotel-primary uppercase tracking-widest hover:underline"
                     >
@@ -647,7 +649,7 @@ const AppContent = () => {
                           key={n.id} 
                           className={`p-4 rounded-xl transition-all border ${n.read ? 'bg-white border-transparent' : 'bg-hotel-primary/5 border-hotel-primary/10'}`}
                           onClick={async () => {
-                            if (!n.read) await update(ref(db, `notifications/${user.uid}/${n.id}`), { read: true });
+                            if (!n.read) await updateDoc(doc(db, 'notifications', user.uid, 'items', n.id), { read: true });
                             if (n.link) navigate(n.link);
                           }}
                         >
@@ -753,14 +755,6 @@ const AppContent = () => {
           </div>
         )}
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-        {isProfileLoading && (
-          <div className="fixed inset-0 z-[10002] bg-white flex items-center justify-center">
-            <div className="text-center">
-               <Loader2 className="animate-spin text-hotel-primary mx-auto mb-4" size={48} />
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Synchronizing Registry...</p>
-            </div>
-          </div>
-        )}
         {isProfileIncomplete && <ProfileOnboarding user={user} onComplete={() => loadProfile(user)} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />}
         {profile && isManageAccountOpen && <ManageAccount profile={profile} onClose={() => setIsManageAccountOpen(false)} onUpdate={() => loadProfile(user)} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />}
         {selectedRoomToBook && profile && <BookingModal room={selectedRoomToBook} profile={profile} activeDiscount={0} onClose={() => setSelectedRoomToBook(null)} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />}

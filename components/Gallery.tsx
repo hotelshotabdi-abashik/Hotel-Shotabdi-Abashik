@@ -5,8 +5,15 @@ import {
   Loader2, Plus, X, Maximize2, CheckCircle2
 } from 'lucide-react';
 import { 
-  db, auth, ref, onValue, push, set, remove, 
-  OWNER_EMAIL, get 
+  db, 
+  auth, 
+  OWNER_EMAIL,
+  collection,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  doc,
+  setDoc
 } from '../services/firebase';
 import { GalleryItem } from '../types';
 import { translations, Language } from '../translations';
@@ -30,21 +37,18 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const galleryRef = ref(db, 'gallery');
+    const galleryRef = collection(db, 'gallery');
     
     // Fallback timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       setLoading(false);
     }, 5000);
 
-    const unsub = onValue(galleryRef, (snapshot) => {
+    const unsub = onSnapshot(galleryRef, (snapshot) => {
       clearTimeout(timeout);
-      if (snapshot.exists()) {
-        const data = Object.values(snapshot.val()) as GalleryItem[];
-        setItems(data.sort((a, b) => b.createdAt - a.createdAt));
-      } else {
-        setItems([]);
-      }
+      const data: GalleryItem[] = [];
+      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as GalleryItem));
+      setItems(data.sort((a, b) => b.createdAt - a.createdAt));
       setLoading(false);
     }, (error) => {
       console.error("Gallery fetch error:", error);
@@ -67,16 +71,15 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
       const url = await onImageUpload(file);
       const isVideo = file.type.startsWith('video/');
       
-      const newItemRef = push(ref(db, 'gallery'));
-      const newItem: GalleryItem = {
-        id: newItemRef.key!,
+      const galleryRef = collection(db, 'gallery');
+      const docRef = await addDoc(galleryRef, {
         url,
         type: isVideo ? 'video' : 'image',
         createdAt: Date.now(),
         title: file.name
-      };
+      });
       
-      await set(newItemRef, newItem);
+      // Update with id if needed, but Firestore id is already in docRef.id
     } catch (error) {
       console.error("Upload failed", error);
       alert("Upload failed. Please try again.");
@@ -95,8 +98,8 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
         await onImageDelete(item.url);
       }
       
-      // 2. Delete from Realtime Database
-      await remove(ref(db, `gallery/${item.id}`));
+      // 2. Delete from Firestore
+      await deleteDoc(doc(db, 'gallery', item.id));
     } catch (error) {
       console.error("Delete failed", error);
     }

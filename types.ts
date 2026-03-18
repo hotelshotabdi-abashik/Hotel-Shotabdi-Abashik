@@ -136,6 +136,8 @@ export interface UserProfile {
   role?: 'guest' | 'staff' | 'manager' | 'owner';
   onlineStatus?: boolean;
   isTyping?: boolean;
+  lastSeenPath?: string;
+  lastActive?: any;
 }
 
 export interface AppNotification {

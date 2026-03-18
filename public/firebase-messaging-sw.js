@@ -3,13 +3,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "AIzaSyAk6x2Mt9IqmQftA5YI-wBbPEP9KBH2wFQ",
-  authDomain: "hotel-shotabdi.firebaseapp.com",
-  databaseURL: "https://hotel-shotabdi-default-rtdb.asia-southeast1.firebasedatabase.app/",
-  projectId: "hotel-shotabdi",
-  storageBucket: "hotel-shotabdi.firebasestorage.app",
-  messagingSenderId: "682102275681",
-  appId: "1:682102275681:web:f9362e8a87daed0736b420"
+  apiKey: "AIzaSyAXCmORg4CKPQD9Tjlv3zzQ0pPd8Vad6Uk",
+  authDomain: "utility-canto-485622-n5.firebaseapp.com",
+  projectId: "utility-canto-485622-n5",
+  storageBucket: "utility-canto-485622-n5.firebasestorage.app",
+  messagingSenderId: "89561317448",
+  appId: "1:89561317448:web:9fcad6f2bca04d19c0187d"
 });
 
 const messaging = firebase.messaging();

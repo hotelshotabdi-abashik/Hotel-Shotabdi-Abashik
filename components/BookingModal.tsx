@@ -7,7 +7,7 @@ import {
   Clock, User as UserIcon, Phone, MessageSquare, PhoneCall,
   ChevronRight, Maximize2
 } from 'lucide-react';
-import { db, ref, set, get, onValue } from '../services/firebase';
+import { db, collection, onSnapshot, query, where, setDoc, doc } from '../services/firebase';
 import { sendGuestEmail, notifyOwnerOfBooking } from '../services/emailService';
 import { Room, UserProfile, GuestInfo, Booking } from '../types';
 
@@ -54,13 +54,10 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
   });
 
   useEffect(() => {
-    const bookingsRef = ref(db, 'bookings');
-    const unsub = onValue(bookingsRef, (snap) => {
-      if (snap.exists()) {
-        const allBookings = Object.values(snap.val()) as Booking[];
-        const pending = allBookings.some(b => b.userId === profile.uid && b.status === 'pending');
-        setHasExistingPending(pending);
-      }
+    const bookingsRef = collection(db, 'bookings');
+    const q = query(bookingsRef, where('userId', '==', profile.uid), where('status', '==', 'pending'));
+    const unsub = onSnapshot(q, (snap) => {
+      setHasExistingPending(!snap.empty);
     });
     return () => unsub();
   }, [profile.uid]);
@@ -141,10 +138,10 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
         hasEdited: false,
         createdAt: Date.now()
       };
-      await set(ref(db, `bookings/${bookingId}`), bookingData);
+      await setDoc(doc(db, 'bookings', bookingId), bookingData);
       
       // Senior Architect Fix: Sync to user_registry for guest-side persistence
-      await set(ref(db, `user_registry/${profile.uid}/bookings/${bookingId}`), bookingData);
+      await setDoc(doc(db, 'user_registry', profile.uid, 'bookings', bookingId), bookingData);
       
       sendGuestEmail({
         to_name: profile.legalName,

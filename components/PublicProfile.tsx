@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShieldCheck, MapPin, Calendar, Star, Hotel, ArrowRight, Loader2 } from 'lucide-react';
-import { db, ref, get } from '../services/firebase';
+import { db, doc, getDoc } from '../services/firebase';
 import { UserProfile } from '../types';
 import { LOGO_ICON_URL } from '../constants';
 
@@ -14,23 +14,24 @@ const PublicProfile: React.FC = () => {
 
   useEffect(() => {
     // Fetch Global Logo
-    const configRef = ref(db, 'site-config/logoUrl');
-    get(configRef).then(snap => {
-      if (snap.exists()) setGlobalLogo(snap.val());
+    const configRef = doc(db, 'site-config', 'main');
+    getDoc(configRef).then(snap => {
+      if (snap.exists()) setGlobalLogo(snap.data().logoUrl);
     });
 
     if (!username) return;
     
-    const usernamesRef = ref(db, `usernames/${username.toLowerCase()}`);
-    get(usernamesRef).then(async (snap) => {
+    const usernamesRef = doc(db, 'usernames', username.toLowerCase());
+    getDoc(usernamesRef).then(async (snap) => {
       if (snap.exists()) {
-        const uid = snap.val();
-        const profileRef = ref(db, `profiles/${uid}`);
-        const pSnap = await get(profileRef);
+        const uid = snap.data().uid;
+        const profileRef = doc(db, 'profiles', uid);
+        const pSnap = await getDoc(profileRef);
         if (pSnap.exists()) {
-          setProfile(pSnap.val());
+          const data = pSnap.data() as UserProfile;
+          setProfile(data);
           // Update Page Metadata for SEO
-          const name = pSnap.val().legalName || username;
+          const name = data.legalName || username;
           document.title = `${name} | Verified Resident at Hotel Shotabdi Residential Sylhet`;
         }
       }

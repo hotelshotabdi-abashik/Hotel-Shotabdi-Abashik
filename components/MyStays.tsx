@@ -7,7 +7,7 @@ import {
   Eye, Loader2, ArrowRight, X, User, Phone, IdCard, Database, ClipboardCheck,
   CheckCircle2, Printer, MapPin, Clock, Tag, Shield, Receipt, Maximize2
 } from 'lucide-react';
-import { db, auth, ref, onValue } from '../services/firebase';
+import { db, auth, collection, onSnapshot } from '../services/firebase';
 import { Booking, UserProfile } from '../types';
 
 interface MyStaysProps {
@@ -27,15 +27,12 @@ const MyStays: React.FC<MyStaysProps> = ({ profile, logoUrl }) => {
       setLoading(false);
       return;
     }
-    const bookingsRef = ref(db, `user_registry/${user.uid}/bookings`);
-    const unsub = onValue(bookingsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = Object.values(snapshot.val()) as Booking[];
-        const userStays = data.sort((a, b) => b.createdAt - a.createdAt);
-        setBookings(userStays);
-      } else {
-        setBookings([]);
-      }
+    const bookingsRef = collection(db, 'user_registry', user.uid, 'bookings');
+    const unsub = onSnapshot(bookingsRef, (snapshot) => {
+      const data: Booking[] = [];
+      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as Booking));
+      const userStays = data.sort((a, b) => b.createdAt - a.createdAt);
+      setBookings(userStays);
       setLoading(false);
     });
     return () => unsub();
