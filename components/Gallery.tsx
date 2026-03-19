@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Image as ImageIcon, PlayCircle, Upload, Trash2, 
-  Loader2, Plus, X, Maximize2, CheckCircle2
+  Loader2, Plus, X, Maximize2, CheckCircle2,
+  Camera, RefreshCw
 } from 'lucide-react';
 import { 
   db, 
@@ -19,13 +20,15 @@ import { GalleryItem } from '../types';
 import { translations, Language } from '../translations';
 
 interface GalleryProps {
+  headerImage?: string;
   isEditMode?: boolean;
   language: Language;
   onImageUpload?: (file: File) => Promise<string>;
   onImageDelete?: (url: string) => Promise<boolean>;
+  onUpdateHeader?: (url: string) => void;
 }
 
-const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageUpload, onImageDelete }) => {
+const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, language, onImageUpload, onImageDelete, onUpdateHeader }) => {
   const t = translations[language];
   const user = auth.currentUser;
   const isAdmin = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
@@ -33,8 +36,27 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleHeaderImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImageUpload) {
+      setIsHeaderUploading(true);
+      try {
+        if (headerImage && onImageDelete) {
+          await onImageDelete(headerImage);
+        }
+        const url = await onImageUpload(file);
+        onUpdateHeader?.(url);
+      } catch (err: any) {
+        alert(`Upload Failed: ${err.message || 'Ensure file is under 10MB.'}`);
+      } finally {
+        setIsHeaderUploading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const galleryRef = collection(db, 'gallery');
@@ -115,7 +137,7 @@ const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageU
   }
 
   return (
-    <section id="gallery" className="py-20 px-4 md:px-10 bg-white w-full">
+    <section id="gallery" className="py-20 px-4 md:px-10 bg-white w-full scroll-mt-24">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="text-left">

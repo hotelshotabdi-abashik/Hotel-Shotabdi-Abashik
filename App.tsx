@@ -143,15 +143,9 @@ const AppContent = () => {
     hero: {
       title: "24h Residential Service",
       subtitle: "Experience Elite Hospitality in Sylhet",
-      backgroundImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
       buttonText: "Book Now",
       locationLabel: "Sylhet HQ District"
     },
-    roomsHeaderImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
-    offersHeaderImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
-    restaurantsHeaderImage: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80",
-    touristHeaderImage: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80",
-    aboutHeaderImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80",
     rooms: ROOMS_DATA,
     offers: [],
     restaurants: SYLHET_RESTAURANTS,
@@ -735,10 +729,10 @@ const AppContent = () => {
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
             <Route path="/" element={<HomeView siteConfig={siteConfig} isEditMode={isEditMode} language={language} setSiteConfig={setSiteConfig} handleImageUpload={handleImageUpload} handleImageDelete={handleImageDelete} requireAuth={requireAuth} />} />
-            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} headerImage={siteConfig.offersHeaderImage} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onUpdateHeader={(url) => setSiteConfig(prev => ({...prev, offersHeaderImage: url}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} headerImage={siteConfig.roomsHeaderImage} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onUpdateHeader={(url) => setSiteConfig(prev => ({...prev, roomsHeaderImage: url}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
-            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} headerImage={siteConfig.restaurantsHeaderImage} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onUpdateHeader={(url) => setSiteConfig(prev => ({...prev, restaurantsHeaderImage: url}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
-            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} headerImage={siteConfig.touristHeaderImage} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onUpdateHeader={(url) => setSiteConfig(prev => ({...prev, touristHeaderImage: url}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} language={language} siteConfig={siteConfig} />} />
             <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
@@ -789,11 +783,9 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         <div id="offers">
           <ExclusiveOffers 
             offers={siteConfig.offers} 
-            headerImage={siteConfig.offersHeaderImage}
             isEditMode={isEditMode} 
             language={language} 
             onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} 
-            onUpdateHeader={(url: string) => setSiteConfig((prev: any) => ({...prev, offersHeaderImage: url}))}
             onImageUpload={handleImageUpload} 
             onImageDelete={handleImageDelete} 
           />
@@ -804,12 +796,10 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         <div id="rooms">
           <RoomGrid 
             rooms={siteConfig.rooms} 
-            headerImage={siteConfig.roomsHeaderImage}
             onBook={(room: any) => requireAuth(() => {})} 
             isEditMode={isEditMode} 
             language={language} 
             onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} 
-            onUpdateHeader={(url: string) => setSiteConfig((prev: any) => ({...prev, roomsHeaderImage: url}))}
             onImageUpload={handleImageUpload} 
             onImageDelete={handleImageDelete} 
           />
@@ -820,11 +810,9 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         <div id="restaurants">
           <NearbyRestaurants 
             restaurants={siteConfig.restaurants} 
-            headerImage={siteConfig.restaurantsHeaderImage}
             isEditMode={isEditMode} 
             language={language} 
             onUpdate={(res: any) => setSiteConfig((prev: any) => ({...prev, restaurants: res}))} 
-            onUpdateHeader={(url: string) => setSiteConfig((prev: any) => ({...prev, restaurantsHeaderImage: url}))}
             onImageUpload={handleImageUpload} 
             onImageDelete={handleImageDelete} 
           />
@@ -835,11 +823,9 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         <div id="guide">
           <TouristGuide 
             touristGuides={siteConfig.touristGuides} 
-            headerImage={siteConfig.touristHeaderImage}
             isEditMode={isEditMode} 
             language={language} 
             onUpdate={(tg: any) => setSiteConfig((prev: any) => ({...prev, touristGuides: tg}))} 
-            onUpdateHeader={(url: string) => setSiteConfig((prev: any) => ({...prev, touristHeaderImage: url}))}
             onImageUpload={handleImageUpload} 
             onImageDelete={handleImageDelete} 
           />
@@ -851,23 +837,8 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="relative group">
               <div className="relative w-full aspect-[4/3] rounded-[3rem] overflow-hidden shadow-2xl">
-                <img src={siteConfig.aboutHeaderImage} className="w-full h-full object-cover" alt="About Hotel" referrerPolicy="no-referrer" />
+                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1920" className="w-full h-full object-cover" alt="About Hotel" referrerPolicy="no-referrer" />
                 <div className="absolute inset-0 bg-black/10"></div>
-                {isEditMode && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <label className="bg-white/95 backdrop-blur px-6 py-3 rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-all flex items-center gap-3">
-                      <input type="file" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const url = await handleImageUpload(file);
-                          setSiteConfig((prev: any) => ({...prev, aboutHeaderImage: url}));
-                        }
-                      }} />
-                      <Camera size={18} className="text-hotel-primary" />
-                      <span className="text-xs font-black uppercase tracking-widest text-gray-700">Change About Image</span>
-                    </label>
-                  </div>
-                )}
               </div>
               <div className="absolute -bottom-6 -right-6 bg-hotel-primary text-white p-8 rounded-[2rem] shadow-2xl hidden md:block">
                 <p className="text-4xl font-black mb-1">24/7</p>

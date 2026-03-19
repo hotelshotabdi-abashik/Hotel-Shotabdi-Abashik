@@ -5,7 +5,7 @@ import {
   Camera, Loader2, Search, ChevronDown, ShieldCheck,
   Filter, Check, Bed, Utensils, Map as MapIcon, Tag, 
   History, MessageSquare, Sparkles, Key, Moon, Calendar,
-  Image as ImageIcon, PlayCircle, ChevronRight
+  Image as ImageIcon, PlayCircle, ChevronRight, RefreshCw
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -165,13 +165,13 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   return (
     <section 
       id="hero-section" 
-      className="relative min-h-[480px] md:min-h-[600px] flex flex-col items-center justify-center px-4 md:px-10 w-full pt-6 md:pt-0 pb-0 bg-gray-50/50"
+      className="relative min-h-[480px] md:min-h-[600px] flex flex-col items-center justify-center px-4 md:px-10 w-full pt-12 md:pt-20 pb-12 bg-gray-50/50"
     >
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
-        <div className="text-center mb-6">
+        <div className="text-center mb-10">
           <h2 
-            className={`text-gray-900 text-3xl md:text-6xl font-cormorant font-black mb-1 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            className={`text-gray-900 text-3xl md:text-6xl font-cormorant font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
             onClick={() => isEditMode && onUpdate?.({ title: window.prompt("Edit Title:", config.title) || config.title })}
           >
              {config.title || t.residentialService}
