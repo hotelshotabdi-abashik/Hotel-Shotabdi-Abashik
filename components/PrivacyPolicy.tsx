@@ -9,7 +9,7 @@ const PrivacyPolicy: React.FC = () => {
           <Shield size={32} />
         </div>
         <h1 className="text-4xl font-serif font-black text-gray-900 mb-4 tracking-tight">Privacy Policy</h1>
-        <p className="text-gray-500 font-medium uppercase tracking-widest text-[10px]">Official Document for hotelshotabdiabashik.com</p>
+        <p className="text-gray-500 font-medium uppercase tracking-widest text-[10px]">Official Document for shotabdi-abashik.bd</p>
         <p className="text-gray-400 font-bold text-[9px] mt-2 italic">Last Updated: October 26, 2024</p>
       </div>
 
@@ -17,7 +17,7 @@ const PrivacyPolicy: React.FC = () => {
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex gap-4">
           <Info className="text-hotel-primary shrink-0" size={20} />
           <p className="text-xs leading-relaxed font-medium m-0">
-            This Privacy Policy describes how <strong>Hotel Shotabdi Abashik</strong> ("we", "our", or "us") collects, uses, and shares your personal information when you visit or make a booking through <a href="https://hotelshotabdiabashik.com" className="text-hotel-primary underline">https://hotelshotabdiabashik.com</a>.
+            This Privacy Policy describes how <strong>Hotel Shotabdi Abashik</strong> ("we", "our", or "us") collects, uses, and shares your personal information when you visit or make a booking through <a href="https://shotabdi-abashik.bd" className="text-hotel-primary underline">https://shotabdi-abashik.bd</a>.
           </p>
         </div>
 

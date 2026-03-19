@@ -255,8 +255,8 @@ const AppContent = () => {
     try {
       const data = await syncUserProfile(u);
       setProfile(data);
-      // Senior Architect Update: Managers have administrative access
-      const isPowerUser = u.email === OWNER_EMAIL || data?.role === 'owner';
+      // Senior Architect Update: Robust admin detection
+      const isPowerUser = (u.email?.toLowerCase() === OWNER_EMAIL.toLowerCase()) || data?.role === 'owner';
       setIsAdmin(isPowerUser);
       
       // Resilience: Run cleanup when admin logs in
@@ -462,11 +462,11 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
-  const isProfileIncomplete = user && profile && !profile.isComplete && user.email !== OWNER_EMAIL;
+  const isProfileIncomplete = user && profile && !profile.isComplete && user.email?.toLowerCase() !== OWNER_EMAIL.toLowerCase();
   
   const getDisplayNameWithRole = () => {
     const name = profile?.legalName || user?.displayName || 'Resident';
-    if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return `Owner: ${name}`;
+    if (user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() || profile?.role === 'owner') return `Owner: ${name}`;
     if (profile?.role === 'manager') return `Manager: ${name}`;
     return name;
   };
@@ -677,8 +677,8 @@ const AppContent = () => {
           </button>
 
           {isAdmin && (
-            <button onClick={() => setIsEditMode(!isEditMode)} className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-              <Edit3 size={14} /> {isEditMode ? t.liveEditing : t.editWeb}
+            <button onClick={() => setIsEditMode(!isEditMode)} className={`flex items-center gap-2 px-3 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+              <Edit3 size={14} /> <span className="hidden sm:inline">{isEditMode ? t.liveEditing : t.editWeb}</span>
             </button>
           )}
 
@@ -693,8 +693,8 @@ const AppContent = () => {
                      <div className="p-6 border-b border-gray-50 bg-gray-50/50">
                         <div className="flex items-center gap-2 mb-1">
                           {isAdmin && (
-                            <div className={`p-1 rounded-md ${profile?.role === 'owner' || user?.email === OWNER_EMAIL ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
-                              {profile?.role === 'owner' || user?.email === OWNER_EMAIL ? <Key size={10}/> : <Shield size={10}/>}
+                            <div className={`p-1 rounded-md ${profile?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
+                              {profile?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() ? <Key size={10}/> : <Shield size={10}/>}
                             </div>
                           )}
                           <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{getDisplayNameWithRole()}</p>

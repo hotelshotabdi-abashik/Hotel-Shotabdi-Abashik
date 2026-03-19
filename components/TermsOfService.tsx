@@ -9,7 +9,7 @@ const TermsOfService: React.FC = () => {
           <Gavel size={32} />
         </div>
         <h1 className="text-4xl font-serif font-black text-gray-900 mb-4 tracking-tight">Terms of Service</h1>
-        <p className="text-gray-500 font-medium uppercase tracking-widest text-[10px]">Official Registry Terms for hotelshotabdiabashik.com</p>
+        <p className="text-gray-500 font-medium uppercase tracking-widest text-[10px]">Official Registry Terms for shotabdi-abashik.bd</p>
         <p className="text-gray-400 font-bold text-[9px] mt-2 italic">Last Updated: October 26, 2024</p>
       </div>
 
@@ -19,7 +19,7 @@ const TermsOfService: React.FC = () => {
             <Scale size={20} className="text-hotel-primary" /> 1. Agreement to Terms
           </h2>
           <p className="text-sm leading-relaxed">
-            By accessing or using the services provided at <strong>https://hotelshotabdiabashik.com</strong>, you agree to comply with and be bound by these Terms of Service. These terms apply to all visitors, residents, and others who access the digital registry or make reservations.
+            By accessing or using the services provided at <strong>https://shotabdi-abashik.bd</strong>, you agree to comply with and be bound by these Terms of Service. These terms apply to all visitors, residents, and others who access the digital registry or make reservations.
           </p>
         </div>
 

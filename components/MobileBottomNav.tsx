@@ -29,7 +29,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
   ];
 
   const getRoleLabel = () => {
-    if (user?.email === OWNER_EMAIL || profile?.role === 'owner') return language === 'EN' ? 'Owner' : 'মালিক';
+    if (user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() || profile?.role === 'owner') return language === 'EN' ? 'Owner' : 'মালিক';
     if (profile?.role === 'manager') return language === 'EN' ? 'Manager' : 'ম্যানেজার';
     return language === 'EN' ? 'Me' : 'আমি';
   };

@@ -16,7 +16,7 @@ interface HelpDeskProps {
 }
 
 const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', siteConfig }) => {
-  const isOwner = profile?.email === OWNER_EMAIL;
+  const isOwner = profile?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   const t = translations[language];
 
   const contactNumbers = siteConfig?.helpDeskNumbers || [

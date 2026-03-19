@@ -28,7 +28,7 @@ interface GalleryProps {
 const GallerySection: React.FC<GalleryProps> = ({ isEditMode, language, onImageUpload, onImageDelete }) => {
   const t = translations[language];
   const user = auth.currentUser;
-  const isAdmin = user?.email === OWNER_EMAIL;
+  const isAdmin = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
 
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);

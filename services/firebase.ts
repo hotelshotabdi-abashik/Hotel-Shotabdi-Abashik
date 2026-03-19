@@ -149,8 +149,8 @@ export const trackUserMovement = async (uid: string, path: string) => {
       onlineStatus: true
     });
 
-    if (user.email === OWNER_EMAIL) {
-      await addDoc(collection(db, "analytics", uid, "movements"), {
+    if (user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+      await addDoc(collection(db, "analytics", user.uid, "movements"), {
         path,
         timestamp: serverTimestamp()
       });
@@ -163,7 +163,7 @@ export const trackUserMovement = async (uid: string, path: string) => {
 
 // Database Resilience Utility: Cleans up old data to stay within Spark plan limits.
 export const cleanupDatabase = async () => {
-  if (auth.currentUser?.email !== OWNER_EMAIL) return;
+  if (auth.currentUser?.email?.toLowerCase() !== OWNER_EMAIL.toLowerCase()) return;
 
   try {
     // Firestore cleanup is more complex due to lack of bulk delete in client SDK
@@ -283,16 +283,14 @@ export const syncUserProfile = async (user: any) => {
   
   try {
     const [profileSnap, roleSnap] = await Promise.all([getDoc(userRef), getDoc(roleRef)]);
-    let role = roleSnap.exists() ? roleSnap.data()?.role : (user.email === OWNER_EMAIL ? 'owner' : 'guest');
+    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    let role = roleSnap.exists() ? roleSnap.data()?.role : (isOwner ? 'owner' : 'guest');
     
-    if (user.email === OWNER_EMAIL) {
+    if (isOwner) {
       if (role !== 'owner') {
         await setDoc(roleRef, { role: 'owner' }, { merge: true });
         role = 'owner';
       }
-    } else if (role === 'manager') {
-      await setDoc(roleRef, { role: 'guest' }, { merge: true });
-      role = 'guest';
     }
     
     if (!profileSnap.exists()) {

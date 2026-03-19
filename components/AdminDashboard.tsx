@@ -52,7 +52,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   };
 
   const currentUser = auth.currentUser;
-  const isOwner = currentUser?.email === OWNER_EMAIL;
+  const isOwner = currentUser?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   
   const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data' | 'settings' | 'guide'>('bookings');
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -329,8 +329,12 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
         {activeTab === 'users' && filteredUsers.map(user => (
           <div key={user.uid} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between group overflow-hidden">
             <div className="flex items-center gap-5 min-w-0">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg shrink-0">
-                <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg shrink-0 bg-gray-50 flex items-center justify-center">
+                {user.photoURL ? (
+                  <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
+                ) : (
+                  <User className="text-gray-300" size={24} />
+                )}
               </div>
               <div className="min-w-0">
                 <h3 className="text-base font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>

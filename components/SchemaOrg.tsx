@@ -7,7 +7,7 @@ const SchemaOrg: React.FC = () => {
     "@type": "Hotel",
     "name": "Hotel Shotabdi Residential",
     "description": "Premium luxury residential hotel in Sylhet, Bangladesh. Offering AC rooms, free WiFi, and 24/7 service.",
-    "url": "https://hotelshotabdiabashik.com",
+    "url": "https://shotabdi-abashik.bd",
     "telephone": "+8801717425702",
     "priceRange": "৳1000 - ৳5000",
     "address": {
