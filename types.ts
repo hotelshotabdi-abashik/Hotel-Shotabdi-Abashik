@@ -109,12 +109,13 @@ export interface Booking {
   totalGuests: number;
   guests: GuestInfo[];
   price: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
   bookingMode: BookingMode;
   roomNumber?: string;
   rejectionReason?: string;
   hasEdited: boolean;
-  createdAt: number;
+  createdAt: any; // Using timestamp
+  cancelCooldownUntil?: any; // Using timestamp
   arrivedAt?: number;
   leftAt?: number;
 }
@@ -138,7 +139,7 @@ export interface UserProfile {
   isComplete: boolean;
   claims?: string[];
   fcmToken?: string;
-  role?: 'guest' | 'staff' | 'manager' | 'owner';
+  role?: 'guest' | 'admin' | 'staff' | 'manager' | 'owner';
   onlineStatus?: boolean;
   isTyping?: boolean;
   lastSeenPath?: string;

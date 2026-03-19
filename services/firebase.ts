@@ -27,6 +27,7 @@ import {
   signInWithCredential,
 } from "firebase/auth";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { UserProfile } from "../types";
 import firebaseConfig from "../firebase-applet-config.json";
 
 export { 
@@ -250,10 +251,51 @@ export const deleteUserProfile = async (uid: string) => {
     }
     await deleteDoc(doc(db, "profiles", uid));
     await deleteDoc(doc(db, "roles", uid));
-    // Subcollections need recursive deletion which is not supported in client SDK
-    // We'll just delete the main docs for now
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `profiles/${uid}`);
+  }
+};
+
+// Create a new booking
+export const createBooking = async (bookingData: any) => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+
+  try {
+    const cooldownMinutes = 5;
+    const now = new Date();
+    const cooldownUntil = new Date(now.getTime() + cooldownMinutes * 60000);
+
+    const docRef = await addDoc(collection(db, "bookings"), {
+      ...bookingData,
+      userId: user.uid,
+      status: 'pending',
+      hasEdited: false,
+      createdAt: serverTimestamp(),
+      cancelCooldownUntil: cooldownUntil, // We use a Date object here, Firestore will convert to Timestamp
+    });
+
+    await saveUserHistory(user.uid, 'bookings', { 
+      roomTitle: bookingData.roomTitle, 
+      checkIn: bookingData.checkIn,
+      bookingId: docRef.id 
+    });
+
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, "bookings");
+  }
+};
+
+// Cancel a booking
+export const cancelBooking = async (bookingId: string) => {
+  try {
+    await updateDoc(doc(db, "bookings", bookingId), {
+      status: 'cancelled',
+      lastUpdated: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `bookings/${bookingId}`);
   }
 };
 
@@ -275,7 +317,7 @@ export const createAdminLog = async (action: string, details: string) => {
   }
 };
 
-export const syncUserProfile = async (user: any) => {
+export const syncUserProfile = async (user: any): Promise<UserProfile | null> => {
   if (!user) return null;
   const userRef = doc(db, "profiles", user.uid);
   const roleRef = doc(db, "roles", user.uid);
@@ -287,34 +329,43 @@ export const syncUserProfile = async (user: any) => {
     let role = roleSnap.exists() ? roleSnap.data()?.role : (isOwner ? 'owner' : 'guest');
     
     if (isOwner) {
-      if (role !== 'owner') {
+      if (role !== 'owner' && role !== 'admin') {
         await setDoc(roleRef, { role: 'owner' }, { merge: true });
         role = 'owner';
       }
     }
     
     if (!profileSnap.exists()) {
-      const freshProfile = {
+      const freshProfile: UserProfile = {
         uid: user.uid,
-        email: user.email,
-        photoURL: user.photoURL,
+        email: user.email || '',
+        photoURL: user.photoURL || '',
         createdAt: now,
         lastLogin: now,
+        lastUpdated: now,
         isComplete: false,
         legalName: '',
         username: '',
         phone: '',
+        guardianName: '',
         guardianPhone: '',
         nidNumber: '',
         nidImageUrl: '',
-        role: role
+        age: '',
+        bio: '',
+        role: role as any
       };
       await setDoc(userRef, freshProfile);
       return freshProfile;
     } else {
-      const data = profileSnap.data();
-      await updateDoc(userRef, { lastLogin: now, role: role });
-      return { ...data, lastLogin: now, role: role };
+      const data = profileSnap.data() as UserProfile;
+      // Ensure role is synced if it changed in roles collection
+      if (data.role !== role) {
+        await updateDoc(userRef, { role: role });
+        return { ...data, role: role as any, lastLogin: now };
+      }
+      await updateDoc(userRef, { lastLogin: now });
+      return { ...data, lastLogin: now };
     }
   } catch (e) {
     console.error("Sync profile failed", e);

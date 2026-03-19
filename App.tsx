@@ -15,7 +15,7 @@ import TermsOfService from './components/TermsOfService';
 import MobileBottomNav from './components/MobileBottomNav';
 import AdminDashboard from './components/AdminDashboard';
 import HelpDesk from './components/HelpDex';
-import MyStays from './components/MyStays';
+import BookingSystem from './components/BookingSystem';
 import Footer from './components/Footer';
 import PublicProfile from './components/PublicProfile';
 import SchemaOrg from './components/SchemaOrg';
@@ -250,7 +250,7 @@ const AppContent = () => {
       const data = await syncUserProfile(u);
       setProfile(data);
       // Senior Architect Update: Robust admin detection
-      const isPowerUser = (u.email?.toLowerCase() === OWNER_EMAIL.toLowerCase()) || data?.role === 'owner';
+      const isPowerUser = (u.email?.toLowerCase() === OWNER_EMAIL.toLowerCase()) || data?.role === 'owner' || data?.role === 'admin';
       setIsAdmin(isPowerUser);
       
       // Resilience: Run cleanup when admin logs in
@@ -456,7 +456,14 @@ const AppContent = () => {
 
   const currentLogo = siteConfig.logoUrl || LOGO_ICON_URL;
   const unreadCount = notifications.filter(n => !n.read).length;
-  const isProfileIncomplete = user && profile && !profile.isComplete && user.email?.toLowerCase() !== OWNER_EMAIL.toLowerCase();
+  const isProfileIncomplete = user && profile && (
+    !profile.legalName || 
+    !profile.phone || 
+    !profile.guardianName || 
+    !profile.guardianPhone || 
+    !profile.nidNumber || 
+    !profile.nidImageUrl
+  ) && user.email?.toLowerCase() !== OWNER_EMAIL.toLowerCase();
   
   const getDisplayNameWithRole = () => {
     const name = profile?.legalName || user?.displayName || 'Resident';
@@ -588,6 +595,16 @@ const AppContent = () => {
               className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/gallery' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
             >
               {language === 'EN' ? 'Gallery' : 'গ্যালারি'}
+            </Link>
+            <Link 
+              to="/mystays" 
+              onClick={(e) => {
+                e.preventDefault();
+                requireAuth(() => navigate('/mystays'));
+              }}
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/mystays' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {language === 'EN' ? 'My Stays' : 'আমার বুকিং'}
             </Link>
             <Link 
               to="/helpdesk" 
@@ -743,8 +760,8 @@ const AppContent = () => {
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
-            <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} language={language} siteConfig={siteConfig} />} />
-            <Route path="/mystays" element={<MyStays profile={profile} logoUrl={currentLogo} />} />
+            <Route path="/helpdesk" element={<HelpDesk profile={profile} logoUrl={currentLogo} language={language} siteConfig={siteConfig} isAdmin={isAdmin} pendingBookingsCount={pendingBookingsCount} />} />
+            <Route path="/mystays" element={<BookingSystem profile={profile} siteConfig={siteConfig} language={language} />} />
             <Route path="/u/:username" element={<PublicProfile />} />
             <Route path="/admin" element={isAdmin ? <AdminDashboard language={language} siteConfig={siteConfig} setSiteConfig={setSiteConfig} /> : <div className="p-20 text-center font-black text-[10px] uppercase tracking-widest text-gray-400">{t.unauthorized}</div>} />
             <Route path="/privacypolicy" element={<PrivacyPolicy />} />

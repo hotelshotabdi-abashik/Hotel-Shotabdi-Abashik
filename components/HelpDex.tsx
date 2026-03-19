@@ -13,9 +13,11 @@ interface HelpDeskProps {
   logoUrl?: string;
   language?: 'EN' | 'BN';
   siteConfig?: SiteConfig;
+  isAdmin?: boolean;
+  pendingBookingsCount?: number;
 }
 
-const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', siteConfig }) => {
+const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', siteConfig, isAdmin, pendingBookingsCount = 0 }) => {
   const isOwner = profile?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   const t = translations[language];
 
@@ -42,6 +44,14 @@ const HelpDesk: React.FC<HelpDeskProps> = ({ profile, logoUrl, language = 'EN', 
           </p>
           
           <div className="flex flex-wrap justify-center gap-3 mt-6">
+            {isAdmin && pendingBookingsCount > 0 && (
+              <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-full border border-amber-100 shadow-sm animate-pulse">
+                <Clock size={14} className="text-amber-600" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  {pendingBookingsCount} Pending Bookings
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-100 shadow-sm">
               <Clock size={14} className="text-hotel-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">24/7 Available</span>

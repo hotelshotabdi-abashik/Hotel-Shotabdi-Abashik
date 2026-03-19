@@ -77,7 +77,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (getRole() == 'owner' ||
+        (getRole() == 'admin' || getRole() == 'owner' ||
           (request.auth.token.email == "hotelshotabdiabashik@gmail.com" && request.auth.token.email_verified == true));
     }
 
@@ -141,7 +141,7 @@ service cloud.firestore {
       return hasOnlyAllowedFields(['uid', 'legalName', 'username', 'email', 'phone', 'guardianName', 'guardianPhone', 'nidNumber', 'nidImageUrl', 'photoURL', 'age', 'bio', 'createdAt', 'lastUpdated', 'lastLogin', 'isComplete', 'role', 'fcmToken', 'onlineStatus', 'lastSeenPath', 'lastActive', 'claims', 'isTyping']) &&
              data.uid == request.auth.uid &&
              data.email is string && isValidEmail(data.email) &&
-             data.role in ['owner', 'manager', 'staff', 'guest'] &&
+             data.role in ['owner', 'manager', 'staff', 'guest', 'admin'] &&
              validOptionalString('phone', 5, 20) &&
              validOptionalString('legalName', 2, 100) &&
              validOptionalString('username', 3, 30) &&
@@ -155,10 +155,10 @@ service cloud.firestore {
     }
 
     function isValidBooking(data) {
-      return hasOnlyAllowedFields(['id', 'userId', 'userName', 'userEmail', 'roomTitle', 'roomId', 'checkIn', 'checkOut', 'totalGuests', 'guests', 'price', 'status', 'bookingMode', 'roomNumber', 'rejectionReason', 'hasEdited', 'createdAt', 'arrivedAt', 'leftAt']) &&
+      return hasOnlyAllowedFields(['id', 'userId', 'userName', 'userEmail', 'roomTitle', 'roomId', 'checkIn', 'checkOut', 'totalGuests', 'guests', 'price', 'status', 'bookingMode', 'roomNumber', 'rejectionReason', 'hasEdited', 'createdAt', 'arrivedAt', 'leftAt', 'cancelCooldownUntil']) &&
              data.userId is string &&
-             data.status in ['pending', 'accepted', 'rejected', 'completed'] &&
-             data.createdAt is number &&
+             data.status in ['pending', 'accepted', 'rejected', 'completed', 'cancelled'] &&
+             data.createdAt is timestamp &&
              data.totalGuests is number && data.totalGuests > 0 &&
              data.hasEdited is bool &&
              validString('roomTitle', 2, 100) &&
@@ -223,12 +223,22 @@ service cloud.firestore {
                     request.resource.data.userId == request.auth.uid && 
                     request.resource.data.status == 'pending';
       allow update: if isAuthenticated() && (
+        // User cancellation logic
+        (resource.data.userId == request.auth.uid && 
+         resource.data.status == 'pending' &&
+         request.resource.data.status == 'cancelled' &&
+         request.time > resource.data.cancelCooldownUntil &&
+         request.time < resource.data.createdAt + duration.value(24, 'h') &&
+         request.resource.data.userId == resource.data.userId &&
+         request.resource.data.createdAt == resource.data.createdAt) ||
+        // User edit logic
         (resource.data.userId == request.auth.uid && 
          !resource.data.hasEdited && 
          request.resource.data.hasEdited == true && 
          request.resource.data.status == 'pending' &&
          request.resource.data.userId == resource.data.userId &&
          request.resource.data.createdAt == resource.data.createdAt) ||
+        // Staff logic
         (isStaff() && request.resource.data.userId == resource.data.userId &&
          request.resource.data.createdAt == resource.data.createdAt)
       ) && isValidBooking(request.resource.data);

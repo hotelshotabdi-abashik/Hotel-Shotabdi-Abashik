@@ -21,6 +21,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
     legalName: '',
     username: '',
     phone: '',
+    guardianName: '',
     guardianPhone: '',
     nidNumber: '',
   });
@@ -53,8 +54,8 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
   };
 
   const validate = async () => {
-    const { legalName, username, phone, guardianPhone, nidNumber } = form;
-    if (!legalName || !username || !phone || !guardianPhone || !nidNumber || !nidPreview) {
+    const { legalName, username, phone, guardianName, guardianPhone, nidNumber } = form;
+    if (!legalName || !username || !phone || !guardianName || !guardianPhone || !nidNumber || !nidPreview) {
       throw new Error('All identity fields and NID photo are required');
     }
     if (username.includes(' ')) throw new Error('Username cannot contain spaces');
@@ -141,10 +142,10 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Phone</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Guardian Name</label>
                 <div className="relative group">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
-                  <input type="text" placeholder="+88017XXXXXXXX" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
+                  <input type="text" placeholder="Guardian's Full Name" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5" value={form.guardianName} onChange={e => setForm({...form, guardianName: e.target.value})} />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -156,16 +157,25 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center px-1">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">NID Number (10-17 digits)</label>
-                <span className={`text-[9px] font-bold ${(form.nidNumber.length >= 10 && form.nidNumber.length <= 17) ? 'text-green-500' : 'text-gray-300'}`}>
-                  {form.nidNumber.length} / 17
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Phone</label>
+                <div className="relative group">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
+                  <input type="text" placeholder="+88017XXXXXXXX" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                </div>
               </div>
-              <div className="relative group">
-                <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
-                <input type="text" maxLength={17} placeholder="NID Digits" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5 font-mono tracking-widest" value={form.nidNumber} onChange={e => setForm({...form, nidNumber: e.target.value.replace(/\D/g, '')})} />
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">NID Number (10-17 digits)</label>
+                  <span className={`text-[9px] font-bold ${(form.nidNumber.length >= 10 && form.nidNumber.length <= 17) ? 'text-green-500' : 'text-gray-300'}`}>
+                    {form.nidNumber.length} / 17
+                  </span>
+                </div>
+                <div className="relative group">
+                  <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-hotel-primary transition-colors" size={18} />
+                  <input type="text" maxLength={17} placeholder="NID Digits" className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:bg-white focus:border-hotel-primary outline-none transition-all focus:ring-4 focus:ring-hotel-primary/5 font-mono tracking-widest" value={form.nidNumber} onChange={e => setForm({...form, nidNumber: e.target.value.replace(/\D/g, '')})} />
+                </div>
               </div>
             </div>
 
