@@ -22,7 +22,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ user, profile, isAdmi
   const navItems = [
     { id: 'home', path: '/', label: t.home, icon: <Home size={16} /> },
     { id: 'offers', path: '/offers', label: t.exclusiveOffers, icon: <Tag size={16} /> },
-    { id: 'rooms', path: '/rooms', label: t.ourLuxuryRooms, icon: <Bed size={16} /> },
+    { id: 'rooms', path: '/rooms', label: t.rooms, icon: <Bed size={16} /> },
     { id: 'restaurants', path: '/restaurants', label: t.restaurantsTitle, icon: <Utensils size={16} /> },
     { id: 'guide', path: '/guide', label: t.guideTitle, icon: <Map size={16} /> },
     { id: 'gallery', path: '/gallery', label: language === 'EN' ? 'Gallery' : 'গ্যালারি', icon: <ImageIcon size={16} /> },

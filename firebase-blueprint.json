@@ -5,15 +5,17 @@
       "description": "Global settings for the hotel website",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "subtitle": { "type": "string" },
-        "heroImage": { "type": "string" },
-        "roomsImage": { "type": "string" },
-        "offersImage": { "type": "string" },
-        "restaurantImage": { "type": "string" },
-        "touristImage": { "type": "string" },
-        "aboutImage": { "type": "string" },
-        "lastUpdated": { "type": "number" }
+        "hero": { "type": "object" },
+        "rooms": { "type": "array" },
+        "restaurants": { "type": "array" },
+        "touristGuides": { "type": "array" },
+        "offers": { "type": "array" },
+        "announcement": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "lastUpdated": { "type": "number" },
+        "socialLinks": { "type": "object" },
+        "name": { "type": "string" },
+        "tagline": { "type": "string" }
       }
     },
     "Profile": {
@@ -22,8 +24,74 @@
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
+        "legalName": { "type": "string" },
+        "username": { "type": "string" },
         "email": { "type": "string" },
-        "role": { "type": "string", "enum": ["owner", "manager", "guest"] }
+        "phone": { "type": "string" },
+        "guardianName": { "type": "string" },
+        "guardianPhone": { "type": "string" },
+        "nidNumber": { "type": "string" },
+        "nidImageUrl": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "age": { "type": "string" },
+        "bio": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "lastUpdated": { "type": "number" },
+        "lastLogin": { "type": "number" },
+        "isComplete": { "type": "boolean" },
+        "role": { "type": "string", "enum": ["owner", "manager", "staff", "guest"] },
+        "onlineStatus": { "type": "boolean" },
+        "lastSeenPath": { "type": "string" },
+        "lastActive": { "type": "object" }
+      }
+    },
+    "Booking": {
+      "title": "Room Booking",
+      "description": "Booking details for a guest",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "roomTitle": { "type": "string" },
+        "roomId": { "type": "string" },
+        "checkIn": { "type": "string" },
+        "checkOut": { "type": "string" },
+        "totalGuests": { "type": "number" },
+        "guests": { "type": "array" },
+        "price": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected", "completed"] },
+        "bookingMode": { "type": "string" },
+        "roomNumber": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "hasEdited": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      }
+    },
+    "Log": {
+      "title": "Admin Log",
+      "description": "Audit log for admin actions",
+      "type": "object",
+      "properties": {
+        "actorId": { "type": "string" },
+        "actorName": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "number" }
       }
     }
   },
@@ -35,6 +103,26 @@
     "/profiles/{uid}": {
       "schema": "Profile",
       "description": "User profiles"
+    },
+    "/roles/{uid}": {
+      "schema": { "type": "object", "properties": { "role": { "type": "string" } } },
+      "description": "User roles"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Room bookings"
+    },
+    "/notifications/{userId}/items/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "/logs/{logId}": {
+      "schema": "Log",
+      "description": "Admin audit logs"
+    },
+    "/usernames/{username}": {
+      "schema": { "type": "object", "properties": { "uid": { "type": "string" } } },
+      "description": "Username to UID mapping"
     }
   }
 }

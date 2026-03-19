@@ -526,7 +526,7 @@ const AppContent = () => {
           {showStickyCategories && (
             <div className="hidden xl:flex items-center gap-8 animate-fade-in">
               {[
-                { id: 'rooms', label: t.ourLuxuryRooms },
+                { id: 'rooms', label: t.rooms },
                 { id: 'offers', label: t.exclusiveOffers },
                 { id: 'restaurants', label: t.restaurantsTitle },
                 { id: 'guide', label: t.guideTitle },
@@ -554,6 +554,12 @@ const AppContent = () => {
               className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
             >
               {t.home}
+            </Link>
+            <Link 
+              to="/rooms" 
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/rooms' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {t.rooms}
             </Link>
             <button 
               onClick={() => {

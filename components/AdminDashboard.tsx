@@ -5,7 +5,7 @@ import {
   Users, User, Calendar, Search, CheckCircle2, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
-  MapPin, UserCheck, Key, Shield, X,  Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star
+  MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star, ChevronRight
 } from 'lucide-react';
 import { 
   db, 
@@ -54,11 +54,11 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const currentUser = auth.currentUser;
   const isOwner = currentUser?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   
-  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'data' | 'settings' | 'guide'>('bookings');
+  const [activeTab, setActiveTab] = useState<'users'>('users');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [movements, setMovements] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [userBookings, setUserBookings] = useState<Booking[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -116,34 +116,15 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
       setBookings(data.sort((a, b) => b.createdAt - a.createdAt));
     }, handleLoadError);
 
-    // Optimize: Limit logs to last 50 to save bandwidth
-    const logsQuery = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
-    const lUnsub = onSnapshot(logsQuery, (snapshot) => {
-      const data: AuditLog[] = [];
-      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as AuditLog));
-      setLogs(data);
-    }, handleLoadError);
-
-    // Optimize: Movements are expensive. We only need the latest status from profiles
-    // instead of the full movement history tree.
-    const mUnsub = onSnapshot(profilesRef, (snapshot) => {
-      const allMovements: any[] = [];
-      snapshot.forEach(d => {
-        const p = d.data() as UserProfile;
-        if (p.lastSeenPath) {
-          allMovements.push({ 
-            uid: d.id, 
-            path: p.lastSeenPath, 
-            timestamp: p.lastActive || Date.now(),
-            userName: p.legalName || p.email || 'Guest'
-          });
-        }
-      });
-      setMovements(allMovements.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50));
-    });
-
-    return () => { uUnsub(); bUnsub(); lUnsub(); mUnsub(); };
+    return () => { uUnsub(); bUnsub(); };
   }, []);
+
+  useEffect(() => {
+    if (selectedUser) {
+      const filtered = bookings.filter(b => b.userId === selectedUser.uid);
+      setUserBookings(filtered);
+    }
+  }, [selectedUser, bookings]);
 
   const triggerRoleNotification = async (uid: string, newRole: string) => {
     const targetUser = users.find(u => u.uid === uid);
@@ -264,7 +245,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">Registry Control</h1>
+              <h1 className="text-3xl font-serif font-black text-gray-900 leading-none">User Directory</h1>
               <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${isOwner ? 'bg-hotel-primary/10 text-hotel-primary' : 'bg-blue-50 text-blue-600'}`}>
                 {currentAdminRole}
               </span>
@@ -272,466 +253,215 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
             <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Authorized: {currentUser?.displayName || currentUser?.email}</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {['bookings', 'users', 'data', 'settings', 'guide'].map((tab) => (
-            <button 
-              key={tab} 
-              onClick={() => { setActiveTab(tab as any); setSearchQuery(''); }} 
-              className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab ? 'bg-hotel-primary text-white shadow-xl shadow-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
-            >
-              {tab === 'bookings' ? t.bookings : tab === 'users' ? t.users : tab === 'data' ? t.data : tab === 'settings' ? t.settings : t.touristGuide}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="relative mb-10 group">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#B22222] transition-colors" size={20} />
-        <input type="text" placeholder={`Search ${activeTab}...`} className="w-full bg-white border border-gray-100 rounded-[2rem] py-6 pl-16 pr-8 text-sm font-semibold outline-none focus:border-[#B22222] shadow-xl shadow-gray-100/50 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        <input type="text" placeholder="Search residents by name or email..." className="w-full bg-white border border-gray-100 rounded-[2rem] py-6 pl-16 pr-8 text-sm font-semibold outline-none focus:border-[#B22222] shadow-xl shadow-gray-100/50 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
-      <div className="space-y-5">
-        {activeTab === 'bookings' && filteredBookings.map(booking => (
-          <div key={booking.id} onClick={() => setSelectedBooking(booking)} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between cursor-pointer hover:shadow-2xl transition-all group">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg bg-gray-50 flex items-center justify-center">
-                {booking.guests?.[0]?.nidImageUrl ? <img src={booking.guests[0].nidImageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <User className="text-gray-300" />}
-              </div>
-              <div>
-                <h3 className="text-base font-black text-gray-900">{booking.userName}</h3>
-                <p className="text-[9px] font-black text-[#B22222] uppercase tracking-widest">{booking.roomTitle}</p>
-                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{booking.checkIn} to {booking.checkOut}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-               <a 
-                 href={`tel:${booking.guests?.[0]?.phone}`} 
-                 onClick={(e) => e.stopPropagation()}
-                 className="p-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors"
-                 title="Call Guest"
-               >
-                 <Phone size={20} />
-               </a>
-               <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl ${
-                 booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
-                 booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
-                 'bg-red-50 text-red-600'
-               }`}>
-                 {booking.status}
-               </span>
-               <div className="p-3 bg-gray-50 rounded-xl text-gray-400 group-hover:text-hotel-primary transition-colors">
-                  <Eye size={20} />
-               </div>
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'users' && filteredUsers.map(user => (
-          <div key={user.uid} className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-between group overflow-hidden">
-            <div className="flex items-center gap-5 min-w-0">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg shrink-0 bg-gray-50 flex items-center justify-center">
-                {user.photoURL ? (
-                  <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
-                ) : (
-                  <User className="text-gray-300" size={24} />
-                )}
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>
-                <div className="flex items-center gap-2 mt-0.5">
-                   <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                     user.role === 'owner' ? 'bg-hotel-primary text-white border-hotel-primary' :
-                     user.role === 'manager' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                     user.role === 'staff' ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                     'bg-gray-50 text-gray-500 border-gray-100'
-                   }`}>
-                     {user.role || 'guest'}
-                   </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-               {isOwner && user.role !== 'owner' ? (
-                 <div className="flex items-center bg-gray-50 p-1.5 rounded-xl border border-gray-100 gap-1">
-                    <button 
-                      onClick={() => handleUpdateRole(user.uid, 'guest')}
-                      disabled={roleUpdatingUid === user.uid}
-                      className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'guest' || !user.role ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      Guest
-                    </button>
-                    <button 
-                      onClick={() => handleUpdateRole(user.uid, 'staff')}
-                      disabled={roleUpdatingUid === user.uid}
-                      className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${user.role === 'staff' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      Staff
-                    </button>
-                 </div>
-               ) : (
-                 <div className="flex items-center gap-2">
-                    {user.role === 'owner' && <span className="text-[9px] font-black text-hotel-primary uppercase tracking-widest flex items-center gap-1.5 pr-4"><Key size={12}/> Owner</span>}
-                    {user.role === 'manager' && !isOwner && <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5 pr-4"><Shield size={12}/> Manager</span>}
-                 </div>
-               )}
-               {roleUpdatingUid === user.uid && <Loader2 className="animate-spin text-hotel-primary" size={16} />}
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'data' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
-            <div className="lg:col-span-4 space-y-6">
-               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-                  <div>
-                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-6 flex items-center gap-3"><BarChart3 size={16} className="text-hotel-primary"/> Statistics</h4>
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Accepted</p>
-                           <p className="text-2xl font-sans font-black text-green-600 leading-none">{acceptedCount}</p>
-                        </div>
-                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rejected</p>
-                           <p className="text-2xl font-sans font-black text-red-600 leading-none">{rejectedCount}</p>
-                        </div>
-                     </div>
-                     <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                        <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest mb-1">Pending Sync</p>
-                        <p className="text-2xl font-sans font-black text-amber-700 leading-none">{pendingCount}</p>
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            <div className="lg:col-span-8">
-               <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
-                  <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                     <div className="flex items-center gap-3">
-                        <Activity size={18} className="text-hotel-primary" />
-                        <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Live User Movements</h4>
-                      </div>
-                      <span className="text-[9px] font-bold text-gray-400 uppercase">{movements.length} entries</span>
-                   </div>
-                   <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                      {movements.map((m, idx) => (
-                        <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
-                           <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-hotel-primary font-black text-[10px]">
-                                {m.userName.charAt(0)}
-                              </div>
-                              <div>
-                                 <p className="text-[10px] font-black text-gray-900">{m.userName}</p>
-                                 <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Visited: {m.path}</p>
-                              </div>
-                           </div>
-                           <span className="text-[8px] font-bold text-gray-300">{new Date(m.timestamp).toLocaleTimeString()}</span>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[700px]">
-                   <div className="p-8 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                         <ClipboardCheck size={18} className="text-hotel-primary" />
-                         <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Audit Logs</h4>
-                     </div>
-                     <span className="text-[9px] font-bold text-gray-400 uppercase">{logs.length} entries</span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                     {logs.map((log) => (
-                       <div key={log.id} className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 flex gap-5 items-start">
-                          <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
-                             {/* Fix: Included missing RefreshCw icon from lucide-react */}
-                             {log.action.includes('BOOKING') ? <ClipboardCheck size={18} className="text-green-600" /> : log.action.includes('ROLE') ? <Shield size={18} className="text-blue-600" /> : <RefreshCw size={18} className="text-amber-600" />}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                             <div className="flex justify-between items-start mb-1">
-                                <h5 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter truncate">{log.action.replace('_', ' ')}</h5>
-                                <span className="text-[8px] font-bold text-gray-400 whitespace-nowrap ml-2">{new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
-                             </div>
-                             <p className="text-[12px] text-gray-600 leading-relaxed font-medium mb-2">{log.details}</p>
-                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Actor: {log.actorName}</p>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-hotel-primary/10 rounded-2xl flex items-center justify-center text-hotel-primary">
-                    <Settings size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Help Desk Configuration</h3>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Manage live contact numbers</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setHelpDeskNumbers([...helpDeskNumbers, { number: '', labelEn: '', labelBn: '' }])}
-                  className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
-                >
-                  <Plus size={16} /> Add Number
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {helpDeskNumbers.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 items-end">
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
-                      <div className="relative">
-                        <PhoneCall size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                          type="text" 
-                          placeholder="+880..." 
-                          className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs font-bold outline-none focus:border-hotel-primary"
-                          value={item.number}
-                          onChange={(e) => {
-                            const next = [...helpDeskNumbers];
-                            next[idx].number = e.target.value;
-                            setHelpDeskNumbers(next);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Label (English)</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Reception" 
-                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-hotel-primary"
-                        value={item.labelEn}
-                        onChange={(e) => {
-                          const next = [...helpDeskNumbers];
-                          next[idx].labelEn = e.target.value;
-                          setHelpDeskNumbers(next);
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Label (Bengali)</label>
-                      <input 
-                        type="text" 
-                        placeholder="যেমন: রিসেপশন" 
-                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-hotel-primary"
-                        value={item.labelBn}
-                        onChange={(e) => {
-                          const next = [...helpDeskNumbers];
-                          next[idx].labelBn = e.target.value;
-                          setHelpDeskNumbers(next);
-                        }}
-                      />
-                    </div>
-                    <button 
-                      onClick={() => setHelpDeskNumbers(helpDeskNumbers.filter((_, i) => i !== idx))}
-                      className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-10 pt-8 border-t border-gray-100 flex justify-end">
-                <button 
-                  onClick={async () => {
-                    setIsSavingSettings(true);
-                    try {
-                      const updatedConfig = { ...siteConfig, helpDeskNumbers };
-                      await setDoc(doc(db, 'site-config', 'main'), updatedConfig, { merge: true });
-                      setSiteConfig(updatedConfig);
-                      await createAdminLog('SETTINGS_UPDATE', 'Updated Help Desk contact numbers');
-                      alert("Settings updated successfully!");
-                    } catch (err) {
-                      alert("Failed to save settings.");
-                    } finally {
-                      setIsSavingSettings(false);
-                    }
-                  }}
-                  disabled={isSavingSettings}
-                  className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 flex items-center gap-3 hover:brightness-110 active:scale-95 transition-all"
-                >
-                  {isSavingSettings ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save Configuration</>}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'guide' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <h3 className="text-2xl font-serif font-black text-gray-900">Manage Tourist Guides</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Add, edit, or remove local attractions for guests.</p>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <button 
-                  onClick={() => {
-                    if (window.confirm("This will replace all current guides with the 30 default entries. Continue?")) {
-                      setSiteConfig(prev => ({ ...prev, touristGuides: SYLHET_ATTRACTIONS }));
-                      createAdminLog('GUIDE_RESET', 'Reset tourist guides to 30 defaults');
-                    }
-                  }}
-                  className="bg-amber-50 text-amber-600 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95"
-                >
-                  Reset to 30 Defaults
-                </button>
-                <button 
-                  onClick={() => {
-                    const newItem = {
-                      id: Date.now(),
-                      name: "New Attraction",
-                      subtitle: "Category",
-                      distance: "5.0 km",
-                      description: "A short but engaging description of this local treasure.",
-                      image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80",
-                      mapUrl: "",
-                      phone: "",
-                      isRecommended: false
-                    };
-                    setSiteConfig(prev => ({ ...prev, touristGuides: [newItem, ...(prev.touristGuides || [])] }));
-                  }}
-                  className="bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl hover:bg-gray-800 transition-all active:scale-95"
-                >
-                  <Plus size={16} /> Add New Place
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(siteConfig.touristGuides || []).map((spot, idx) => (
-                <div key={spot.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden group flex flex-col">
-                  <div className="relative h-48 overflow-hidden">
-                    <img src={spot.image} alt={spot.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                       <button 
-                        onClick={() => {
-                          const url = window.prompt("Enter Image URL:", spot.image);
-                          if (url) {
-                            const updated = [...(siteConfig.touristGuides || [])];
-                            updated[idx] = { ...updated[idx], image: url };
-                            setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                          }
-                        }}
-                        className="bg-white p-3 rounded-2xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-xl"
-                       >
-                         <RefreshCw size={18} />
-                       </button>
-                       <button 
-                        onClick={() => {
-                          const updated = [...(siteConfig.touristGuides || [])];
-                          updated[idx] = { ...updated[idx], isRecommended: !updated[idx].isRecommended };
-                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                        }}
-                        className={`p-3 rounded-2xl transition-all shadow-xl ${spot.isRecommended ? 'bg-amber-400 text-gray-900' : 'bg-white text-gray-400 hover:text-amber-400'}`}
-                       >
-                         <Star size={18} fill={spot.isRecommended ? "currentColor" : "none"} />
-                       </button>
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-5 flex-1 flex flex-col">
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Place Name</label>
-                      <input 
-                        className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl px-4 py-3 text-sm font-black text-gray-900 outline-none transition-all"
-                        value={spot.name}
-                        onChange={(e) => {
-                          const updated = [...(siteConfig.touristGuides || [])];
-                          updated[idx] = { ...updated[idx], name: e.target.value };
-                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Category / Subtitle</label>
-                      <input 
-                        className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl px-4 py-3 text-[10px] font-black text-blue-600 uppercase tracking-widest outline-none transition-all"
-                        value={spot.subtitle}
-                        onChange={(e) => {
-                          const updated = [...(siteConfig.touristGuides || [])];
-                          updated[idx] = { ...updated[idx], subtitle: e.target.value };
-                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-1.5 flex-1">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
-                      <textarea 
-                        className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl p-4 h-28 text-xs font-bold text-gray-500 outline-none resize-none transition-all leading-relaxed"
-                        value={spot.description}
-                        onChange={(e) => {
-                          const updated = [...(siteConfig.touristGuides || [])];
-                          updated[idx] = { ...updated[idx], description: e.target.value };
-                          setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                        }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Distance</label>
-                        <input 
-                          className="w-full bg-gray-50 border border-transparent focus:border-blue-600 rounded-xl px-4 py-3 text-xs font-bold outline-none transition-all"
-                          value={spot.distance}
-                          placeholder="e.g. 5.0 km"
-                          onChange={(e) => {
-                            const updated = [...(siteConfig.touristGuides || [])];
-                            updated[idx] = { ...updated[idx], distance: e.target.value };
-                            setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <button 
-                          onClick={() => {
-                            if (window.confirm("Delete this attraction?")) {
-                              const updated = (siteConfig.touristGuides || []).filter(s => s.id !== spot.id);
-                              setSiteConfig(prev => ({ ...prev, touristGuides: updated }));
-                            }
-                          }}
-                          className="w-full bg-red-50 text-red-600 py-3 rounded-xl hover:bg-red-100 transition-all flex items-center justify-center"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 pt-8 border-t border-gray-100 flex justify-end">
-              <button 
-                onClick={async () => {
-                  setIsSavingSettings(true);
-                  try {
-                    await setDoc(doc(db, 'site-config', 'main'), siteConfig, { merge: true });
-                    await createAdminLog('GUIDE_UPDATE', 'Updated tourist guide listings');
-                    alert("Tourist guides updated successfully!");
-                  } catch (err) {
-                    alert("Failed to save tourist guides.");
-                  } finally {
-                    setIsSavingSettings(false);
-                  }
-                }}
-                disabled={isSavingSettings}
-                className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-100 flex items-center gap-3 hover:brightness-110 active:scale-95 transition-all"
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 space-y-4">
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-2">Registered Accounts</h4>
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
+            {filteredUsers.map(user => (
+              <div 
+                key={user.uid} 
+                onClick={() => setSelectedUser(user)}
+                className={`bg-white rounded-[2rem] border p-5 flex items-center justify-between cursor-pointer transition-all group ${selectedUser?.uid === user.uid ? 'border-hotel-primary shadow-xl ring-1 ring-hotel-primary/10' : 'border-gray-100 hover:border-hotel-primary/30 hover:shadow-lg'}`}
               >
-                {isSavingSettings ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save Guide Changes</>}
-              </button>
-            </div>
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md shrink-0 bg-gray-50 flex items-center justify-center">
+                    {user.photoURL ? (
+                      <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
+                    ) : (
+                      <User className="text-gray-300" size={20} />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>
+                    <p className="text-[9px] text-gray-400 truncate font-bold">{user.email}</p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className={`transition-transform ${selectedUser?.uid === user.uid ? 'text-hotel-primary translate-x-1' : 'text-gray-200 group-hover:text-gray-400'}`} />
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
+        <div className="lg:col-span-2">
+          {selectedUser ? (
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl overflow-hidden animate-fade-in flex flex-col h-full min-h-[70vh]">
+              <div className="p-8 md:p-10 border-b border-gray-50 bg-gray-50/30">
+                <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                  <div className="relative group">
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl">
+                      <img 
+                        src={selectedUser.photoURL || `https://ui-avatars.com/api/?name=${selectedUser.legalName}`} 
+                        className="w-full h-full object-cover" 
+                        alt={selectedUser.legalName} 
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    {selectedUser.role === 'owner' && (
+                      <div className="absolute -top-2 -right-2 bg-hotel-primary text-white p-2 rounded-xl shadow-lg">
+                        <Key size={16} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter">{selectedUser.legalName}</h2>
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        selectedUser.role === 'owner' ? 'bg-hotel-primary text-white' :
+                        selectedUser.role === 'manager' ? 'bg-blue-600 text-white' :
+                        selectedUser.role === 'staff' ? 'bg-purple-600 text-white' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {selectedUser.role || 'guest'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      <span className="flex items-center gap-2"><Mail size={14} className="text-hotel-primary"/> {selectedUser.email}</span>
+                      <span className="flex items-center gap-2"><Phone size={14} className="text-hotel-primary"/> {selectedUser.phone || 'No Phone'}</span>
+                    </div>
+                  </div>
+                  {isOwner && selectedUser.role !== 'owner' && (
+                    <div className="flex items-center bg-white p-2 rounded-2xl border border-gray-100 shadow-sm gap-2">
+                      <button 
+                        onClick={() => handleUpdateRole(selectedUser.uid, 'guest')}
+                        disabled={roleUpdatingUid === selectedUser.uid}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${selectedUser.role === 'guest' || !selectedUser.role ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                      >
+                        Guest
+                      </button>
+                      <button 
+                        onClick={() => handleUpdateRole(selectedUser.uid, 'staff')}
+                        disabled={roleUpdatingUid === selectedUser.uid}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${selectedUser.role === 'staff' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                      >
+                        Staff
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-12 no-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-6">
+                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
+                      <IdCard size={16} className="text-hotel-primary" /> Identity Verification
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">NID Number</p>
+                        <p className="text-sm font-black text-gray-900">{selectedUser.nidNumber || 'Not Provided'}</p>
+                      </div>
+                      {selectedUser.nidImageUrl && (
+                        <div className="relative group cursor-pointer" onClick={() => setLightboxUrl(selectedUser.nidImageUrl)}>
+                          <img src={selectedUser.nidImageUrl} className="w-full h-40 object-cover rounded-2xl border border-gray-100 shadow-sm" alt="NID Scan" referrerPolicy="no-referrer" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                            <Maximize2 className="text-white" size={24} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
+                      <UserCheck size={16} className="text-hotel-primary" /> Emergency Contact
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Guardian Name</p>
+                        <p className="text-sm font-black text-gray-900">{selectedUser.guardianName || 'Not Provided'}</p>
+                      </div>
+                      <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Guardian Phone</p>
+                        <p className="text-sm font-black text-gray-900">{selectedUser.guardianPhone || 'Not Provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                    <History size={16} className="text-hotel-primary" /> Stay History & Bookings
+                  </h4>
+                  <div className="space-y-4">
+                    {userBookings.length === 0 ? (
+                      <div className="p-10 text-center bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">No stay records found for this resident.</p>
+                      </div>
+                    ) : (
+                      userBookings.map(booking => (
+                        <div 
+                          key={booking.id} 
+                          onClick={() => setSelectedBooking(booking)}
+                          className="p-6 bg-white border border-gray-100 rounded-[2rem] flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-hotel-primary group-hover:bg-hotel-primary group-hover:text-white transition-all">
+                              <Building2 size={20} />
+                            </div>
+                            <div>
+                              <h5 className="text-sm font-black text-gray-900">{booking.roomTitle}</h5>
+                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{booking.checkIn} — {booking.checkOut}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${
+                              booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                              booking.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                              'bg-amber-50 text-amber-600'
+                            }`}>
+                              {booking.status}
+                            </span>
+                            <Eye size={18} className="text-gray-300 group-hover:text-hotel-primary transition-colors" />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
+                    <Activity size={16} className="text-hotel-primary" /> System Metadata
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Joined</p>
+                      <p className="text-[10px] font-black text-gray-900">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Active</p>
+                      <p className="text-[10px] font-black text-gray-900">{selectedUser.lastActive ? new Date(selectedUser.lastActive).toLocaleString() : 'N/A'}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Path</p>
+                      <p className="text-[10px] font-black text-gray-900 truncate">{selectedUser.lastSeenPath || '/'}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">UID</p>
+                      <p className="text-[10px] font-black text-gray-900 truncate">{selectedUser.uid}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 p-10 text-center">
+              <div className="w-20 h-20 bg-white rounded-[2rem] shadow-xl flex items-center justify-center text-gray-200 mb-6">
+                <Users size={40} />
+              </div>
+              <h3 className="text-xl font-serif font-black text-gray-900 mb-2">Select a Resident</h3>
+              <p className="text-xs text-gray-400 font-medium max-w-xs leading-relaxed">Choose an account from the directory to view detailed profile information, stay history, and identity verification.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {selectedBooking && createPortal(

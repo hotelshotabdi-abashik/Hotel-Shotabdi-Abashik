@@ -104,6 +104,7 @@ export const SYLHET_ATTRACTIONS: Attraction[] = [
 
 export const NAV_ITEMS = [
   { id: 'home', path: '/', label: 'Home', icon: <Home size={20} /> },
+  { id: 'rooms', path: '/rooms', label: 'Rooms', icon: <Bed size={20} /> },
   { id: 'about', path: '/about', label: 'About', icon: <Tag size={20} /> },
   { id: 'helpdesk', path: '/helpdesk', label: 'Help Desk', icon: <MessageSquare size={20} /> },
 ];
