@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { db, collection, onSnapshot, query, where, setDoc, doc } from '../services/firebase';
 import { sendGuestEmail, notifyOwnerOfBooking } from '../services/emailService';
-import { Room, UserProfile, GuestInfo, Booking } from '../types';
+import { Room, UserProfile, GuestInfo, Booking, BookingMode } from '../types';
 
 interface Props {
   room: Room;
@@ -23,7 +23,8 @@ interface Props {
 const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, onImageDelete }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [bookingMode, setBookingMode] = useState<BookingMode>('website');
   const [totalGuests, setTotalGuests] = useState(room.id.includes('single') ? 1 : 2);
   const [uploadingGuestIndex, setUploadingGuestIndex] = useState<number | null>(null);
   const [hasExistingPending, setHasExistingPending] = useState(false);
@@ -43,12 +44,13 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
   const [guests, setGuests] = useState<GuestInfo[]>(() => {
     return [
       { 
-        legalName: profile.legalName, 
+        legalName: profile.legalName || '', 
         age: profile.age || '', 
-        nidNumber: profile.nidNumber, 
-        phone: profile.phone, 
-        guardianPhone: profile.guardianPhone,
-        nidImageUrl: profile.nidImageUrl 
+        nidNumber: profile.nidNumber || '', 
+        phone: profile.phone || '', 
+        guardianName: profile.guardianName || '',
+        guardianPhone: profile.guardianPhone || '',
+        nidImageUrl: profile.nidImageUrl || '' 
       }
     ];
   });
@@ -67,7 +69,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
       const current = [...prev];
       if (current.length < totalGuests) {
         for (let i = current.length; i < totalGuests; i++) {
-          current.push({ legalName: '', age: '', nidNumber: '', phone: '', guardianPhone: '', nidImageUrl: '' });
+          current.push({ legalName: '', age: '', nidNumber: '', phone: '', guardianName: '', guardianPhone: '', nidImageUrl: '' });
         }
       } else if (current.length > totalGuests) {
         return current.slice(0, totalGuests);
@@ -135,6 +137,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
         guests: guests,
         price: finalPrice,
         status: 'pending',
+        bookingMode: bookingMode,
         hasEdited: false,
         createdAt: Date.now()
       };
@@ -159,11 +162,48 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
     }
   };
 
-  const isStep1Valid = dates.checkIn && dates.checkOut;
-  const isStep2Valid = guests.every((g, idx) => {
-     if (idx === 0) return g.legalName.trim().length > 2 && g.nidNumber && g.nidImageUrl;
-     return g.legalName.trim().length > 2;
-  });
+  const isStep1Valid = () => {
+    if (!dates.checkIn || !dates.checkOut) return false;
+    const start = new Date(dates.checkIn);
+    const end = new Date(dates.checkOut);
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Policy: Stay must be less than 5 months (approx 150 days) to prevent spamming
+    if (diffDays > 150) return false;
+    if (diffDays <= 0) return false;
+    return true;
+  };
+
+  const getStayDuration = () => {
+    if (!dates.checkIn || !dates.checkOut) return 0;
+    const start = new Date(dates.checkIn);
+    const end = new Date(dates.checkOut);
+    const diffTime = end.getTime() - start.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const isStep2Valid = () => {
+    return guests.every((g, idx) => {
+      const roomTitle = room.title.toLowerCase();
+      const isSingle = roomTitle.includes('single');
+      
+      // Basic validation for all guests
+      if (!g.legalName || g.legalName.trim().length < 3) return false;
+      if (!g.age || !parseInt(g.age) || parseInt(g.age) < 1 || parseInt(g.age) > 120) return false;
+
+      // Full validation for first 2 guests (or 1 if single)
+      if (idx === 0 || (idx === 1 && !isSingle)) {
+        if (!g.nidNumber || g.nidNumber.length < 10 || g.nidNumber.length > 15) return false;
+        if (!g.nidImageUrl) return false;
+        if (!g.guardianName || g.guardianName.trim().length < 3) return false;
+        if (!g.guardianPhone || g.guardianPhone.length < 10) return false;
+        if (!g.phone || g.phone.length < 10) return false;
+      }
+      
+      return true;
+    });
+  };
 
   const modalContent = (
     <>
@@ -183,6 +223,31 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                </p>
 
                <div className="w-full max-w-md space-y-4">
+                  <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100 mb-6 text-left">
+                     <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Info size={14} /> Help Desk
+                     </h4>
+                     <p className="text-xs text-blue-800 font-medium leading-relaxed">
+                        Need immediate assistance? Our Help Desk is ready to support your stay.
+                     </p>
+                     <div className="grid grid-cols-2 gap-3 mt-4">
+                        <button 
+                           onClick={() => window.location.href = '/helpdesk'}
+                           className="bg-white text-blue-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-100 shadow-sm hover:bg-blue-600 hover:text-white transition-all"
+                        >
+                           Open Help Desk
+                        </button>
+                        <a 
+                           href={`https://wa.me/${contactNumbers[0].clean}?text=I%20just%20booked%20${room.title}%20and%20need%20help.`}
+                           target="_blank"
+                           rel="noreferrer"
+                           className="bg-green-600 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center justify-center gap-2"
+                        >
+                           <MessageSquare size={12} /> WhatsApp Support
+                        </a>
+                     </div>
+                  </div>
+
                   {contactNumbers.map((num) => (
                      <div key={num.value} className="relative">
                         <button 
@@ -243,12 +308,68 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                  )}
 
                  <div className="flex items-center justify-center gap-4 mb-10">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 0 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>0</div>
+                    <div className="w-8 h-[2px] bg-gray-100"></div>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 1 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>1</div>
-                    <div className="w-12 h-[2px] bg-gray-100"></div>
+                    <div className="w-8 h-[2px] bg-gray-100"></div>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${step === 2 ? 'bg-hotel-primary border-hotel-primary text-white scale-110 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-300'}`}>2</div>
                  </div>
 
-                 {step === 1 ? (
+                 {step === 0 ? (
+                    <div className="space-y-8 animate-fade-in">
+                       <div className="text-center mb-10">
+                          <h4 className="text-xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter mb-2">How would you like to book?</h4>
+                          <p className="text-gray-500 text-[10px] md:text-xs font-black uppercase tracking-[0.2em]">Choose your preferred confirmation method</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 gap-4">
+                          <button 
+                             onClick={() => { setBookingMode('website'); setStep(1); }}
+                             className="group relative bg-white border-2 border-gray-100 p-8 rounded-[2.5rem] text-left transition-all hover:border-hotel-primary hover:shadow-2xl hover:shadow-red-50 active:scale-[0.98]"
+                          >
+                             <div className="flex items-center justify-between mb-4">
+                                <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-hotel-primary group-hover:text-white transition-all">
+                                   <Maximize2 size={28} />
+                                </div>
+                                <ArrowRight className="text-gray-200 group-hover:text-hotel-primary transition-all" />
+                             </div>
+                             <h5 className="text-xl font-black text-gray-900 tracking-tight mb-1">Book from Website</h5>
+                             <p className="text-xs text-gray-500 font-medium">Complete the full digital reservation process instantly.</p>
+                          </button>
+
+                          <button 
+                             onClick={() => { setBookingMode('call_confirm'); setStep(1); }}
+                             className="group relative bg-white border-2 border-gray-100 p-8 rounded-[2.5rem] text-left transition-all hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-50 active:scale-[0.98]"
+                          >
+                             <div className="flex items-center justify-between mb-4">
+                                <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                                   <PhoneCall size={28} />
+                                </div>
+                                <ArrowRight className="text-gray-200 group-hover:text-blue-500 transition-all" />
+                             </div>
+                             <h5 className="text-xl font-black text-gray-900 tracking-tight mb-1">Confirm through Calling</h5>
+                             <p className="text-xs text-gray-500 font-medium">Fill basic info here and finalize details over a call.</p>
+                          </button>
+
+                          <div className="relative group">
+                             <div className="absolute -top-3 left-8 bg-hotel-primary text-white px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest z-10 shadow-lg">Fastest</div>
+                             <button 
+                                onClick={() => { setBookingMode('direct_call'); setSuccess(true); }}
+                                className="w-full group relative bg-gray-900 border-2 border-gray-900 p-8 rounded-[2.5rem] text-left transition-all hover:shadow-2xl hover:shadow-black/20 active:scale-[0.98]"
+                             >
+                                <div className="flex items-center justify-between mb-4">
+                                   <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white">
+                                      <Phone size={28} />
+                                   </div>
+                                   <ArrowRight className="text-white/20 group-hover:text-white transition-all" />
+                                </div>
+                                <h5 className="text-xl font-black text-white tracking-tight mb-1">Direct Call</h5>
+                                <p className="text-xs text-white/60 font-medium">Skip the forms and call our reception directly now.</p>
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                 ) : step === 1 ? (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-fade-in">
                       <div className="space-y-6">
                          <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3"><Clock size={16} className="text-hotel-primary"/> Schedule</h4>
@@ -262,6 +383,12 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                                <input type="date" value={dates.checkOut} onChange={e => setDates({...dates, checkOut: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary transition-all" />
                             </div>
                          </div>
+                         {getStayDuration() > 150 && (
+                           <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 animate-shake mt-4">
+                             <AlertTriangle size={16} />
+                             <p className="text-[10px] font-bold uppercase tracking-tight">Stay limit exceeded (Max 150 days)</p>
+                           </div>
+                         )}
                       </div>
                       <div className="space-y-6">
                          <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3"><Users size={16} className="text-hotel-primary"/> Occupants</h4>
@@ -270,7 +397,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                             <select 
                               value={totalGuests} 
                               onChange={e => setTotalGuests(parseInt(e.target.value))}
-                              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none appearance-none cursor-pointer"
+                              disabled={room.capacity === 1}
+                              className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none appearance-none cursor-pointer ${room.capacity === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                {Array.from({length: room.capacity}, (_, i) => i + 1).map(num => (
                                  <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
@@ -286,38 +414,88 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                           <div className="flex items-center justify-between">
                               <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3">
                                  {idx < 2 ? <ShieldCheck size={16} className="text-hotel-primary"/> : <UserPlus size={16} className="text-gray-400"/>}
-                                 Guest {idx + 1}
+                                 Guest {idx + 1} {idx === 0 && "(Primary)"}
                               </h4>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                              <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
-                                   <input 
-                                      placeholder="Full Name as per ID" 
-                                      className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
-                                      value={guest.legalName}
-                                      disabled={idx === 0}
-                                      onChange={e => handleGuestChange(idx, 'legalName', e.target.value)}
-                                   />
+                                <div className="grid grid-cols-2 gap-4">
+                                   <div className="space-y-1.5">
+                                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Legal Name</label>
+                                      <input 
+                                         placeholder="Full Name" 
+                                         className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                                         value={guest.legalName}
+                                         disabled={idx === 0}
+                                         onChange={e => handleGuestChange(idx, 'legalName', e.target.value)}
+                                      />
+                                   </div>
+                                   <div className="space-y-1.5">
+                                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Age</label>
+                                      <input 
+                                         placeholder="Age" 
+                                         type="number"
+                                         className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                                         value={guest.age}
+                                         disabled={idx === 0}
+                                         onChange={e => handleGuestChange(idx, 'age', e.target.value)}
+                                      />
+                                   </div>
                                 </div>
 
-                                {idx < 2 ? (
-                                  <div className="space-y-1.5">
-                                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">ID Number</label>
-                                     <input 
-                                        placeholder="NID Number" 
-                                        className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
-                                        value={guest.nidNumber}
-                                        disabled={idx === 0}
-                                        onChange={e => handleGuestChange(idx, 'nidNumber', e.target.value.replace(/\D/g, ''))}
-                                     />
-                                  </div>
+                                {(idx === 0 || (idx === 1 && !room.title.toLowerCase().includes('single'))) ? (
+                                  <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                       <div className="space-y-1.5">
+                                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                                          <input 
+                                             placeholder="Phone" 
+                                             className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                                             value={guest.phone}
+                                             disabled={idx === 0}
+                                             onChange={e => handleGuestChange(idx, 'phone', e.target.value)}
+                                          />
+                                       </div>
+                                       <div className="space-y-1.5">
+                                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Number</label>
+                                          <input 
+                                             placeholder="10-15 Digits" 
+                                             className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary font-mono ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                                             value={guest.nidNumber}
+                                             disabled={idx === 0}
+                                             onChange={e => handleGuestChange(idx, 'nidNumber', e.target.value.replace(/\D/g, ''))}
+                                          />
+                                       </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                       <div className="space-y-1.5">
+                                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Guardian Name</label>
+                                          <input 
+                                             placeholder="Guardian Name" 
+                                             className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                                             value={guest.guardianName}
+                                             disabled={idx === 0}
+                                             onChange={e => handleGuestChange(idx, 'guardianName', e.target.value)}
+                                          />
+                                       </div>
+                                       <div className="space-y-1.5">
+                                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Guardian Phone</label>
+                                          <input 
+                                             placeholder="Guardian Phone" 
+                                             className={`w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-bold outline-none focus:border-hotel-primary ${idx === 0 ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                                             value={guest.guardianPhone}
+                                             disabled={idx === 0}
+                                             onChange={e => handleGuestChange(idx, 'guardianPhone', e.target.value)}
+                                          />
+                                       </div>
+                                    </div>
+                                  </>
                                 ) : null}
                              </div>
 
-                             {idx < 2 ? (
+                             {(idx === 0 || (idx === 1 && !room.title.toLowerCase().includes('single'))) ? (
                                 <div className="space-y-1.5">
                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">ID Registry Scan</label>
                                    <div 
@@ -361,22 +539,22 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
               </div>
 
               <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex gap-4 shrink-0">
-                 {step === 2 && (
-                   <button onClick={() => setStep(1)} className="px-8 md:px-10 py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest text-gray-400 hover:bg-white transition-all">Back</button>
+                 {step > 0 && (
+                   <button onClick={() => setStep(step - 1)} className="px-8 md:px-10 py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest text-gray-400 hover:bg-white transition-all">Back</button>
                  )}
-                 {step === 1 ? (
+                 {step === 0 ? null : step === 1 ? (
                    <button 
                       onClick={() => setStep(2)} 
-                      disabled={!isStep1Valid}
-                      className="flex-1 bg-gray-900 text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 transition-all active:scale-95"
+                      disabled={!isStep1Valid()}
+                      className="flex-1 bg-gray-900 text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                    >
                       Verify Guests <ArrowRight size={18} />
                  </button>
                  ) : (
                    <button 
                       onClick={submitBooking}
-                      disabled={loading || !isStep2Valid || hasExistingPending}
-                      className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                      disabled={loading || !isStep2Valid() || hasExistingPending}
+                      className="flex-1 bg-hotel-primary text-white py-4 md:py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-red-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                    >
                       {loading ? <Loader2 className="animate-spin" size={20}/> : <React.Fragment><CheckCircle2 size={18}/> Finalize Booking</React.Fragment>}
                    </button>

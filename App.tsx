@@ -522,207 +522,210 @@ const AppContent = () => {
           </Link>
         </div>
 
-        {showStickyCategories && (
-          <div className="hidden xl:flex items-center gap-8 animate-fade-in ml-auto">
-            {[
-              { id: 'rooms', label: t.ourLuxuryRooms },
-              { id: 'offers', label: t.exclusiveOffers },
-              { id: 'restaurants', label: t.restaurantsTitle },
-              { id: 'guide', label: t.guideTitle },
-              { id: 'helpdesk', label: t.helpDesk }
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  const el = document.getElementById(item.id);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  else navigate(item.id === 'helpdesk' ? '/helpdesk' : `/#${item.id}`);
-                }}
-                className="flex items-center gap-2 group"
-              >
-                <span className="text-[10px] font-black text-gray-400 group-hover:text-hotel-primary uppercase tracking-widest transition-all border-b-2 border-transparent group-hover:border-hotel-primary pb-1">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        <nav className="hidden lg:flex items-center gap-10 ml-auto xl:ml-10">
-          <Link 
-            to="/" 
-            onClick={handleHomeClick}
-            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
-          >
-            {t.home}
-          </Link>
-          <button 
-            onClick={() => {
-              const el = document.getElementById('about');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-              else navigate('/#about');
-            }}
-            className="transition-all text-[11px] tracking-widest uppercase font-medium text-gray-400 hover:text-hotel-primary"
-          >
-            {t.about}
-          </button>
-          <Link 
-            to="/restaurants" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/restaurants' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
-          >
-            {t.restaurantsTitle}
-          </Link>
-          <Link 
-            to="/guide" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/guide' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
-          >
-            {t.guideTitle}
-          </Link>
-          <Link 
-            to="/gallery" 
-            className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/gallery' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
-          >
-            {language === 'EN' ? 'Gallery' : 'গ্যালারি'}
-          </Link>
-          <Link 
-            to="/helpdesk" 
-            onClick={(e) => {
-              e.preventDefault();
-              requireAuth(() => navigate('/helpdesk'));
-            }}
-            className={`transition-all text-[11px] tracking-widest uppercase font-medium relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
-          >
-            {t.helpDesk}
-            {isAdmin && pendingBookingsCount > 0 && (
-              <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white shadow-sm">
-                {formatNumber(pendingBookingsCount)}
-              </span>
-            )}
-          </Link>
-          
-          <div className="h-4 w-[1px] bg-gray-200"></div>
-
-          <button 
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className={`transition-all relative p-2 rounded-xl ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary hover:bg-gray-50'}`}
-            title={t.notifications}
-          >
-            <Bell size={22} />
-            {unreadCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">{formatNumber(unreadCount)}</span>}
-            
-            {isNotificationsOpen && (
-              <div ref={notificationRef} className="absolute right-0 top-full mt-4 w-80 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right cursor-default" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
-                  <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">{t.notifications}</h3>
-                  {unreadCount > 0 && (
-                    <button 
-                      onClick={async () => {
-                        const batch = writeBatch(db);
-                        notifications.forEach(n => { 
-                          if (!n.read) {
-                            const nRef = doc(db, 'notifications', user.uid, 'items', n.id);
-                            batch.update(nRef, { read: true });
-                          }
-                        });
-                        await batch.commit();
-                      }}
-                      className="text-[8px] font-black text-hotel-primary uppercase tracking-widest hover:underline"
-                    >
-                      {t.markAllRead}
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-96 overflow-y-auto no-scrollbar">
-                  {notifications.length === 0 ? (
-                    <div className="p-10 text-center">
-                      <Bell size={32} className="mx-auto text-gray-200 mb-4" />
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.noNotifications}</p>
-                    </div>
-                  ) : (
-                    <div className="p-2 space-y-1">
-                      {notifications.map(n => (
-                        <div 
-                          key={n.id} 
-                          className={`p-4 rounded-xl transition-all border ${n.read ? 'bg-white border-transparent' : 'bg-hotel-primary/5 border-hotel-primary/10'}`}
-                          onClick={async () => {
-                            if (!n.read) await updateDoc(doc(db, 'notifications', user.uid, 'items', n.id), { read: true });
-                            if (n.link) navigate(n.link);
-                          }}
-                        >
-                          <p className="text-[11px] font-black text-gray-900 mb-1">{n.title}</p>
-                          <p className="text-[10px] text-gray-500 font-medium leading-relaxed mb-2">{n.message}</p>
-                          <p className="text-[8px] font-black text-gray-300 uppercase">{new Date(n.createdAt).toLocaleString()}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </button>
-        </nav>
-
-        <div className="flex items-center gap-2 md:gap-4 ml-auto lg:ml-0">
-          <button 
-            onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
-            className="transition-all text-[9px] md:text-[11px] tracking-widest uppercase font-black text-hotel-primary hover:bg-hotel-primary/5 flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-xl border border-hotel-primary/10 shrink-0"
-          >
-            <span className={language === 'EN' ? 'opacity-100' : 'opacity-30'}>EN</span>
-            <span className="text-gray-300">/</span>
-            <span className={language === 'BN' ? 'opacity-100' : 'opacity-30'}>BN</span>
-          </button>
-
-          {isAdmin && (
-            <button onClick={() => setIsEditMode(!isEditMode)} className={`flex items-center gap-2 px-3 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-              <Edit3 size={14} /> <span className="hidden sm:inline">{isEditMode ? t.liveEditing : t.editWeb}</span>
-            </button>
-          )}
-
-          {user ? (
-            <div className="flex items-center gap-2 md:gap-4">
-              <div className="relative" ref={dropdownRef}>
-                <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
-                  <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="Profile" />
+        <div className="ml-auto flex items-center gap-4 lg:gap-10">
+          {showStickyCategories && (
+            <div className="hidden xl:flex items-center gap-8 animate-fade-in">
+              {[
+                { id: 'rooms', label: t.ourLuxuryRooms },
+                { id: 'offers', label: t.exclusiveOffers },
+                { id: 'restaurants', label: t.restaurantsTitle },
+                { id: 'guide', label: t.guideTitle },
+                { id: 'helpdesk', label: t.helpDesk }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    const el = document.getElementById(item.id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    else navigate(item.id === 'helpdesk' ? '/helpdesk' : `/#${item.id}`);
+                  }}
+                  className="flex items-center gap-2 group"
+                >
+                  <span className="text-[10px] font-black text-gray-400 group-hover:text-hotel-primary uppercase tracking-widest transition-all border-b-2 border-transparent group-hover:border-hotel-primary pb-1">{item.label}</span>
                 </button>
-                {isProfileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-4 w-72 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
-                     <div className="p-6 border-b border-gray-50 bg-gray-50/50">
-                        <div className="flex items-center gap-2 mb-1">
-                          {isAdmin && (
-                            <div className={`p-1 rounded-md ${profile?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
-                              {profile?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() ? <Key size={10}/> : <Shield size={10}/>}
-                            </div>
-                          )}
-                          <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{getDisplayNameWithRole()}</p>
-                        </div>
-                        <p className="text-[9px] text-gray-400 truncate font-bold tracking-widest opacity-70">{user.email}</p>
-                     </div>
-                     <div className="p-2 space-y-1">
-                        <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center justify-between px-4 py-4 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase text-left group">
-                          <div className="flex items-center gap-3">
-                            <UserIcon size={18} className="shrink-0" /> {t.manageIdentity}
-                          </div>
-                          {unreadCount > 0 && (
-                            <span className="bg-hotel-primary text-white text-[8px] px-1.5 py-0.5 rounded-full">
-                              {formatNumber(unreadCount)}
-                            </span>
-                          )}
-                        </button>
-                        {isAdmin && (
-                          <Link to="/admin" onClick={() => setIsProfileMenuOpen(false)} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-amber-600 hover:bg-amber-50 transition-all uppercase text-left">
-                            <LayoutDashboard size={18} className="shrink-0" /> {t.adminConsole}
-                          </Link>
-                        )}
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase text-left">
-                          <LogOut size={18} className="shrink-0" /> {t.deAuthorize}
-                        </button>
-                     </div>
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
-          ) : (
-            <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase shadow-xl hover:brightness-110 active:scale-95 transition-all shrink-0">{t.login}</button>
           )}
+
+          <nav className="hidden lg:flex items-center gap-10">
+            <Link 
+              to="/" 
+              onClick={handleHomeClick}
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {t.home}
+            </Link>
+            <button 
+              onClick={() => {
+                const el = document.getElementById('about');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else navigate('/#about');
+              }}
+              className="transition-all text-[11px] tracking-widest uppercase font-medium text-gray-400 hover:text-hotel-primary"
+            >
+              {t.about}
+            </button>
+            <Link 
+              to="/restaurants" 
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/restaurants' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {t.restaurantsTitle}
+            </Link>
+            <Link 
+              to="/guide" 
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/guide' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {t.guideTitle}
+            </Link>
+            <Link 
+              to="/gallery" 
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium ${location.pathname === '/gallery' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {language === 'EN' ? 'Gallery' : 'গ্যালারি'}
+            </Link>
+            <Link 
+              to="/helpdesk" 
+              onClick={(e) => {
+                e.preventDefault();
+                requireAuth(() => navigate('/helpdesk'));
+              }}
+              className={`transition-all text-[11px] tracking-widest uppercase font-medium relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
+            >
+              {t.helpDesk}
+              {isAdmin && pendingBookingsCount > 0 && (
+                <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white shadow-sm">
+                  {formatNumber(pendingBookingsCount)}
+                </span>
+              )}
+            </Link>
+            
+            <div className="h-4 w-[1px] bg-gray-200"></div>
+
+            <button 
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              className={`transition-all relative p-2 rounded-xl ${isNotificationsOpen ? 'bg-hotel-primary/10 text-hotel-primary' : 'text-gray-400 hover:text-hotel-primary hover:bg-gray-50'}`}
+              title={t.notifications}
+            >
+              <Bell size={22} />
+              {unreadCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white">{formatNumber(unreadCount)}</span>}
+              
+              {isNotificationsOpen && (
+                <div ref={notificationRef} className="absolute right-0 top-full mt-4 w-80 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right cursor-default" onClick={e => e.stopPropagation()}>
+                  <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                    <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">{t.notifications}</h3>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={async () => {
+                          const batch = writeBatch(db);
+                          notifications.forEach(n => { 
+                            if (!n.read) {
+                              const nRef = doc(db, 'notifications', user.uid, 'items', n.id);
+                              batch.update(nRef, { read: true });
+                            }
+                          });
+                          await batch.commit();
+                        }}
+                        className="text-[8px] font-black text-hotel-primary uppercase tracking-widest hover:underline"
+                      >
+                        {t.markAllRead}
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto no-scrollbar">
+                    {notifications.length === 0 ? (
+                      <div className="p-10 text-center">
+                        <Bell size={32} className="mx-auto text-gray-200 mb-4" />
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.noNotifications}</p>
+                      </div>
+                    ) : (
+                      <div className="p-2 space-y-1">
+                        {notifications.map(n => (
+                          <div 
+                            key={n.id} 
+                            className={`p-4 rounded-xl transition-all border ${n.read ? 'bg-white border-transparent' : 'bg-hotel-primary/5 border-hotel-primary/10'}`}
+                            onClick={async () => {
+                              if (!n.read) await updateDoc(doc(db, 'notifications', user.uid, 'items', n.id), { read: true });
+                              if (n.link) navigate(n.link);
+                            }}
+                          >
+                            <p className="text-[11px] font-black text-gray-900 mb-1">{n.title}</p>
+                            <p className="text-[10px] text-gray-500 font-medium leading-relaxed mb-2">{n.message}</p>
+                            <p className="text-[8px] font-black text-gray-300 uppercase">{new Date(n.createdAt).toLocaleString()}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            <button 
+              onClick={() => setLanguage(language === 'EN' ? 'BN' : 'EN')}
+              className="transition-all text-[9px] md:text-[11px] tracking-widest uppercase font-black text-hotel-primary hover:bg-hotel-primary/5 flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-xl border border-hotel-primary/10 shrink-0"
+            >
+              <span className={language === 'EN' ? 'opacity-100' : 'opacity-30'}>EN</span>
+              <span className="text-gray-300">/</span>
+              <span className={language === 'BN' ? 'opacity-100' : 'opacity-30'}>BN</span>
+            </button>
+
+            {isAdmin && (
+              <button onClick={() => setIsEditMode(!isEditMode)} className={`flex items-center gap-2 px-3 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest ${isEditMode ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                <Edit3 size={14} /> <span className="hidden sm:inline">{isEditMode ? t.liveEditing : t.editWeb}</span>
+              </button>
+            )}
+
+            {user ? (
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="relative" ref={dropdownRef}>
+                  <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm ring-1 transition-all ${isAdmin ? 'border-amber-400 ring-amber-100' : 'border-white ring-gray-100'}`}>
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} className="w-full h-full object-cover" alt="Profile" />
+                  </button>
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 top-full mt-4 w-72 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] animate-fade-in origin-top-right">
+                       <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            {isAdmin && (
+                              <div className={`p-1 rounded-md ${profile?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() ? 'bg-hotel-primary text-white' : 'bg-blue-600 text-white'}`}>
+                                {profile?.role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() ? <Key size={10}/> : <Shield size={10}/>}
+                              </div>
+                            )}
+                            <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{getDisplayNameWithRole()}</p>
+                          </div>
+                          <p className="text-[9px] text-gray-400 truncate font-bold tracking-widest opacity-70">{user.email}</p>
+                       </div>
+                       <div className="p-2 space-y-1">
+                          <button onClick={() => { setIsManageAccountOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center justify-between px-4 py-4 rounded-xl text-[11px] font-black text-gray-600 hover:bg-hotel-primary/5 hover:text-hotel-primary transition-all uppercase text-left group">
+                            <div className="flex items-center gap-3">
+                              <UserIcon size={18} className="shrink-0" /> {t.manageIdentity}
+                            </div>
+                            {unreadCount > 0 && (
+                              <span className="bg-hotel-primary text-white text-[8px] px-1.5 py-0.5 rounded-full">
+                                {formatNumber(unreadCount)}
+                              </span>
+                            )}
+                          </button>
+                          {isAdmin && (
+                            <Link to="/admin" onClick={() => setIsProfileMenuOpen(false)} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-amber-600 hover:bg-amber-50 transition-all uppercase text-left">
+                              <LayoutDashboard size={18} className="shrink-0" /> {t.adminConsole}
+                            </Link>
+                          )}
+                          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-[11px] font-black text-red-500 hover:bg-red-50 transition-all uppercase text-left">
+                            <LogOut size={18} className="shrink-0" /> {t.deAuthorize}
+                          </button>
+                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setIsAuthModalOpen(true)} className="bg-hotel-primary text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase shadow-xl hover:brightness-110 active:scale-95 transition-all shrink-0">{t.login}</button>
+            )}
+          </div>
         </div>
+
       </header>
       
       <main className="flex-1 relative w-full flex flex-col pt-[72px] md:pt-[88px] pb-32 lg:pb-0">

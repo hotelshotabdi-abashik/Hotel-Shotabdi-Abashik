@@ -90,9 +90,12 @@ export interface GuestInfo {
   age: string;
   nidNumber: string;
   phone: string;
+  guardianName: string;
   guardianPhone: string;
   nidImageUrl: string;
 }
+
+export type BookingMode = 'website' | 'call_confirm' | 'direct_call';
 
 export interface Booking {
   id: string;
@@ -107,6 +110,7 @@ export interface Booking {
   guests: GuestInfo[];
   price: string;
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  bookingMode: BookingMode;
   roomNumber?: string;
   rejectionReason?: string;
   hasEdited: boolean;
@@ -121,6 +125,7 @@ export interface UserProfile {
   username: string;
   email: string;
   phone: string;
+  guardianName: string;
   guardianPhone: string;
   nidNumber: string;
   nidImageUrl: string;

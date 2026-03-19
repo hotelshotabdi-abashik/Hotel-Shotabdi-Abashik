@@ -14,6 +14,9 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+const R2_WORKER_URL = process.env.R2_WORKER_URL || "https://hotel-cms-worker.hotelshotabdiabashik.workers.dev";
+const R2_WORKER_AUTH_KEY = process.env.R2_WORKER_AUTH_KEY;
+
 // R2 Configuration
 const r2Client = new S3Client({
   region: "auto",
@@ -41,8 +44,8 @@ app.post("/api/upload/presigned", async (req, res) => {
     
     // If Worker is configured, we'll return the Worker URL and use it as the "signedUrl"
     // The frontend will then PUT to this URL with the Auth Key handled by the server or passed through
-    if (process.env.R2_WORKER_URL) {
-      const workerUrl = `${process.env.R2_WORKER_URL}/${key}`;
+    if (R2_WORKER_URL) {
+      const workerUrl = `${R2_WORKER_URL}/${key}`;
       const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
       
       // We return the worker URL as the upload destination
@@ -76,15 +79,15 @@ app.post("/api/upload/presigned", async (req, res) => {
 app.put("/api/upload/worker-proxy", express.raw({ type: '*/*', limit: '50mb' }), async (req, res) => {
   try {
     const { key, type } = req.query;
-    if (!key || !process.env.R2_WORKER_URL) {
+    if (!key || !R2_WORKER_URL) {
       return res.status(400).json({ error: "Missing configuration" });
     }
 
-    const workerUrl = `${process.env.R2_WORKER_URL}/${key}`;
+    const workerUrl = `${R2_WORKER_URL}/${key}`;
     const response = await fetch(workerUrl, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${process.env.R2_WORKER_AUTH_KEY}`,
+        'Authorization': `Bearer ${R2_WORKER_AUTH_KEY}`,
         'Content-Type': type as string
       },
       body: req.body
@@ -110,12 +113,12 @@ app.delete("/api/upload/delete", async (req, res) => {
       return res.status(400).json({ error: "Missing object key" });
     }
 
-    if (process.env.R2_WORKER_URL) {
-      const workerUrl = `${process.env.R2_WORKER_URL}/${key}`;
+    if (R2_WORKER_URL) {
+      const workerUrl = `${R2_WORKER_URL}/${key}`;
       const response = await fetch(workerUrl, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${process.env.R2_WORKER_AUTH_KEY}`
+          'Authorization': `Bearer ${R2_WORKER_AUTH_KEY}`
         }
       });
 
