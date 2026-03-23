@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ShieldCheck, User, Phone, IdCard, Camera, Loader2, AlertCircle, CheckCircle2, Maximize2, X } from 'lucide-react';
-import { db, setDoc, doc, checkUsernameUnique } from '../services/firebase';
+import { rtdb as db, ref, set, checkUsernameUnique } from '../services/firebase';
 
 interface Props {
   user: any;
@@ -88,8 +88,8 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
         lastUpdated: timestamp,
         createdAt: timestamp,
       };
-      await setDoc(doc(db, 'profiles', user.uid), profileData);
-      await setDoc(doc(db, 'usernames', normalizedUsername), { uid: user.uid });
+      await set(ref(db, `profiles/${user.uid}`), profileData);
+      await set(ref(db, `usernames/${normalizedUsername}`), { uid: user.uid });
       onComplete();
     } catch (err: any) {
       setError(err.message);

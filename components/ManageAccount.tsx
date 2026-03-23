@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History, Clock, Maximize2 } from 'lucide-react';
-import { db, setDoc, doc, checkUsernameUnique } from '../services/firebase';
+import { rtdb, checkUsernameUnique } from '../services/firebase';
+import { ref, set, update } from 'firebase/database';
 import { UserProfile } from '../types';
 
 interface Props {
@@ -77,9 +78,9 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
         isComplete: !!(form.legalName && form.phone && form.nidNumber && nidPreview)
       };
 
-      await setDoc(doc(db, 'profiles', profile.uid), finalProfile);
+      await set(ref(rtdb, `profiles/${profile.uid}`), finalProfile);
       if (normalizedUsername !== profile.username) {
-        await setDoc(doc(db, 'usernames', normalizedUsername), { uid: profile.uid });
+        await set(ref(rtdb, `usernames/${normalizedUsername}`), { uid: profile.uid });
       }
       setSuccess(true);
       setTimeout(() => {

@@ -6,15 +6,14 @@ import {
   Camera, RefreshCw
 } from 'lucide-react';
 import { 
-  db, 
+  rtdb as db, 
   auth, 
   OWNER_EMAIL,
-  collection,
-  onSnapshot,
-  addDoc,
-  deleteDoc,
-  doc,
-  setDoc
+  ref,
+  onValue,
+  push,
+  remove,
+  set
 } from '../services/firebase';
 import { GalleryItem } from '../types';
 import { translations, Language } from '../translations';
@@ -59,17 +58,19 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
   };
 
   useEffect(() => {
-    const galleryRef = collection(db, 'gallery');
+    const galleryRef = ref(db, 'gallery');
     
     // Fallback timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       setLoading(false);
     }, 5000);
 
-    const unsub = onSnapshot(galleryRef, (snapshot) => {
+    const unsub = onValue(galleryRef, (snapshot) => {
       clearTimeout(timeout);
       const data: GalleryItem[] = [];
-      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as GalleryItem));
+      snapshot.forEach(child => {
+        data.push({ ...child.val(), id: child.key } as GalleryItem);
+      });
       setItems(data.sort((a, b) => b.createdAt - a.createdAt));
       setLoading(false);
     }, (error) => {
@@ -93,15 +94,14 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
       const url = await onImageUpload(file);
       const isVideo = file.type.startsWith('video/');
       
-      const galleryRef = collection(db, 'gallery');
-      const docRef = await addDoc(galleryRef, {
+      const galleryRef = ref(db, 'gallery');
+      await push(galleryRef, {
         url,
         type: isVideo ? 'video' : 'image',
         createdAt: Date.now(),
         title: file.name
       });
       
-      // Update with id if needed, but Firestore id is already in docRef.id
     } catch (error) {
       console.error("Upload failed", error);
       alert("Upload failed. Please try again.");
@@ -120,8 +120,8 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
         await onImageDelete(item.url);
       }
       
-      // 2. Delete from Firestore
-      await deleteDoc(doc(db, 'gallery', item.id));
+      // 2. Delete from Realtime Database
+      await remove(ref(db, `gallery/${item.id}`));
     } catch (error) {
       console.error("Delete failed", error);
     }

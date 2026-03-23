@@ -7,7 +7,7 @@ import {
   Clock, User as UserIcon, Phone, MessageSquare, PhoneCall,
   ChevronRight, Maximize2
 } from 'lucide-react';
-import { db, collection, onSnapshot, query, where, setDoc, doc } from '../services/firebase';
+import { rtdb as db, ref, onValue, rtdbQuery, orderByChild, equalTo, set } from '../services/firebase';
 import { sendGuestEmail, notifyOwnerOfBooking } from '../services/emailService';
 import { Room, UserProfile, GuestInfo, Booking, BookingMode } from '../types';
 
@@ -33,10 +33,16 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
   const [hasExistingPending, setHasExistingPending] = useState(false);
 
   useEffect(() => {
-    const bookingsRef = collection(db, 'bookings');
-    const q = query(bookingsRef, where('userId', '==', profile.uid), where('status', '==', 'pending'));
-    const unsub = onSnapshot(q, (snap) => {
-      setHasExistingPending(!snap.empty);
+    const bookingsRef = ref(db, 'bookings');
+    const q = rtdbQuery(bookingsRef, orderByChild('userId'), equalTo(profile.uid));
+    const unsub = onValue(q, (snap) => {
+      let hasPending = false;
+      snap.forEach(child => {
+        if (child.val().status === 'pending') {
+          hasPending = true;
+        }
+      });
+      setHasExistingPending(hasPending);
     });
     return () => unsub();
   }, [profile.uid]);
@@ -78,8 +84,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
         hasEdited: false,
         createdAt: Date.now()
       };
-      await setDoc(doc(db, 'bookings', bookingId), bookingData);
-      await setDoc(doc(db, 'user_registry', profile.uid, 'bookings', bookingId), bookingData);
+      await set(ref(db, `bookings/${bookingId}`), bookingData);
+      await set(ref(db, `user_registry/${profile.uid}/bookings/${bookingId}`), bookingData);
       
       notifyOwnerOfBooking(bookingData);
       setSuccess(true);

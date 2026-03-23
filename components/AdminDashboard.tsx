@@ -8,20 +8,13 @@ import {
   MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star, ChevronRight
 } from 'lucide-react';
 import { 
-  db, 
+  rtdb, 
   createNotification, 
   OWNER_EMAIL, 
   auth, 
   createAdminLog, 
-  query, 
-  limit, 
-  collection, 
-  onSnapshot, 
-  doc, 
-  updateDoc, 
-  setDoc, 
-  orderBy 
 } from '../services/firebase';
+import { ref, onValue, set, update, push, query as rtdbQuery, limitToLast, orderByChild, equalTo } from 'firebase/database';
 import { sendGuestEmail } from '../services/emailService';
 import { UserProfile, Booking, SiteConfig, HelpDeskNumber } from '../types';
 
@@ -83,37 +76,30 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const [roleUpdatingUid, setRoleUpdatingUid] = useState<string | null>(null);
 
   useEffect(() => {
-    const profilesRef = collection(db, 'profiles');
-    const bookingsRef = collection(db, 'bookings');
-    const logsRef = collection(db, 'logs');
-
-    let loadedCount = 0;
-    const totalToLoad = 3;
-
-    const checkLoadingFinished = () => {
-      loadedCount++;
-      if (loadedCount >= totalToLoad) {
-        setLoading(false);
-      }
-    };
+    const profilesRef = ref(rtdb, 'profiles');
+    const bookingsRef = ref(rtdb, 'bookings');
 
     const handleLoadError = (err: any) => {
       console.error("Registry Sync Error:", err);
       setLoadError("Some administrative data could not be synced. Check permissions.");
-      checkLoadingFinished();
+      setLoading(false);
     };
 
-    const uUnsub = onSnapshot(profilesRef, (snapshot) => {
+    const uUnsub = onValue(profilesRef, (snapshot) => {
       const usersList: UserProfile[] = [];
-      snapshot.forEach(d => usersList.push({ ...d.data(), uid: d.id } as UserProfile));
+      snapshot.forEach(d => {
+        usersList.push({ ...d.val(), uid: d.key } as UserProfile);
+      });
       setUsers(usersList);
       setLoading(false);
     }, handleLoadError);
 
-    const bUnsub = onSnapshot(bookingsRef, (snapshot) => {
+    const bUnsub = onValue(bookingsRef, (snapshot) => {
       const data: Booking[] = [];
-      snapshot.forEach(d => data.push({ ...d.data(), id: d.id } as Booking));
-      setBookings(data.sort((a, b) => b.createdAt - a.createdAt));
+      snapshot.forEach(d => {
+        data.push({ ...d.val(), id: d.key } as Booking);
+      });
+      setBookings(data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
     }, handleLoadError);
 
     return () => { uUnsub(); bUnsub(); };
@@ -149,11 +135,11 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
     setRoleUpdatingUid(uid);
     try {
       const targetUser = users.find(u => u.uid === uid);
-      const userRef = doc(db, 'profiles', uid);
-      const roleRef = doc(db, 'roles', uid);
+      const userRef = ref(rtdb, `profiles/${uid}`);
+      const roleRef = ref(rtdb, `roles/${uid}`);
       
-      await updateDoc(userRef, { role: newRole });
-      await setDoc(roleRef, { role: newRole }, { merge: true });
+      await update(userRef, { role: newRole });
+      await set(roleRef, { role: newRole });
       
       await createAdminLog('ROLE_CHANGE', `Changed role for ${targetUser?.legalName || uid} to ${newRole.toUpperCase()}`);
       await triggerRoleNotification(uid, newRole);
@@ -173,11 +159,11 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
         rejectionReason: status === 'rejected' ? meta : null
       };
       
-      const bookingRef = doc(db, 'bookings', booking.id);
-      const userBookingRef = doc(db, 'user_registry', booking.userId, 'bookings', booking.id);
+      const bookingRef = ref(rtdb, `bookings/${booking.id}`);
+      const userBookingRef = ref(rtdb, `user_registry/${booking.userId}/bookings/${booking.id}`);
       
-      await updateDoc(bookingRef, updates);
-      await updateDoc(userBookingRef, updates);
+      await update(bookingRef, updates);
+      await update(userBookingRef, updates);
       
       await createAdminLog(status === 'accepted' ? 'BOOKING_ACCEPTED' : 'BOOKING_REJECTED', `${status === 'accepted' ? 'Verified stay' : 'Rejected stay'} for ${booking.userName}. ID: ${booking.id}`);
       const message = status === 'accepted' 

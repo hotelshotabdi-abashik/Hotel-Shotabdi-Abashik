@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db, createBooking, cancelBooking, handleFirestoreError, OperationType } from '../services/firebase';
-import { onSnapshot, doc, collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { auth, rtdb, createBooking, cancelBooking } from '../services/firebase';
+import { ref, onValue, query as rtdbQuery, orderByChild, equalTo } from 'firebase/database';
 import { UserProfile, Booking } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, Clock, Shield, AlertCircle, CheckCircle, XCircle, User, Phone, Image as ImageIcon, Fingerprint } from 'lucide-react';
@@ -17,23 +17,30 @@ export const BookingSystem: React.FC = () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    const unsubProfile = onSnapshot(doc(db, "profiles", user.uid), (snap) => {
+    const profileRef = ref(rtdb, `profiles/${user.uid}`);
+    const unsubProfile = onValue(profileRef, (snap) => {
       if (snap.exists()) {
-        setProfile(snap.data() as UserProfile);
+        setProfile(snap.val() as UserProfile);
       }
       setLoading(false);
-    }, (err) => handleFirestoreError(err, OperationType.GET, `profiles/${user.uid}`));
+    }, (err) => console.error("Profile sync failed", err));
 
-    const q = query(
-      collection(db, "bookings"),
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+    const bookingsRef = ref(rtdb, "bookings");
+    const q = rtdbQuery(
+      bookingsRef,
+      orderByChild("userId"),
+      equalTo(user.uid)
     );
 
-    const unsubBookings = onSnapshot(q, (snap) => {
-      const docs = snap.docs.map(d => ({ ...d.data(), id: d.id } as Booking));
-      setBookings(docs);
-    }, (err) => handleFirestoreError(err, OperationType.GET, "bookings"));
+    const unsubBookings = onValue(q, (snap) => {
+      const list: Booking[] = [];
+      snap.forEach(d => {
+        list.push({ ...d.val(), id: d.key } as Booking);
+      });
+      // Sort by createdAt descending manually since RTDB doesn't support multiple orderBys easily
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setBookings(list);
+    }, (err) => console.error("Bookings sync failed", err));
 
     return () => {
       unsubProfile();
@@ -49,8 +56,8 @@ export const BookingSystem: React.FC = () => {
       
       bookings.forEach(booking => {
         if (booking.status === 'pending' && booking.cancelCooldownUntil) {
-          const until = booking.cancelCooldownUntil instanceof Timestamp 
-            ? booking.cancelCooldownUntil.toMillis() 
+          const until = typeof booking.cancelCooldownUntil === 'number' 
+            ? booking.cancelCooldownUntil 
             : new Date(booking.cancelCooldownUntil).getTime();
           
           if (until > now) {
@@ -78,7 +85,7 @@ export const BookingSystem: React.FC = () => {
   // 4. Expiration Check (>24h Pending)
   const hasExpiredPendingBooking = bookings.some(b => {
     if (b.status !== 'pending') return false;
-    const created = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : b.createdAt;
+    const created = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt).getTime();
     return Date.now() - created > 24 * 60 * 60 * 1000;
   });
 
@@ -208,7 +215,7 @@ export const BookingSystem: React.FC = () => {
               bookings.map((booking) => {
                 const isPending = booking.status === 'pending';
                 const cooldown = cooldowns[booking.id];
-                const created = booking.createdAt instanceof Timestamp ? booking.createdAt.toMillis() : booking.createdAt;
+                const created = typeof booking.createdAt === 'number' ? booking.createdAt : (booking.createdAt?.toMillis?.() || Date.now());
                 const isWithin24h = Date.now() - created < 24 * 60 * 60 * 1000;
                 const canCancel = isPending && isWithin24h && !cooldown;
 

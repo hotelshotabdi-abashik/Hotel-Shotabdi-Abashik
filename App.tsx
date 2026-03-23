@@ -21,25 +21,24 @@ import PublicProfile from './components/PublicProfile';
 import SchemaOrg from './components/SchemaOrg';
 import GallerySection from './components/Gallery';
 import { 
+  rtdb as db,
   auth, 
   onAuthStateChanged, 
   signOut,
   syncUserProfile,
   OWNER_EMAIL,
-  db,
-  onSnapshot,
-  doc,
-  collection,
-  updateDoc,
-  getDoc,
+  rtdb,
   createAdminLog,
   playNotificationSound,
   trackUserMovement,
-  query,
-  limit,
-  orderBy,
-  where,
-  writeBatch
+  ref,
+  onValue,
+  rtdbQuery,
+  orderByChild,
+  equalTo,
+  limitToLast,
+  update,
+  set
 } from './services/firebase';
 import { UserProfile, SiteConfig, AppNotification, Room } from './types';
 import { 
@@ -170,10 +169,10 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    const configRef = doc(db, 'site-config', 'main');
-    const unsubscribe = onSnapshot(configRef, (snapshot) => {
+    const configRef = ref(rtdb, 'site-config/main');
+    const unsubscribe = onValue(configRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.data();
+        const data = snapshot.val();
         setSiteConfig(prev => !isSaving ? { ...prev, ...data } : prev as SiteConfig);
       }
     });
@@ -188,12 +187,16 @@ const AppContent = () => {
 
   useEffect(() => {
     if (!user) { setNotifications([]); return; }
-    const notificationsRef = collection(db, 'notifications', user.uid, 'items');
-    const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(10));
+    const notificationsRef = ref(rtdb, `notifications/${user.uid}/items`);
+    const q = rtdbQuery(notificationsRef, limitToLast(10));
     let initialLoad = true;
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onValue(q, (snap) => {
       const list: AppNotification[] = [];
-      snap.forEach(d => list.push({ ...d.data(), id: d.id } as AppNotification));
+      snap.forEach(d => {
+        list.push({ ...d.val(), id: d.key } as AppNotification);
+      });
+      // RTDB limitToLast returns in ascending order of keys, we want descending for UI
+      list.reverse();
       
       // Play sound for new unread notifications after initial load
       if (!initialLoad) {
@@ -213,9 +216,9 @@ const AppContent = () => {
     
     if (isAdmin) {
       // Admin listens to new bookings
-      const bookingsRef = collection(db, 'bookings');
-      const q = query(bookingsRef, where('status', '==', 'pending'));
-      const unsubBookings = onSnapshot(q, (snap) => {
+      const bookingsRef = ref(rtdb, 'bookings');
+      const q = rtdbQuery(bookingsRef, orderByChild('status'), equalTo('pending'));
+      const unsubBookings = onValue(q, (snap) => {
         const pending = snap.size;
         if (pending > pendingBookingsCount) playNotificationSound();
         setPendingBookingsCount(pending);
@@ -341,8 +344,8 @@ const AppContent = () => {
 
       const cleanConfig = sanitizeKeys(JSON.parse(safeStringify(finalConfig)));
       
-      const configRef = doc(db, 'site-config', 'main');
-      await updateDoc(configRef, { ...cleanConfig, lastUpdated: Date.now() });
+      const configRef = ref(rtdb, 'site-config/main');
+      await update(configRef, { ...cleanConfig, lastUpdated: Date.now() });
       await createAdminLog('WEBSITE_UPDATE', 'Configuration updated.');
       setIsEditMode(false);
       alert("Update Success!");
@@ -639,14 +642,13 @@ const AppContent = () => {
                     {unreadCount > 0 && (
                       <button 
                         onClick={async () => {
-                          const batch = writeBatch(db);
+                          const updates: any = {};
                           notifications.forEach(n => { 
                             if (!n.read) {
-                              const nRef = doc(db, 'notifications', user.uid, 'items', n.id);
-                              batch.update(nRef, { read: true });
+                              updates[`notifications/${user.uid}/items/${n.id}/read`] = true;
                             }
                           });
-                          await batch.commit();
+                          await update(ref(rtdb), updates);
                         }}
                         className="text-[8px] font-black text-hotel-primary uppercase tracking-widest hover:underline"
                       >
@@ -667,7 +669,7 @@ const AppContent = () => {
                             key={n.id} 
                             className={`p-4 rounded-xl transition-all border ${n.read ? 'bg-white border-transparent' : 'bg-hotel-primary/5 border-hotel-primary/10'}`}
                             onClick={async () => {
-                              if (!n.read) await updateDoc(doc(db, 'notifications', user.uid, 'items', n.id), { read: true });
+                              if (!n.read) await update(ref(rtdb, `notifications/${user.uid}/items/${n.id}`), { read: true });
                               if (n.link) navigate(n.link);
                             }}
                           >
