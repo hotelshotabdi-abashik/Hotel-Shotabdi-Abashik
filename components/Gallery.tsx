@@ -5,6 +5,8 @@ import {
   Loader2, Plus, X, Maximize2, CheckCircle2,
   Camera, RefreshCw
 } from 'lucide-react';
+import { toast } from 'sonner';
+import ConfirmModal from './ConfirmModal';
 import { 
   rtdb as db, 
   auth, 
@@ -37,6 +39,7 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
   const [uploading, setUploading] = useState(false);
   const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [confirmDeleteItem, setConfirmDeleteItem] = useState<GalleryItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleHeaderImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +53,7 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
         const url = await onImageUpload(file);
         onUpdateHeader?.(url);
       } catch (err: any) {
-        alert(`Upload Failed: ${err.message || 'Ensure file is under 10MB.'}`);
+        toast.error(`Upload Failed: ${err.message || 'Ensure file is under 10MB.'}`);
       } finally {
         setIsHeaderUploading(false);
       }
@@ -104,7 +107,7 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
       
     } catch (error) {
       console.error("Upload failed", error);
-      alert("Upload failed. Please try again.");
+      toast.error("Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -112,18 +115,24 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
 
   const handleDelete = async (item: GalleryItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm("Delete this item from gallery?")) return;
+    setConfirmDeleteItem(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteItem) return;
     
     try {
       // 1. Delete from R2 if onImageDelete is provided
       if (onImageDelete) {
-        await onImageDelete(item.url);
+        await onImageDelete(confirmDeleteItem.url);
       }
       
       // 2. Delete from Realtime Database
-      await remove(ref(db, `gallery/${item.id}`));
+      await remove(ref(db, `gallery/${confirmDeleteItem.id}`));
+      setConfirmDeleteItem(null);
     } catch (error) {
       console.error("Delete failed", error);
+      toast.error("Delete failed. Please try again.");
     }
   };
 
@@ -264,6 +273,14 @@ const GallerySection: React.FC<GalleryProps> = ({ headerImage, isEditMode, langu
           </div>
         </div>
       )}
+
+      <ConfirmModal 
+        isOpen={confirmDeleteItem !== null}
+        onClose={() => setConfirmDeleteItem(null)}
+        onConfirm={confirmDelete}
+        title="Delete Gallery Item"
+        message="Are you sure you want to delete this item from the gallery? This action cannot be undone."
+      />
     </section>
   );
 };

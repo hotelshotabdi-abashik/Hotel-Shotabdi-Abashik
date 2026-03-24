@@ -7,6 +7,8 @@ import {
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
   MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star, ChevronRight
 } from 'lucide-react';
+import { toast } from 'sonner';
+import ConfirmModal from './ConfirmModal';
 import { 
   rtdb, 
   createNotification, 
@@ -47,7 +49,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const currentUser = auth.currentUser;
   const isOwner = currentUser?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   
-  const [activeTab, setActiveTab] = useState<'users'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'system'>('users');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -74,6 +76,8 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   });
 
   const [roleUpdatingUid, setRoleUpdatingUid] = useState<string | null>(null);
+  const [showConfirmResetCache, setShowConfirmResetCache] = useState(false);
+  const [showConfirmFactoryReset, setShowConfirmFactoryReset] = useState(false);
 
   useEffect(() => {
     const profilesRef = ref(rtdb, 'profiles');
@@ -144,7 +148,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
       await createAdminLog('ROLE_CHANGE', `Changed role for ${targetUser?.legalName || uid} to ${newRole.toUpperCase()}`);
       await triggerRoleNotification(uid, newRole);
     } catch (err) {
-      alert("Role update failed. Connection error.");
+      toast.error("Role update failed. Connection error.");
     } finally {
       setRoleUpdatingUid(null);
     }
@@ -185,7 +189,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
       setRoomNumberInput('');
       setRejectionReason('Registry verification failed');
     } catch (err) { 
-      alert("Action failed. Check database connection.");
+      toast.error("Action failed. Check database connection.");
     } finally {
       setActionLoading(false);
     }
@@ -213,6 +217,53 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const acceptedCount = analyticsBookings.filter(b => b.status === 'accepted').length;
   const rejectedCount = analyticsBookings.filter(b => b.status === 'rejected').length;
   const pendingCount = analyticsBookings.filter(b => b.status === 'pending').length;
+
+  const handleResetCache = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  };
+
+  const handleFactoryReset = async () => {
+    if (!isOwner) {
+      toast.error("Only the Owner can perform a Factory Reset.");
+      return;
+    }
+    
+    setIsSavingSettings(true);
+    try {
+      const defaultConfig = {
+        hero: {
+          title: "24h Residential Service",
+          subtitle: "Experience Elite Hospitality in Sylhet",
+          buttonText: "Book Now",
+          locationLabel: "Sylhet HQ District"
+        },
+        rooms: ROOMS_DATA,
+        offers: [],
+        restaurants: SYLHET_RESTAURANTS,
+        touristGuides: SYLHET_ATTRACTIONS,
+        gallery: [],
+        announcement: "25% OFF DISCOUNT",
+        logoUrl: LOGO_ICON_URL,
+        lastUpdated: Date.now(),
+        socialLinks: { facebook: "#", instagram: "#", website: "#" },
+        name: "Hotel Shotabdi",
+        tagline: "Abashik"
+      };
+      
+      const configRef = ref(rtdb, 'site-config/main');
+      await set(configRef, defaultConfig);
+      setSiteConfig(defaultConfig);
+      await createAdminLog('FACTORY_RESET', 'Restored website to default configuration');
+      toast.success("Factory reset successful. The website has been restored to default settings.");
+      window.location.reload();
+    } catch (error) {
+      toast.error("Reset failed. Check database connection.");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const currentAdminRole = isOwner ? 'Owner' : 'Admin';
 
@@ -243,212 +294,297 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
 
       <div className="relative mb-10 group">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#B22222] transition-colors" size={20} />
-        <input type="text" placeholder="Search residents by name or email..." className="w-full bg-white border border-gray-100 rounded-[2rem] py-6 pl-16 pr-8 text-sm font-semibold outline-none focus:border-[#B22222] shadow-xl shadow-gray-100/50 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        <input 
+          type="text" 
+          placeholder="Search residents by name or email..." 
+          className="w-full bg-white border border-gray-100 rounded-[2rem] py-6 pl-16 pr-8 text-sm font-semibold outline-none focus:border-[#B22222] shadow-xl shadow-gray-100/50 transition-all" 
+          value={searchQuery} 
+          onChange={(e) => setSearchQuery(e.target.value)} 
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 space-y-4">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-2">Registered Accounts</h4>
-          <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
-            {filteredUsers.map(user => (
-              <div 
-                key={user.uid} 
-                onClick={() => setSelectedUser(user)}
-                className={`bg-white rounded-[2rem] border p-5 flex items-center justify-between cursor-pointer transition-all group ${selectedUser?.uid === user.uid ? 'border-hotel-primary shadow-xl ring-1 ring-hotel-primary/10' : 'border-gray-100 hover:border-hotel-primary/30 hover:shadow-lg'}`}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md shrink-0 bg-gray-50 flex items-center justify-center">
-                    {user.photoURL ? (
-                      <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
-                    ) : (
-                      <User className="text-gray-300" size={20} />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>
-                    <p className="text-[9px] text-gray-400 truncate font-bold">{user.email}</p>
-                  </div>
-                </div>
-                <ChevronRight size={18} className={`transition-transform ${selectedUser?.uid === user.uid ? 'text-hotel-primary translate-x-1' : 'text-gray-200 group-hover:text-gray-400'}`} />
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center gap-2 mb-8 bg-white p-2 rounded-[2rem] border border-gray-100 shadow-sm w-fit">
+        <button 
+          onClick={() => setActiveTab('users')}
+          className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'users' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+        >
+          <Users size={16} /> Residents
+        </button>
+        <button 
+          onClick={() => setActiveTab('system')}
+          className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'system' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+        >
+          <Settings size={16} /> System Tools
+        </button>
+      </div>
 
-        <div className="lg:col-span-2">
-          {selectedUser ? (
-            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl overflow-hidden animate-fade-in flex flex-col h-full min-h-[70vh]">
-              <div className="p-8 md:p-10 border-b border-gray-50 bg-gray-50/30">
-                <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-                  <div className="relative group">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl">
-                      <img 
-                        src={selectedUser.photoURL || `https://ui-avatars.com/api/?name=${selectedUser.legalName}`} 
-                        className="w-full h-full object-cover" 
-                        alt={selectedUser.legalName} 
-                        referrerPolicy="no-referrer"
-                      />
+      {activeTab === 'users' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 space-y-4">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-2">Registered Accounts</h4>
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
+              {filteredUsers.map(user => (
+                <div 
+                  key={user.uid} 
+                  onClick={() => setSelectedUser(user)}
+                  className={`bg-white rounded-[2rem] border p-5 flex items-center justify-between cursor-pointer transition-all group ${selectedUser?.uid === user.uid ? 'border-hotel-primary shadow-xl ring-1 ring-hotel-primary/10' : 'border-gray-100 hover:border-hotel-primary/30 hover:shadow-lg'}`}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md shrink-0 bg-gray-50 flex items-center justify-center">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} className="w-full h-full object-cover" alt={user.legalName} referrerPolicy="no-referrer" />
+                      ) : (
+                        <User className="text-gray-300" size={20} />
+                      )}
                     </div>
-                    {selectedUser.role === 'owner' && (
-                      <div className="absolute -top-2 -right-2 bg-hotel-primary text-white p-2 rounded-xl shadow-lg">
-                        <Key size={16} />
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-gray-900 truncate">{user.legalName || 'New Resident'}</h3>
+                      <p className="text-[9px] text-gray-400 truncate font-bold">{user.email}</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} className={`transition-transform ${selectedUser?.uid === user.uid ? 'text-hotel-primary translate-x-1' : 'text-gray-200 group-hover:text-gray-400'}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            {selectedUser ? (
+              <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl overflow-hidden animate-fade-in flex flex-col h-full min-h-[70vh]">
+                <div className="p-8 md:p-10 border-b border-gray-50 bg-gray-50/30">
+                  <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                    <div className="relative group">
+                      <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl">
+                        <img 
+                          src={selectedUser.photoURL || `https://ui-avatars.com/api/?name=${selectedUser.legalName}`} 
+                          className="w-full h-full object-cover" 
+                          alt={selectedUser.legalName} 
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      {selectedUser.role === 'owner' && (
+                        <div className="absolute -top-2 -right-2 bg-hotel-primary text-white p-2 rounded-xl shadow-lg">
+                          <Key size={16} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h2 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter">{selectedUser.legalName}</h2>
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                          selectedUser.role === 'owner' ? 'bg-hotel-primary text-white' :
+                          selectedUser.role === 'manager' ? 'bg-blue-600 text-white' :
+                          selectedUser.role === 'staff' ? 'bg-purple-600 text-white' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>
+                          {selectedUser.role || 'guest'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        <span className="flex items-center gap-2"><Mail size={14} className="text-hotel-primary"/> {selectedUser.email}</span>
+                        <span className="flex items-center gap-2"><Phone size={14} className="text-hotel-primary"/> {selectedUser.phone || 'No Phone'}</span>
+                      </div>
+                    </div>
+                    {isOwner && selectedUser.role !== 'owner' && (
+                      <div className="flex items-center bg-white p-2 rounded-2xl border border-gray-100 shadow-sm gap-2">
+                        <button 
+                          onClick={() => handleUpdateRole(selectedUser.uid, 'guest')}
+                          disabled={roleUpdatingUid === selectedUser.uid}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${selectedUser.role === 'guest' || !selectedUser.role ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                        >
+                          Guest
+                        </button>
+                        <button 
+                          onClick={() => handleUpdateRole(selectedUser.uid, 'staff')}
+                          disabled={roleUpdatingUid === selectedUser.uid}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${selectedUser.role === 'staff' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+                        >
+                          Staff
+                        </button>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter">{selectedUser.legalName}</h2>
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                        selectedUser.role === 'owner' ? 'bg-hotel-primary text-white' :
-                        selectedUser.role === 'manager' ? 'bg-blue-600 text-white' :
-                        selectedUser.role === 'staff' ? 'bg-purple-600 text-white' :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
-                        {selectedUser.role || 'guest'}
-                      </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-12 no-scrollbar">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
+                        <IdCard size={16} className="text-hotel-primary" /> Identity Verification
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">NID Number</p>
+                          <p className="text-sm font-black text-gray-900">{selectedUser.nidNumber || 'Not Provided'}</p>
+                        </div>
+                        {selectedUser.nidImageUrl && (
+                          <div className="relative group cursor-pointer" onClick={() => setLightboxUrl(selectedUser.nidImageUrl)}>
+                            <img src={selectedUser.nidImageUrl} className="w-full h-40 object-cover rounded-2xl border border-gray-100 shadow-sm" alt="NID Scan" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                              <Maximize2 className="text-white" size={24} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      <span className="flex items-center gap-2"><Mail size={14} className="text-hotel-primary"/> {selectedUser.email}</span>
-                      <span className="flex items-center gap-2"><Phone size={14} className="text-hotel-primary"/> {selectedUser.phone || 'No Phone'}</span>
+
+                    <div className="space-y-6">
+                      <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
+                        <UserCheck size={16} className="text-hotel-primary" /> Emergency Contact
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Guardian Name</p>
+                          <p className="text-sm font-black text-gray-900">{selectedUser.guardianName || 'Not Provided'}</p>
+                        </div>
+                        <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Guardian Phone</p>
+                          <p className="text-sm font-black text-gray-900">{selectedUser.guardianPhone || 'Not Provided'}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {isOwner && selectedUser.role !== 'owner' && (
-                    <div className="flex items-center bg-white p-2 rounded-2xl border border-gray-100 shadow-sm gap-2">
-                      <button 
-                        onClick={() => handleUpdateRole(selectedUser.uid, 'guest')}
-                        disabled={roleUpdatingUid === selectedUser.uid}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${selectedUser.role === 'guest' || !selectedUser.role ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
-                      >
-                        Guest
-                      </button>
-                      <button 
-                        onClick={() => handleUpdateRole(selectedUser.uid, 'staff')}
-                        disabled={roleUpdatingUid === selectedUser.uid}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${selectedUser.role === 'staff' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
-                      >
-                        Staff
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-12 no-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
-                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
-                      <IdCard size={16} className="text-hotel-primary" /> Identity Verification
+                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                      <History size={16} className="text-hotel-primary" /> Stay History & Bookings
                     </h4>
                     <div className="space-y-4">
-                      <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">NID Number</p>
-                        <p className="text-sm font-black text-gray-900">{selectedUser.nidNumber || 'Not Provided'}</p>
-                      </div>
-                      {selectedUser.nidImageUrl && (
-                        <div className="relative group cursor-pointer" onClick={() => setLightboxUrl(selectedUser.nidImageUrl)}>
-                          <img src={selectedUser.nidImageUrl} className="w-full h-40 object-cover rounded-2xl border border-gray-100 shadow-sm" alt="NID Scan" referrerPolicy="no-referrer" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
-                            <Maximize2 className="text-white" size={24} />
-                          </div>
+                      {userBookings.length === 0 ? (
+                        <div className="p-10 text-center bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
+                          <p className="text-xs font-black text-gray-400 uppercase tracking-widest">No stay records found for this resident.</p>
                         </div>
+                      ) : (
+                        userBookings.map(booking => (
+                          <div 
+                            key={booking.id} 
+                            onClick={() => setSelectedBooking(booking)}
+                            className="p-6 bg-white border border-gray-100 rounded-[2rem] flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-5">
+                              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-hotel-primary group-hover:bg-hotel-primary group-hover:text-white transition-all">
+                                <Building2 size={20} />
+                              </div>
+                              <div>
+                                <h5 className="text-sm font-black text-gray-900">{booking.roomTitle}</h5>
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{booking.checkIn} — {booking.checkOut}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${
+                                booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                                booking.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                                'bg-amber-50 text-amber-600'
+                              }`}>
+                                {booking.status}
+                              </span>
+                              <Eye size={18} className="text-gray-300 group-hover:text-hotel-primary transition-colors" />
+                            </div>
+                          </div>
+                        ))
                       )}
                     </div>
                   </div>
 
                   <div className="space-y-6">
                     <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
-                      <UserCheck size={16} className="text-hotel-primary" /> Emergency Contact
+                      <Activity size={16} className="text-hotel-primary" /> System Metadata
                     </h4>
-                    <div className="space-y-4">
-                      <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Guardian Name</p>
-                        <p className="text-sm font-black text-gray-900">{selectedUser.guardianName || 'Not Provided'}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Joined</p>
+                        <p className="text-[10px] font-black text-gray-900">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Guardian Phone</p>
-                        <p className="text-sm font-black text-gray-900">{selectedUser.guardianPhone || 'Not Provided'}</p>
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Active</p>
+                        <p className="text-[10px] font-black text-gray-900">{selectedUser.lastActive ? new Date(selectedUser.lastActive).toLocaleString() : 'N/A'}</p>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
-                    <History size={16} className="text-hotel-primary" /> Stay History & Bookings
-                  </h4>
-                  <div className="space-y-4">
-                    {userBookings.length === 0 ? (
-                      <div className="p-10 text-center bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">No stay records found for this resident.</p>
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Path</p>
+                        <p className="text-[10px] font-black text-gray-900 truncate">{selectedUser.lastSeenPath || '/'}</p>
                       </div>
-                    ) : (
-                      userBookings.map(booking => (
-                        <div 
-                          key={booking.id} 
-                          onClick={() => setSelectedBooking(booking)}
-                          className="p-6 bg-white border border-gray-100 rounded-[2rem] flex items-center justify-between hover:shadow-xl transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-5">
-                            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-hotel-primary group-hover:bg-hotel-primary group-hover:text-white transition-all">
-                              <Building2 size={20} />
-                            </div>
-                            <div>
-                              <h5 className="text-sm font-black text-gray-900">{booking.roomTitle}</h5>
-                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{booking.checkIn} — {booking.checkOut}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${
-                              booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
-                              booking.status === 'rejected' ? 'bg-red-50 text-red-600' :
-                              'bg-amber-50 text-amber-600'
-                            }`}>
-                              {booking.status}
-                            </span>
-                            <Eye size={18} className="text-gray-300 group-hover:text-hotel-primary transition-colors" />
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
-                    <Activity size={16} className="text-hotel-primary" /> System Metadata
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Joined</p>
-                      <p className="text-[10px] font-black text-gray-900">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Active</p>
-                      <p className="text-[10px] font-black text-gray-900">{selectedUser.lastActive ? new Date(selectedUser.lastActive).toLocaleString() : 'N/A'}</p>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Path</p>
-                      <p className="text-[10px] font-black text-gray-900 truncate">{selectedUser.lastSeenPath || '/'}</p>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">UID</p>
-                      <p className="text-[10px] font-black text-gray-900 truncate">{selectedUser.uid}</p>
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">UID</p>
+                        <p className="text-[10px] font-black text-gray-900 truncate">{selectedUser.uid}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="h-full min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 p-10 text-center">
-              <div className="w-20 h-20 bg-white rounded-[2rem] shadow-xl flex items-center justify-center text-gray-200 mb-6">
-                <Users size={40} />
+            ) : (
+              <div className="h-full min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200 p-10 text-center">
+                <div className="w-20 h-20 bg-white rounded-[2rem] shadow-xl flex items-center justify-center text-gray-200 mb-6">
+                  <Users size={40} />
+                </div>
+                <h3 className="text-xl font-serif font-black text-gray-900 mb-2">Select a Resident</h3>
+                <p className="text-xs text-gray-400 font-medium max-w-xs leading-relaxed">Choose an account from the directory to view detailed profile information, stay history, and identity verification.</p>
               </div>
-              <h3 className="text-xl font-serif font-black text-gray-900 mb-2">Select a Resident</h3>
-              <p className="text-xs text-gray-400 font-medium max-w-xs leading-relaxed">Choose an account from the directory to view detailed profile information, stay history, and identity verification.</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
+          <div className="bg-white rounded-[3rem] border border-gray-100 p-10 shadow-xl space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-hotel-primary/10 text-hotel-primary rounded-2xl flex items-center justify-center">
+                <RefreshCw size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900">Cache Management</h3>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Local System Optimization</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              If the website feels "glitched" or is showing stale data, resetting the system cache will clear all local storage and session data, forcing a fresh reload from the server.
+            </p>
+            <button 
+              onClick={() => setShowConfirmResetCache(true)}
+              className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3"
+            >
+              <RefreshCw size={18} /> Reset System Cache
+            </button>
+          </div>
+
+          <div className="bg-white rounded-[3rem] border border-red-100 p-10 shadow-xl space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
+                <ShieldAlert size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900">Factory Reset</h3>
+                <p className="text-[10px] text-red-400 font-black uppercase tracking-widest">Database Restoration</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Restores all website configurations (Hero, Rooms, Restaurants, etc.) to their original factory defaults. This action is irreversible and will overwrite any custom changes.
+            </p>
+            <button 
+              onClick={() => setShowConfirmFactoryReset(true)}
+              disabled={!isOwner || isSavingSettings}
+              className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${isOwner ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+            >
+              {isSavingSettings ? <Loader2 className="animate-spin" size={18} /> : <><Database size={18} /> Factory Reset Config</>}
+            </button>
+            {!isOwner && <p className="text-[9px] text-red-400 font-black text-center uppercase tracking-widest">Only the Master Owner can perform this action</p>}
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal 
+        isOpen={showConfirmResetCache}
+        onClose={() => setShowConfirmResetCache(false)}
+        onConfirm={handleResetCache}
+        title="Reset System Cache"
+        message="Are you sure you want to reset system cache? This will clear local storage and reload the application."
+      />
+
+      <ConfirmModal 
+        isOpen={showConfirmFactoryReset}
+        onClose={() => setShowConfirmFactoryReset(false)}
+        onConfirm={handleFactoryReset}
+        title="Factory Reset"
+        message="CRITICAL ACTION: This will reset all website configurations (Hero, Rooms, Restaurants, etc.) to factory defaults. This cannot be undone. Proceed?"
+      />
 
       {selectedBooking && createPortal(
         <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 animate-fade-in">

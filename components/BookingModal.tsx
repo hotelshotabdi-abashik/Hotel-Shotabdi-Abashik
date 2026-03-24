@@ -10,29 +10,37 @@ import {
 import { rtdb as db, ref, onValue, rtdbQuery, orderByChild, equalTo, set } from '../services/firebase';
 import { sendGuestEmail, notifyOwnerOfBooking } from '../services/emailService';
 import { Room, UserProfile, GuestInfo, Booking, BookingMode } from '../types';
+import { translations } from '../translations';
 
 interface Props {
   room: Room;
   profile: UserProfile;
   activeDiscount: number;
   onClose: () => void;
-  onImageUpload: (file: File) => Promise<string>;
-  onImageDelete?: (url: string) => Promise<boolean>;
+  onImageUpload?: (file: File) => Promise<string>;
+  onImageDelete?: (imageUrl: string) => Promise<boolean>;
 }
 
-const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, onImageDelete }) => {
+const BookingModal: React.FC<Props> = ({ room, profile, activeDiscount, onClose, onImageUpload, onImageDelete }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [activeNumberChoice, setActiveNumberChoice] = useState<string | null>(null);
+  const [hasExistingPending, setHasExistingPending] = useState(false);
+  
+  // Get language from context or parent if needed, but for now we'll use a simple detection
+  // or just default to EN as the translations are available
+  const language = (window as any).__APP_LANGUAGE__ || 'EN';
+  const t = translations[language as keyof typeof translations] || translations.EN;
 
   const contactNumbers = [
     { value: "+880 1717-425702", clean: "8801717425702" },
     { value: "+880 1334-935566", clean: "8801334935566" }
   ];
 
-  const [hasExistingPending, setHasExistingPending] = useState(false);
+  const isProfileComplete = !!(profile.legalName && profile.phone && profile.nidNumber);
 
   useEffect(() => {
+    if (!profile.uid) return;
     const bookingsRef = ref(db, 'bookings');
     const q = rtdbQuery(bookingsRef, orderByChild('userId'), equalTo(profile.uid));
     const unsub = onValue(q, (snap) => {
@@ -43,13 +51,19 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
         }
       });
       setHasExistingPending(hasPending);
+    }, (err) => {
+      console.error("Booking check error:", err);
     });
     return () => unsub();
   }, [profile.uid]);
 
-  const finalPrice = room.discountPrice || room.price || "Price on Request";
+  const finalPrice = room.discountPrice || room.price || t.priceOnRequest;
 
   const initiateCallBooking = async () => {
+    if (!isProfileComplete) {
+      alert(t.identityIncomplete || "Please complete your profile first.");
+      return;
+    }
     if (hasExistingPending) {
       alert("Policy Restriction: You already have a pending booking request.");
       return;
@@ -87,9 +101,15 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
       await set(ref(db, `bookings/${bookingId}`), bookingData);
       await set(ref(db, `user_registry/${profile.uid}/bookings/${bookingId}`), bookingData);
       
-      notifyOwnerOfBooking(bookingData);
+      try {
+        notifyOwnerOfBooking(bookingData);
+      } catch (e) {
+        console.warn("Notification failed but booking saved", e);
+      }
+      
       setSuccess(true);
     } catch (err) {
+      console.error("Booking error:", err);
       alert("System registry error. Try again.");
     } finally {
       setLoading(false);
@@ -108,9 +128,11 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                <div className="w-20 h-20 bg-green-500 rounded-[2rem] flex items-center justify-center text-white mb-8 shadow-2xl shadow-green-100 animate-bounce">
                   <CheckCircle2 size={48} />
                </div>
-               <h2 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter mb-4 px-4">Request Logged</h2>
+               <h2 className="text-2xl md:text-4xl font-serif font-black text-gray-900 tracking-tighter mb-4 px-4">{language === 'EN' ? 'Request Logged' : 'অনুরোধ নথিভুক্ত করা হয়েছে'}</h2>
                <p className="text-gray-500 text-xs md:text-base max-w-md mx-auto leading-relaxed mb-10 font-medium italic">
-                 Your interest in {room.title} has been notified to our reception. Please call us now to finalize your stay.
+                 {language === 'EN' 
+                   ? `Your interest in ${room.title} has been notified to our reception. Please call us now to finalize your stay.`
+                   : `${room.title}-এর প্রতি আপনার আগ্রহ আমাদের রিসেপশনে জানানো হয়েছে। আপনার অবস্থান নিশ্চিত করতে দয়া করে এখনই আমাদের কল করুন।`}
                </p>
 
                <div className="w-full max-w-md space-y-4">
@@ -130,7 +152,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                         {activeNumberChoice === num.value && (
                           <div className="flex gap-3 mt-3 animate-fade-in">
                              <a href={`tel:${num.clean}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                                <PhoneCall size={16} /> Direct Call
+                                <PhoneCall size={16} /> {language === 'EN' ? 'Direct Call' : 'সরাসরি কল'}
                              </a>
                              <a href={`https://wa.me/${num.clean}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
                                 <MessageSquare size={16} /> WhatsApp
@@ -142,7 +164,7 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                </div>
 
                <button onClick={onClose} className="mt-10 text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] hover:text-hotel-primary transition-colors">
-                  Return to Overview
+                  {t.backToHome}
                </button>
             </div>
           ) : (
@@ -153,8 +175,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                       <PhoneCall size={22} />
                    </div>
                    <div>
-                      <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight leading-none">Help Desk Booking</h3>
-                      <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.2em] mt-1.5 font-sans">{room.title} • ৳{finalPrice}/night</p>
+                      <h3 className="text-lg md:text-xl font-black text-gray-900 tracking-tight leading-none">{language === 'EN' ? 'Help Desk Booking' : 'হেল্প ডেস্ক বুকিং'}</h3>
+                      <p className="text-[9px] font-black text-hotel-primary uppercase tracking-[0.2em] mt-1.5 font-sans">{room.title} • ৳{finalPrice}/{t.night}</p>
                    </div>
                 </div>
                 <button onClick={onClose} className="p-3 bg-white rounded-xl text-gray-400 hover:text-hotel-primary transition-all border border-gray-100 shadow-sm active:scale-95"><X size={20} /></button>
@@ -165,9 +187,11 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                    <div className="mb-8 p-5 bg-red-50 border border-red-100 rounded-[2rem] flex items-start gap-4 animate-pulse">
                       <ShieldCheck className="text-hotel-primary shrink-0" size={20} />
                       <div>
-                         <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest mb-1">Pending Request Active</p>
+                         <p className="text-[10px] font-black text-hotel-primary uppercase tracking-widest mb-1">{t.pending}</p>
                          <p className="text-xs text-red-600 font-medium leading-relaxed">
-                           Our policy permits only one pending booking at a time. Please call us to resolve your current request.
+                           {language === 'EN' 
+                             ? 'Our policy permits only one pending booking at a time. Please call us to resolve your current request.'
+                             : 'আমাদের নীতি অনুযায়ী একবারে কেবল একটি পেন্ডিং বুকিং অনুমোদিত। আপনার বর্তমান অনুরোধটি সমাধান করতে দয়া করে আমাদের কল করুন।'}
                          </p>
                       </div>
                    </div>
@@ -175,16 +199,18 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
 
                  <div className="space-y-8">
                     <div className="text-center">
-                       <h4 className="text-xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter mb-2">Direct Call Reservation</h4>
-                       <p className="text-gray-500 text-[10px] md:text-xs font-black uppercase tracking-[0.2em]">Skip the forms and speak with our reception</p>
+                       <h4 className="text-xl md:text-3xl font-serif font-black text-gray-900 tracking-tighter mb-2">{language === 'EN' ? 'Direct Call Reservation' : 'সরাসরি কল রিজার্ভেশন'}</h4>
+                       <p className="text-gray-500 text-[10px] md:text-xs font-black uppercase tracking-[0.2em]">{language === 'EN' ? 'Skip the forms and speak with our reception' : 'ফর্ম বাদ দিন এবং আমাদের রিসেপশনের সাথে কথা বলুন'}</p>
                     </div>
 
                     <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100 text-left">
                        <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 flex items-center gap-2">
-                          <Info size={14} /> How it works
+                          <Info size={14} /> {language === 'EN' ? 'How it works' : 'এটি যেভাবে কাজ করে'}
                        </h4>
                        <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                         Click the button below to notify our staff of your interest. Then, call any of the numbers provided to finalize your check-in dates and guest details.
+                         {language === 'EN'
+                           ? 'Click the button below to notify our staff of your interest. Then, call any of the numbers provided to finalize your check-in dates and guest details.'
+                           : 'আমাদের কর্মীদের আপনার আগ্রহ জানাতে নিচের বাটনে ক্লিক করুন। তারপর, আপনার চেক-ইন তারিখ এবং গেস্ট ডিটেইলস চূড়ান্ত করতে প্রদত্ত নম্বরগুলোর যেকোনো একটিতে কল করুন।'}
                        </p>
                     </div>
 
@@ -200,8 +226,8 @@ const BookingModal: React.FC<Props> = ({ room, profile, onClose, onImageUpload, 
                              </div>
                              <ArrowRight className="text-white/20 group-hover:text-white transition-all" />
                           </div>
-                          <h5 className="text-xl font-black text-white tracking-tight mb-1">Notify Reception & Call</h5>
-                          <p className="text-xs text-white/60 font-medium">Log your request and get contact numbers instantly.</p>
+                          <h5 className="text-xl font-black text-white tracking-tight mb-1">{language === 'EN' ? 'Notify Reception & Call' : 'রিসেপশনকে জানান এবং কল করুন'}</h5>
+                          <p className="text-xs text-white/60 font-medium">{language === 'EN' ? 'Log your request and get contact numbers instantly.' : 'আপনার অনুরোধ নথিভুক্ত করুন এবং তাৎক্ষণিকভাবে কন্টাক্ট নম্বর পান।'}</p>
                        </button>
                     </div>
                  </div>

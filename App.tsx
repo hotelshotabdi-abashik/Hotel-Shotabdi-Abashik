@@ -110,6 +110,13 @@ const AppContent = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [selectedRoomToBook, setSelectedRoomToBook] = useState<Room | null>(null);
   const [isLogoSpinning, setIsLogoSpinning] = useState(false);
+
+  useEffect(() => {
+    if (isLogoSpinning) {
+      const timer = setTimeout(() => setIsLogoSpinning(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLogoSpinning]);
   const [language, setLanguage] = useState<Language>('EN');
   
   const t = translations[language];
@@ -143,7 +150,8 @@ const AppContent = () => {
       title: "24h Residential Service",
       subtitle: "Experience Elite Hospitality in Sylhet",
       buttonText: "Book Now",
-      locationLabel: "Sylhet HQ District"
+      locationLabel: "Sylhet HQ District",
+      backgroundImage: ""
     },
     rooms: ROOMS_DATA,
     offers: [],
@@ -496,14 +504,24 @@ const AppContent = () => {
             {siteConfig.announcement}
           </div>
         )}
-        <div className="flex items-center gap-8 mt-2 shrink-0">
-          <Link to="/" onClick={handleHomeClick} className="flex items-center gap-4 group">
+        <div className="flex items-center gap-8 mt-2 shrink-0 select-none">
+          <div className="flex items-center gap-4 group">
             <div className="relative">
               <img 
                 src={currentLogo} 
-                className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform ${isLogoSpinning ? 'animate-spin-once' : ''} ${isEditMode ? 'cursor-pointer hover:opacity-50' : ''}`} 
+                className={`w-10 h-10 md:w-12 md:h-12 object-contain transition-transform cursor-pointer ${isLogoSpinning ? 'animate-spin-once' : ''} ${isEditMode ? 'hover:opacity-50' : ''}`} 
                 alt="Logo"
-                onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleLogoEdit(); } }}
+                onClick={(e) => { 
+                  setIsLogoSpinning(true);
+                  if (isEditMode) { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    handleLogoEdit(); 
+                  } else {
+                    navigate('/');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
               />
               {isEditMode && isAdmin && (
                 <button 
@@ -515,21 +533,7 @@ const AppContent = () => {
               )}
               <input type="file" ref={logoInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
             </div>
-            <div className="hidden sm:block">
-              <h1 
-                className={`text-base font-cormorant font-black text-gray-900 uppercase leading-none transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-1' : ''}`}
-                onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleTextEdit('name', siteConfig.name || t.hotelName); } }}
-              >
-                {siteConfig.name || t.hotelName}
-              </h1>
-              <p 
-                className={`text-[6px] text-hotel-primary font-black uppercase tracking-[0.4em] mt-0.5 transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-1' : ''}`}
-                onClick={(e) => { if (isEditMode) { e.preventDefault(); e.stopPropagation(); handleTextEdit('tagline', siteConfig.tagline || t.hotelTagline); } }}
-              >
-                {siteConfig.tagline || t.hotelTagline}
-              </p>
-            </div>
-          </Link>
+          </div>
         </div>
 
         <div className="ml-auto flex items-center gap-4 lg:gap-10">
@@ -618,11 +622,6 @@ const AppContent = () => {
               className={`transition-all text-[11px] tracking-widest uppercase font-medium relative flex items-center gap-2 ${location.pathname === '/helpdesk' ? 'text-hotel-primary font-black' : 'text-gray-400 hover:text-hotel-primary'}`}
             >
               {t.helpDesk}
-              {isAdmin && pendingBookingsCount > 0 && (
-                <span className="w-4 h-4 bg-hotel-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border border-white shadow-sm">
-                  {formatNumber(pendingBookingsCount)}
-                </span>
-              )}
             </Link>
             
             <div className="h-4 w-[1px] bg-gray-200"></div>
@@ -756,9 +755,39 @@ const AppContent = () => {
       <main className="flex-1 relative w-full flex flex-col pt-[72px] md:pt-[88px] pb-32 lg:pb-0">
         <div className="flex-1 w-full max-w-[1920px] mx-auto">
           <Routes>
-            <Route path="/" element={<HomeView siteConfig={siteConfig} isEditMode={isEditMode} language={language} setSiteConfig={setSiteConfig} handleImageUpload={handleImageUpload} handleImageDelete={handleImageDelete} requireAuth={requireAuth} />} />
-            <Route path="/offers" element={<ExclusiveOffers offers={siteConfig.offers} isEditMode={isEditMode} language={language} onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
-            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
+            <Route path="/" element={
+              <HomeView 
+                siteConfig={siteConfig} 
+                isEditMode={isEditMode} 
+                language={language} 
+                setSiteConfig={setSiteConfig} 
+                handleImageUpload={handleImageUpload} 
+                handleImageDelete={handleImageDelete} 
+                requireAuth={requireAuth}
+                onBook={(room: any) => requireAuth(() => setSelectedRoomToBook(room))}
+                onClaim={(offer: any) => {
+                  const roomsEl = document.getElementById('rooms');
+                  if (roomsEl) roomsEl.scrollIntoView({ behavior: 'smooth' });
+                }}
+                profile={profile}
+              />
+            } />
+            <Route path="/offers" element={
+              <ExclusiveOffers 
+                offers={siteConfig.offers} 
+                isEditMode={isEditMode} 
+                language={language} 
+                onUpdate={(o) => setSiteConfig(prev => ({...prev, offers: o}))} 
+                onImageUpload={handleImageUpload} 
+                onImageDelete={handleImageDelete} 
+                onClaim={(offer: any) => {
+                  const roomsEl = document.getElementById('rooms');
+                  if (roomsEl) roomsEl.scrollIntoView({ behavior: 'smooth' });
+                  else navigate('/#rooms');
+                }}
+              />
+            } />
+            <Route path="/rooms" element={<RoomGrid rooms={siteConfig.rooms} onBook={(room) => requireAuth(() => setSelectedRoomToBook(room))} isEditMode={isEditMode} language={language} onUpdate={(r) => setSiteConfig(prev => ({...prev, rooms: r}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} profile={profile} />} />
             <Route path="/restaurants" element={<NearbyRestaurants restaurants={siteConfig.restaurants} isEditMode={isEditMode} language={language} onUpdate={(res) => setSiteConfig(prev => ({...prev, restaurants: res}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/guide" element={<TouristGuide touristGuides={siteConfig.touristGuides} isEditMode={isEditMode} language={language} onUpdate={(tg) => setSiteConfig(prev => ({...prev, touristGuides: tg}))} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
             <Route path="/gallery" element={<GallerySection isEditMode={isEditMode} language={language} onImageUpload={handleImageUpload} onImageDelete={handleImageDelete} />} />
@@ -773,7 +802,7 @@ const AppContent = () => {
         <Footer isEditMode={isEditMode} language={language} logoUrl={currentLogo} socialLinks={siteConfig.socialLinks} onUpdateSocial={(links) => setSiteConfig(prev => ({ ...prev, socialLinks: links }))} />
         {isEditMode && isAdmin && (
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/90 backdrop-blur-2xl px-10 py-6 rounded-[2.5rem] flex items-center gap-10 shadow-2xl border border-white/10">
-             <button onClick={saveConfig} className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:brightness-110 active:scale-95 transition-all"><Save size={16} /> {t.publishChanges}</button>
+             <button onClick={() => saveConfig()} className="bg-hotel-primary text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:brightness-110 active:scale-95 transition-all"><Save size={16} /> {t.publishChanges}</button>
           </div>
         )}
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
@@ -786,7 +815,18 @@ const AppContent = () => {
   );
 };
 
-const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImageUpload, handleImageDelete, requireAuth }: any) => {
+const HomeView = ({ 
+  siteConfig, 
+  isEditMode, 
+  language, 
+  setSiteConfig, 
+  handleImageUpload, 
+  handleImageDelete, 
+  requireAuth,
+  onBook,
+  onClaim,
+  profile
+}: any) => {
   const [activeCategories, setActiveCategories] = useState(['all']);
   const t = (translations as any)[language];
   
@@ -816,6 +856,7 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
             onUpdate={(o: any) => setSiteConfig((prev: any) => ({...prev, offers: o}))} 
             onImageUpload={handleImageUpload} 
             onImageDelete={handleImageDelete} 
+            onClaim={onClaim}
           />
         </div>
       )}
@@ -824,12 +865,13 @@ const HomeView = ({ siteConfig, isEditMode, language, setSiteConfig, handleImage
         <div id="rooms">
           <RoomGrid 
             rooms={siteConfig.rooms} 
-            onBook={(room: any) => requireAuth(() => {})} 
+            onBook={onBook} 
             isEditMode={isEditMode} 
             language={language} 
             onUpdate={(r: any) => setSiteConfig((prev: any) => ({...prev, rooms: r}))} 
             onImageUpload={handleImageUpload} 
             onImageDelete={handleImageDelete} 
+            profile={profile}
           />
         </div>
       )}

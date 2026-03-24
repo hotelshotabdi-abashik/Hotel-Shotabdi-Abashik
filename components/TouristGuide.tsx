@@ -1,6 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { Compass, ArrowRight, MapPin, Search, Camera, RefreshCw, Trash2, Plus, Globe, ExternalLink, Wand2, CheckSquare, Map as MapIcon, Phone, Star, Link2 } from 'lucide-react';
+import { toast } from 'sonner';
+import ConfirmModal from './ConfirmModal';
 import { Attraction } from '../types';
 import { SYLHET_ATTRACTIONS } from '../constants';
 import { translations, Language } from '../translations';
@@ -21,6 +23,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEdit
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [isHeaderUploading, setIsHeaderUploading] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const t = translations[language];
 
   const formatNumber = (num: number | string) => {
@@ -41,7 +44,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEdit
         }
         onUpdateHeader?.(url);
       } catch (err: any) {
-        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
+        toast.error(`Upload Failed: ${err.message || 'Unknown error'}`);
       } finally {
         setIsHeaderUploading(false);
       }
@@ -85,7 +88,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEdit
         const updated = displayList.map(r => r.id === id ? { ...r, image: url } : r);
         onUpdate?.(updated);
       } catch (err: any) {
-        alert(`Upload Failed: ${err.message || 'Unknown error'}`);
+        toast.error(`Upload Failed: ${err.message || 'Unknown error'}`);
       } finally {
         setUploadingId(null);
       }
@@ -98,13 +101,12 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEdit
   };
 
   const deleteSpot = async (id: number) => {
-    if (window.confirm("Delete this attraction permanently?")) {
-      const spot = displayList.find(r => r.id === id);
-      if (spot?.image && onImageDelete && spot.image.includes('r2.dev')) {
-        await onImageDelete(spot.image);
-      }
-      onUpdate?.(displayList.filter(r => r.id !== id));
+    const spot = displayList.find(r => r.id === id);
+    if (spot?.image && onImageDelete && spot.image.includes('r2.dev')) {
+      await onImageDelete(spot.image);
     }
+    onUpdate?.(displayList.filter(r => r.id !== id));
+    setConfirmDeleteId(null);
   };
 
   const addSpot = () => {
@@ -194,7 +196,7 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEdit
                         <Star size={14} fill={spot.isRecommended ? "currentColor" : "none"} />
                       </button>
                      <button 
-                      onClick={() => deleteSpot(spot.id)}
+                      onClick={() => setConfirmDeleteId(spot.id)}
                       className="bg-white p-2 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all"
                      >
                        <Trash2 size={14} />
@@ -280,6 +282,14 @@ const TouristGuide: React.FC<Props> = ({ touristGuides = [], headerImage, isEdit
           </div>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => confirmDeleteId && deleteSpot(confirmDeleteId)}
+        title="Delete Attraction"
+        message="Are you sure you want to delete this attraction permanently? This action cannot be undone."
+      />
     </section>
   );
 };

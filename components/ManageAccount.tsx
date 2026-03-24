@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, Loader2, ShieldCheck, IdCard, Camera, CheckCircle2, History, Clock, Maximize2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { rtdb, checkUsernameUnique } from '../services/firebase';
 import { ref, set, update } from 'firebase/database';
 import { UserProfile } from '../types';
@@ -109,7 +110,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
 
         setNidPreview(url);
       } catch (err: any) {
-        alert("ID upload failed.");
+        toast.error("ID upload failed.");
       } finally {
         setIsUploading(false);
       }

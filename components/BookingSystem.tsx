@@ -5,8 +5,14 @@ import { UserProfile, Booking } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, Clock, Shield, AlertCircle, CheckCircle, XCircle, User, Phone, Image as ImageIcon, Fingerprint } from 'lucide-react';
 
-export const BookingSystem: React.FC = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+interface BookingSystemProps {
+  profile: UserProfile | null;
+  siteConfig: any;
+  language: string;
+}
+
+export const BookingSystem: React.FC<BookingSystemProps> = ({ profile: initialProfile, siteConfig, language }) => {
+  const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingInProgress, setBookingInProgress] = useState(false);

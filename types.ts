@@ -75,7 +75,11 @@ export interface SiteConfig {
   touristGuides: Attraction[];
   offers: Offer[];
   announcement: string;
+  gallery: GalleryItem[];
+  name?: string;
+  tagline?: string;
   logoUrl?: string;
+  activeDiscount?: number;
   helpDeskNumbers?: HelpDeskNumber[];
   lastUpdated: number;
   socialLinks?: {
@@ -152,6 +156,7 @@ export interface AppNotification {
   message: string;
   type: 'booking_update' | 'system';
   read: boolean;
+  link?: string;
   createdAt: number;
 }
 

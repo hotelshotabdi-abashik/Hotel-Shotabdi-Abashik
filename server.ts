@@ -18,18 +18,30 @@ const R2_WORKER_URL = process.env.R2_WORKER_URL || "https://hotel-cms-worker.hot
 const R2_WORKER_AUTH_KEY = process.env.R2_WORKER_AUTH_KEY;
 
 // R2 Configuration
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
+
+const r2Configured = !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME);
+
 const r2Client = new S3Client({
   region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    accessKeyId: R2_ACCESS_KEY_ID || "",
+    secretAccessKey: R2_SECRET_ACCESS_KEY || "",
   },
 });
 
 // API Routes
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({ 
+    status: "ok", 
+    r2: r2Configured ? "configured" : "missing_credentials",
+    worker: !!R2_WORKER_URL ? "configured" : "missing_url"
+  });
 });
 
 // Generate Pre-signed URL or Handle Worker Upload
@@ -40,16 +52,17 @@ app.post("/api/upload/presigned", async (req, res) => {
       return res.status(400).json({ error: "Missing fileName or contentType" });
     }
 
+    if (!r2Configured && !R2_WORKER_URL) {
+      return res.status(500).json({ error: "R2 Storage is not configured on the server. Please check environment variables." });
+    }
+
     const key = `uploads/${Date.now()}-${fileName.replace(/\s+/g, '-')}`;
     
     // If Worker is configured, we'll return the Worker URL and use it as the "signedUrl"
-    // The frontend will then PUT to this URL with the Auth Key handled by the server or passed through
     if (R2_WORKER_URL) {
       const workerUrl = `${R2_WORKER_URL}/${key}`;
-      const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
+      const publicUrl = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : workerUrl;
       
-      // We return the worker URL as the upload destination
-      // Note: In this setup, the server will handle the actual PUT to the worker to keep the AUTH_KEY secret
       res.json({ 
         useWorker: true,
         uploadUrl: `/api/upload/worker-proxy?key=${encodeURIComponent(key)}&type=${encodeURIComponent(contentType)}`,
@@ -59,13 +72,13 @@ app.post("/api/upload/presigned", async (req, res) => {
     } else {
       // Fallback to S3 Presigned URL
       const command = new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: R2_BUCKET_NAME,
         Key: key,
         ContentType: contentType,
       });
 
       const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
-      const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
+      const publicUrl = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : signedUrl.split('?')[0];
 
       res.json({ signedUrl, publicUrl, key });
     }

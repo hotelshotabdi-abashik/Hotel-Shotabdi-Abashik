@@ -186,7 +186,7 @@ const ExclusiveOffers: React.FC<Props> = ({ offers = [], headerImage, isEditMode
                   {offer.mediaType === 'video' ? (
                     <video src={offer.mediaUrl} className="w-full h-full object-cover" muted loop autoPlay />
                   ) : (
-                    <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} referrerPolicy="no-referrer" />
+                    <img src={offer.mediaUrl} className="w-full h-full object-cover" alt={offer.title} />
                   )}
                   
                   <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">

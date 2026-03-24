@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Users, ChevronRight, Zap, Camera, Trash2, Plus, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, Tag, Sparkles, ShieldAlert, Star, Percent } from 'lucide-react';
-import { Room } from '../types';
+import { Room, UserProfile } from '../types';
 import { translations, Language } from '../translations';
 
 interface RoomGridProps {
@@ -12,6 +12,7 @@ interface RoomGridProps {
   isBookingDisabled?: boolean;
   isEditMode?: boolean;
   language: Language;
+  profile: UserProfile | null;
   onBook?: (room: Room) => void;
   onUpdate?: (rooms: Room[]) => void;
   onUpdateHeader?: (url: string) => void;
@@ -59,7 +60,7 @@ const RoomDescription: React.FC<{ text: string; language: Language }> = ({ text 
   );
 };
 
-const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], headerImage, isBookingDisabled = false, isEditMode, language, onBook, onUpdate, onUpdateHeader, onImageUpload, onImageDelete }) => {
+const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], headerImage, isBookingDisabled = false, isEditMode, language, profile, onBook, onUpdate, onUpdateHeader, onImageUpload, onImageDelete }) => {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [isHeaderUploading, setIsHeaderUploading] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -218,7 +219,6 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms = [], headerImage, isBookingD
                   src={room.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   alt={`Hotel Shotabdi Residential - ${room.title} Luxury Interior`} 
-                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                 

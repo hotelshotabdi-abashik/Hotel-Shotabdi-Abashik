@@ -6,12 +6,20 @@ import {
   ChevronRight, Sparkles, ShieldCheck, Clock
 } from 'lucide-react';
 
-const HomeShortcuts: React.FC = () => {
+import { translations, Language } from '../translations';
+
+interface HomeShortcutsProps {
+  language: Language;
+}
+
+const HomeShortcuts: React.FC<HomeShortcutsProps> = ({ language }) => {
+  const t = translations[language];
+  
   const shortcuts = [
     {
       id: 'offers',
-      title: 'Exclusive Offers',
-      desc: 'Save 25% on your next luxury stay with verified deals.',
+      title: t.exclusiveOffers || 'Exclusive Offers',
+      desc: language === 'EN' ? 'Save 25% on your next luxury stay with verified deals.' : 'আপনার পরবর্তী লাক্সারি স্টে-তে ২৫% সেভ করুন ভেরিফাইড ডিল সহ।',
       icon: <Tag size={24} />,
       path: '/offers',
       color: 'bg-red-500',
@@ -19,8 +27,8 @@ const HomeShortcuts: React.FC = () => {
     },
     {
       id: 'rooms',
-      title: 'Our Rooms',
-      desc: 'Explore premium suites designed for ultimate comfort.',
+      title: t.rooms || 'Our Rooms',
+      desc: language === 'EN' ? 'Explore premium suites designed for ultimate comfort.' : 'আপনার সর্বোচ্চ আরামের জন্য ডিজাইন করা প্রিমিয়াম স্যুটগুলো এক্সপ্লোর করুন।',
       icon: <Bed size={24} />,
       path: '/rooms',
       color: 'bg-blue-600',
@@ -28,8 +36,8 @@ const HomeShortcuts: React.FC = () => {
     },
     {
       id: 'restaurants',
-      title: 'Nearby Dining',
-      desc: 'Discover the best food spots in the heart of Sylhet.',
+      title: t.nearbyDining || 'Nearby Dining',
+      desc: language === 'EN' ? 'Discover the best food spots in the heart of Sylhet.' : 'সিলেটের প্রাণকেন্দ্রে সেরা খাবারের জায়গাগুলো আবিষ্কার করুন।',
       icon: <Utensils size={24} />,
       path: '/restaurants',
       color: 'bg-orange-500',
@@ -37,8 +45,8 @@ const HomeShortcuts: React.FC = () => {
     },
     {
       id: 'guide',
-      title: 'Tourist Guide',
-      desc: 'Visit shrines and tea gardens near our residence.',
+      title: t.touristGuide || 'Tourist Guide',
+      desc: language === 'EN' ? 'Visit shrines and tea gardens near our residence.' : 'আমাদের রেসিডেন্সের কাছে মাজার এবং চা বাগানগুলো ভিজিট করুন।',
       icon: <Map size={24} />,
       path: '/guide',
       color: 'bg-green-600',
@@ -46,8 +54,8 @@ const HomeShortcuts: React.FC = () => {
     },
     {
       id: 'mystays',
-      title: 'Stay Records',
-      desc: 'Access your digital invoices and identity receipts.',
+      title: t.stayHistory || 'Stay Records',
+      desc: language === 'EN' ? 'Access your digital invoices and identity receipts.' : 'আপনার ডিজিটাল ইনভয়েস এবং আইডেন্টিটি রিসিটগুলো অ্যাক্সেস করুন।',
       icon: <History size={24} />,
       path: '/mystays',
       color: 'bg-purple-600',
@@ -55,10 +63,10 @@ const HomeShortcuts: React.FC = () => {
     },
     {
       id: 'helpdex',
-      title: 'Registry Support',
-      desc: 'Connect with our team for 24/7 resident assistance.',
+      title: t.helpDesk || 'Registry Support',
+      desc: language === 'EN' ? 'Connect with our team for 24/7 resident assistance.' : '২৪/৭ রেসিডেন্ট অ্যাসিস্ট্যান্সের জন্য আমাদের টিমের সাথে কানেক্ট করুন।',
       icon: <MessageSquare size={24} />,
-      path: '/helpdex',
+      path: '/helpdesk',
       color: 'bg-hotel-primary',
       lightColor: 'bg-red-50'
     }
@@ -68,11 +76,11 @@ const HomeShortcuts: React.FC = () => {
     <section className="max-w-7xl mx-auto px-4 md:px-10 py-16 md:py-24 w-full animate-fade-in">
       <div className="mb-12 text-center md:text-left">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-hotel-primary/5 text-hotel-primary text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] mb-4">
-           <Sparkles size={12} fill="currentColor" /> Quick Access
+           <Sparkles size={12} fill="currentColor" /> {language === 'EN' ? 'Quick Access' : 'কুইক অ্যাক্সেস'}
         </div>
-        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter">Explore the Hub</h2>
-        <p className="text-gray-400 text-xs md:text-lg mt-3 font-light max-w-2xl">
-          Everything you need for a verified and comfortable stay at <span className="text-hotel-primary font-black">Hotel Shotabdi Residential</span>.
+        <h2 className="text-3xl md:text-5xl font-serif font-black text-gray-900 tracking-tighter">{t.exploreHub}</h2>
+        <p className="text-gray-500 text-xs md:text-lg mt-3 font-light max-w-2xl leading-relaxed">
+          {language === 'EN' ? 'Everything you need for a verified and comfortable stay at' : 'আপনার ভেরিফাইড এবং আরামদায়ক স্টে-র জন্য যা কিছু প্রয়োজন'} <span className="text-hotel-primary font-black">{t.hotelName}</span>.
         </p>
       </div>
 

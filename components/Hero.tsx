@@ -3,9 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, ChevronDown, ShieldCheck,
-  Filter, Check, Bed, Utensils, Map as MapIcon, Tag, 
-  History, MessageSquare, Sparkles, Key, Moon, Calendar,
-  Image as ImageIcon, PlayCircle, ChevronRight, RefreshCw
+  Filter, Check, Calendar, ChevronRight, RefreshCw,
+  Key, Moon
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
 import { ROOMS_DATA } from '../constants';
@@ -38,7 +37,14 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
+  const [pendingCategories, setPendingCategories] = useState<string[]>(activeCategories);
   const mobileNavRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPendingCategories(activeCategories);
+  }, [activeCategories]);
+
+  const isDirty = JSON.stringify([...pendingCategories].sort()) !== JSON.stringify([...activeCategories].sort());
 
   useEffect(() => {
     if (rooms.length > 0 && (!selectedRoomId || selectedRoomId === 'all')) {
@@ -56,17 +62,12 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   }, [activeCategories]);
 
   const toggleCategory = (id: string) => {
-    if (['mystays', 'helpdesk'].includes(id)) {
-      scrollToSection(id);
-      return;
-    }
-
     if (id === 'all') {
-      onCategoriesChange(['all']);
+      setPendingCategories(['all']);
       return;
     }
 
-    let next = [...activeCategories];
+    let next = [...pendingCategories];
     if (next.includes('all')) {
       next = [id];
     } else {
@@ -77,7 +78,18 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
         next.push(id);
       }
     }
-    onCategoriesChange(next);
+    setPendingCategories(next);
+  };
+
+  const handleApply = () => {
+    // For sections that are just scroll targets, we might want to scroll to them if only one is selected
+    if (pendingCategories.length === 1 && pendingCategories[0] !== 'all') {
+      const id = pendingCategories[0];
+      if (['mystays', 'helpdesk'].includes(id)) {
+        scrollToSection(id);
+      }
+    }
+    onCategoriesChange(pendingCategories);
   };
 
   const scrollToSection = (id: string) => {
@@ -149,13 +161,13 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   };
 
   const shortcuts = [
-    { id: 'rooms', label: t.ourRooms || (language === 'EN' ? 'Rooms' : 'রুম'), icon: <Bed size={22} />, path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'offers', label: t.offers || (language === 'EN' ? 'Offers' : 'অফার'), icon: <Tag size={22} />, path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
-    { id: 'restaurants', label: t.dining || (language === 'EN' ? 'Dining' : 'ডাইনিং'), icon: <Utensils size={22} />, path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { id: 'guide', label: t.guide || (language === 'EN' ? 'Guide' : 'গাইড'), icon: <MapIcon size={22} />, path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
-    { id: 'gallery', label: t.gallery, icon: <ImageIcon size={22} />, path: '/gallery', color: 'text-pink-600', bg: 'bg-pink-50' },
-    { id: 'mystays', label: t.history || (language === 'EN' ? 'History' : 'ইতিহাস'), icon: <History size={22} />, path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 'helpdesk', label: t.support || (language === 'EN' ? 'Support' : 'সাপোর্ট'), icon: <MessageSquare size={22} />, path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { id: 'rooms', label: t.ourRooms || (language === 'EN' ? 'Rooms' : 'রুম'), path: '/rooms', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'offers', label: t.offers || (language === 'EN' ? 'Offers' : 'অফার'), path: '/offers', color: 'text-hotel-primary', bg: 'bg-red-50' },
+    { id: 'restaurants', label: t.dining || (language === 'EN' ? 'Dining' : 'ডাইনিং'), path: '/restaurants', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'guide', label: t.guide || (language === 'EN' ? 'Guide' : 'গাইড'), path: '/guide', color: 'text-green-600', bg: 'bg-green-50' },
+    { id: 'gallery', label: t.gallery, path: '/gallery', color: 'text-pink-600', bg: 'bg-pink-50' },
+    { id: 'mystays', label: t.history || (language === 'EN' ? 'History' : 'ইতিহাস'), path: '/mystays', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { id: 'helpdesk', label: t.support || (language === 'EN' ? 'Support' : 'সাপোর্ট'), path: '/helpdesk', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId);
@@ -169,9 +181,19 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
     >
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center">
-        <div className="text-center mb-10">
+        <div className="flex flex-col items-center mb-10 select-none">
+          <div 
+            className={`flex flex-col items-center transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-4 py-2' : ''}`}
+          >
+            <h1 className="flex flex-col items-center font-cormorant font-black tracking-tighter leading-none text-gray-900">
+              <span className="text-6xl md:text-9xl uppercase">{language === 'EN' ? 'Hotel' : 'হোটেল'}</span>
+              <span className="text-4xl md:text-6xl uppercase mt-[-5px] md:mt-[-10px]">{language === 'EN' ? 'Shotabdi' : 'শতাব্দী'}</span>
+              <span className="text-2xl md:text-4xl uppercase mt-[-2px] md:mt-[-5px] text-hotel-primary">{language === 'EN' ? 'Abashik' : 'আবাসিক'}</span>
+            </h1>
+          </div>
+          <div className="w-24 h-1 bg-hotel-primary/20 rounded-full my-6"></div>
           <h2 
-            className={`text-gray-900 text-3xl md:text-6xl font-cormorant font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
+            className={`text-gray-900 text-xl md:text-3xl font-cormorant font-black mb-2 tracking-tight transition-all ${isEditMode ? 'hover:bg-amber-50 cursor-pointer rounded px-2' : ''}`}
             onClick={() => isEditMode && onUpdate?.({ title: window.prompt("Edit Title:", config.title) || config.title })}
           >
              {config.title || t.residentialService}
@@ -219,7 +241,7 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden">
-                        <img src={room.image} className="w-full h-full object-cover" alt={room.title} referrerPolicy="no-referrer" />
+                        <img src={room.image} className="w-full h-full object-cover" alt={room.title} />
                       </div>
                       <div className="text-left">
                         <p className="text-xs font-medium text-gray-900">{room.title}</p>
@@ -275,65 +297,73 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
             className="bg-hotel-primary hover:bg-hotel-secondary text-white px-10 py-5 lg:py-0 font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95 shrink-0 rounded-xl shadow-xl shadow-red-100 flex items-center justify-center gap-3"
           >
             <Search size={18} strokeWidth={3} />
-            {t.checkVacancy}
+            {config.buttonText || t.checkVacancy}
           </button>
         </div>
 
         {/* Categories / Shortcuts below search - Modern Editorial Breadcrumb Style */}
-        <div className="hidden lg:flex w-full max-w-5xl flex-wrap justify-center items-center gap-x-6 gap-y-4">
-          <button 
-            onClick={() => toggleCategory('all')}
-            className="flex items-center gap-3 group transition-all active:scale-95 py-2"
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-              activeCategories.includes('all') 
-              ? 'bg-hotel-primary text-white shadow-lg shadow-red-100' 
-              : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100'
-            }`}>
-              <Sparkles size={16} />
-            </div>
-            {activeCategories.includes('all') && <Check size={14} className="text-hotel-primary animate-scale-in" />}
-            <span className={`text-[11px] font-medium uppercase tracking-[0.2em] transition-all ${activeCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
-              {t.allCategories}
-            </span>
-          </button>
+        <div className="hidden lg:flex flex-col items-center gap-6 w-full max-w-5xl">
+          <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4">
+            <button 
+              onClick={() => toggleCategory('all')}
+              className="flex items-center gap-3 group transition-all active:scale-95 py-2"
+            >
+              <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                pendingCategories.includes('all') 
+                ? 'bg-hotel-primary border-hotel-primary text-white shadow-lg shadow-red-100' 
+                : 'bg-white border-gray-200 text-transparent group-hover:border-gray-400'
+              }`}>
+                <Check size={12} strokeWidth={4} />
+              </div>
+              <span className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${pendingCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
+                {t.allCategories}
+              </span>
+            </button>
 
-          {shortcuts.map((item) => (
-            <React.Fragment key={item.id}>
-              <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
-              <button
-                onClick={() => toggleCategory(item.id)}
-                className="flex items-center gap-3 group transition-all active:scale-95 py-2"
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                  activeCategories.includes(item.id) 
-                  ? 'bg-hotel-primary text-white shadow-lg shadow-red-100' 
-                  : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100'
-                }`}>
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 16 })}
-                </div>
-                {activeCategories.includes(item.id) && <Check size={14} className="text-hotel-primary animate-scale-in" />}
-                <span className={`text-[11px] font-medium uppercase tracking-[0.2em] transition-all ${activeCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
-                  {item.label}
-                </span>
-              </button>
-            </React.Fragment>
-          ))}
+            {shortcuts.map((item) => (
+              <React.Fragment key={item.id}>
+                <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
+                <button
+                  onClick={() => toggleCategory(item.id)}
+                  className="flex items-center gap-3 group transition-all active:scale-95 py-2"
+                >
+                  <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                    pendingCategories.includes(item.id) 
+                    ? 'bg-hotel-primary border-hotel-primary text-white shadow-lg shadow-red-100' 
+                    : 'bg-white border-gray-200 text-transparent group-hover:border-gray-400'
+                  }`}>
+                    <Check size={12} strokeWidth={4} />
+                  </div>
+                  <span className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${pendingCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400 group-hover:text-gray-900'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+
+          {isDirty && (
+            <button 
+              onClick={handleApply}
+              className="bg-hotel-primary text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all animate-fade-in flex items-center gap-2"
+            >
+              <RefreshCw size={14} className="animate-spin-slow" />
+              {t.apply}
+            </button>
+          )}
         </div>
 
         {/* Mobile Filter Button - Replaces the wrap bar for a cleaner look */}
         <div className="lg:hidden w-full mt-6 px-4 flex justify-center">
           <button 
             onClick={() => setShowMobileFilters(true)}
-            className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 px-6 py-3 rounded-full transition-all active:scale-95 border border-gray-100 shadow-sm"
+            className="flex items-center gap-3 bg-white hover:bg-gray-50 px-8 py-4 rounded-full transition-all active:scale-95 border border-gray-100 shadow-xl shadow-gray-100/50"
           >
-            <div className="w-6 h-6 bg-hotel-primary rounded-full flex items-center justify-center text-white">
-              <Filter size={12} />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">
-              {activeCategories.includes('all') ? t.allCategories : `${activeCategories.length} ${t.filter}`}
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900">
+              {activeCategories.includes('all') ? t.allCategories : `${activeCategories.length} Selected`}
             </span>
-            <ChevronRight size={14} className="text-gray-400" />
+            <div className="w-1.5 h-1.5 bg-hotel-primary rounded-full"></div>
+            <ChevronDown size={14} className="text-gray-400" />
           </button>
         </div>
 
@@ -351,45 +381,56 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
               
               <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto no-scrollbar">
                 <button 
-                  onClick={() => { toggleCategory('all'); setShowMobileFilters(false); }}
+                  onClick={() => toggleCategory('all')}
                   className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
-                    activeCategories.includes('all') 
+                    pendingCategories.includes('all') 
                     ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
                     : 'bg-white border-gray-100 text-gray-500'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-2 h-2 rounded-full ${activeCategories.includes('all') ? 'bg-hotel-primary' : 'bg-gray-300'}`}></div>
+                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                      pendingCategories.includes('all') 
+                      ? 'bg-hotel-primary border-hotel-primary text-white' 
+                      : 'bg-white border-gray-200 text-transparent'
+                    }`}>
+                      <Check size={12} strokeWidth={4} />
+                    </div>
                     <span className="text-xs font-black uppercase tracking-widest">{t.allCategories}</span>
                   </div>
-                  {activeCategories.includes('all') && <Check size={18} strokeWidth={3} />}
                 </button>
 
                 {shortcuts.map((item) => (
                   <button 
                     key={item.id}
-                    onClick={() => { toggleCategory(item.id); setShowMobileFilters(false); }}
+                    onClick={() => toggleCategory(item.id)}
                     className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
-                      activeCategories.includes(item.id) 
+                      pendingCategories.includes(item.id) 
                       ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
                       : 'bg-white border-gray-100 text-gray-500'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-2 h-2 rounded-full ${activeCategories.includes(item.id) ? 'bg-hotel-primary' : 'bg-gray-300'}`}></div>
+                      <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                        pendingCategories.includes(item.id) 
+                        ? 'bg-hotel-primary border-hotel-primary text-white' 
+                        : 'bg-white border-gray-200 text-transparent'
+                      }`}>
+                        <Check size={12} strokeWidth={4} />
+                      </div>
                       <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
                     </div>
-                    {activeCategories.includes(item.id) && <Check size={18} strokeWidth={3} />}
                   </button>
                 ))}
               </div>
 
               <div className="p-6 bg-gray-50">
                 <button 
-                  onClick={() => setShowMobileFilters(false)}
-                  className="w-full bg-[#FFC107] hover:bg-[#FFB300] text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-yellow-100 transition-all active:scale-95"
+                  onClick={() => { handleApply(); setShowMobileFilters(false); }}
+                  className="w-full bg-hotel-primary text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-100 transition-all active:scale-95 flex items-center justify-center gap-3"
                 >
-                  {t.filter}
+                  {isDirty && <RefreshCw size={14} className="animate-spin-slow" />}
+                  {t.apply}
                 </button>
               </div>
             </div>
