@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Camera, Loader2, Search, ChevronDown, ShieldCheck,
-  Filter, Check, Calendar, ChevronRight, RefreshCw,
+  Check, Calendar, ChevronRight, RefreshCw,
   Key, Moon
 } from 'lucide-react';
 import { HeroConfig, Room } from '../types';
@@ -35,8 +35,6 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
   const [activeTab, setActiveTab] = useState('hotel');
   const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id || '');
   const [showRoomDropdown, setShowRoomDropdown] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
   const [pendingCategories, setPendingCategories] = useState<string[]>(activeCategories);
   const mobileNavRef = useRef<HTMLDivElement>(null);
 
@@ -353,89 +351,59 @@ const Hero: React.FC<HeroProps> = ({ config, rooms = [], isEditMode, language, o
           )}
         </div>
 
-        {/* Mobile Filter Button - Replaces the wrap bar for a cleaner look */}
-        <div className="lg:hidden w-full mt-6 px-4 flex justify-center">
-          <button 
-            onClick={() => setShowMobileFilters(true)}
-            className="flex items-center gap-3 bg-white hover:bg-gray-50 px-8 py-4 rounded-full transition-all active:scale-95 border border-gray-100 shadow-xl shadow-gray-100/50"
-          >
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900">
-              {activeCategories.includes('all') ? t.allCategories : `${activeCategories.length} Selected`}
-            </span>
-            <div className="w-1.5 h-1.5 bg-hotel-primary rounded-full"></div>
-            <ChevronDown size={14} className="text-gray-400" />
-          </button>
-        </div>
+        {/* Mobile Filters - Horizontal Scroll with Tick Marks and Apply Button */}
+        <div className="lg:hidden w-full mt-6 px-4 flex flex-col items-center gap-4">
+          <div className="w-full overflow-x-auto no-scrollbar pb-2">
+            <div className="flex items-center gap-4 whitespace-nowrap min-w-max px-2">
+              <button 
+                onClick={() => toggleCategory('all')}
+                className="flex items-center gap-2 group transition-all active:scale-95 py-2"
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                  pendingCategories.includes('all') 
+                  ? 'bg-hotel-primary border-hotel-primary text-white shadow-lg shadow-red-100' 
+                  : 'bg-white border-gray-200 text-transparent'
+                }`}>
+                  <Check size={10} strokeWidth={4} />
+                </div>
+                <span className={`text-[10px] font-black uppercase tracking-widest transition-all ${pendingCategories.includes('all') ? 'text-hotel-primary' : 'text-gray-400'}`}>
+                  {t.allCategories}
+                </span>
+              </button>
 
-        {/* Mobile Filter Modal - Keep as fallback or for advanced filters if needed */}
-        {showMobileFilters && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-6 lg:hidden">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)}></div>
-            <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Select Category</h3>
-                <button onClick={() => setShowMobileFilters(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <ChevronDown size={20} className="text-gray-400" />
-                </button>
-              </div>
-              
-              <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto no-scrollbar">
-                <button 
-                  onClick={() => toggleCategory('all')}
-                  className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
-                    pendingCategories.includes('all') 
-                    ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
-                    : 'bg-white border-gray-100 text-gray-500'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
-                      pendingCategories.includes('all') 
-                      ? 'bg-hotel-primary border-hotel-primary text-white' 
+              {shortcuts.map((item) => (
+                <React.Fragment key={item.id}>
+                  <div className="w-1 h-1 bg-gray-200 rounded-full shrink-0"></div>
+                  <button
+                    onClick={() => toggleCategory(item.id)}
+                    className="flex items-center gap-2 group transition-all active:scale-95 py-2"
+                  >
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                      pendingCategories.includes(item.id) 
+                      ? 'bg-hotel-primary border-hotel-primary text-white shadow-lg shadow-red-100' 
                       : 'bg-white border-gray-200 text-transparent'
                     }`}>
-                      <Check size={12} strokeWidth={4} />
+                      <Check size={10} strokeWidth={4} />
                     </div>
-                    <span className="text-xs font-black uppercase tracking-widest">{t.allCategories}</span>
-                  </div>
-                </button>
-
-                {shortcuts.map((item) => (
-                  <button 
-                    key={item.id}
-                    onClick={() => toggleCategory(item.id)}
-                    className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
-                      pendingCategories.includes(item.id) 
-                      ? 'bg-hotel-primary/5 border-hotel-primary text-hotel-primary' 
-                      : 'bg-white border-gray-100 text-gray-500'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
-                        pendingCategories.includes(item.id) 
-                        ? 'bg-hotel-primary border-hotel-primary text-white' 
-                        : 'bg-white border-gray-200 text-transparent'
-                      }`}>
-                        <Check size={12} strokeWidth={4} />
-                      </div>
-                      <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
-                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest transition-all ${pendingCategories.includes(item.id) ? 'text-hotel-primary' : 'text-gray-400'}`}>
+                      {item.label}
+                    </span>
                   </button>
-                ))}
-              </div>
-
-              <div className="p-6 bg-gray-50">
-                <button 
-                  onClick={() => { handleApply(); setShowMobileFilters(false); }}
-                  className="w-full bg-hotel-primary text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-100 transition-all active:scale-95 flex items-center justify-center gap-3"
-                >
-                  {isDirty && <RefreshCw size={14} className="animate-spin-slow" />}
-                  {t.apply}
-                </button>
-              </div>
+                </React.Fragment>
+              ))}
             </div>
           </div>
-        )}
+
+          {isDirty && (
+            <button 
+              onClick={handleApply}
+              className="bg-hotel-primary text-white px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-red-100 hover:brightness-110 active:scale-95 transition-all animate-fade-in flex items-center gap-2"
+            >
+              <RefreshCw size={14} className="animate-spin-slow" />
+              {t.apply}
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Dynamic Background Glow */}

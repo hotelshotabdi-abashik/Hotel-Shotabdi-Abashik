@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { rtdb, checkUsernameUnique } from '../services/firebase';
 import { ref, set, update } from 'firebase/database';
 import { UserProfile } from '../types';
+import { ImageUpload } from './ImageUpload';
 
 interface Props {
   profile: UserProfile;
@@ -21,6 +22,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
   const [pendingMinutes, setPendingMinutes] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [nidPreview, setNidPreview] = useState(profile.nidImageUrl);
+  const [photoUrl, setPhotoUrl] = useState(profile.photoURL || '');
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -74,6 +76,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
         ...profile,
         ...form,
         username: normalizedUsername,
+        photoURL: photoUrl,
         nidImageUrl: nidPreview,
         lastUpdated: timestamp,
         isComplete: !!(form.legalName && form.phone && form.nidNumber && nidPreview)
@@ -128,8 +131,8 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
           
           <div className="p-8 md:p-10 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/40">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md">
-                <img src={profile.photoURL} className="w-full h-full object-cover" alt="User" referrerPolicy="no-referrer" />
+              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-zinc-100">
+                <img src={photoUrl || `https://ui-avatars.com/api/?name=${profile.email}`} className="w-full h-full object-cover" alt="User" referrerPolicy="no-referrer" />
               </div>
               <div>
                 <h2 className="text-2xl font-serif font-black text-gray-900 tracking-tight">Account Vault</h2>
@@ -174,6 +177,23 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
                   {error}
                 </div>
               )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <ImageUpload 
+                  label="Profile Photo"
+                  initialUrl={photoUrl}
+                  onUpload={setPhotoUrl}
+                  aspectRatio="square"
+                  className={isLocked ? 'opacity-40 pointer-events-none' : ''}
+                />
+                <ImageUpload 
+                  label="NID Front Side"
+                  initialUrl={nidPreview}
+                  onUpload={setNidPreview}
+                  aspectRatio="video"
+                  className={isLocked ? 'opacity-40 pointer-events-none' : ''}
+                />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
@@ -227,7 +247,7 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
               <div className="space-y-6">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Government ID (10-17 Digits)</label>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="grid grid-cols-1 gap-6 items-start">
                   <div className="space-y-4">
                     <div className={`relative ${isLocked ? 'opacity-40' : ''}`}>
                       <IdCard size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -240,34 +260,6 @@ const ManageAccount: React.FC<Props> = ({ profile, onClose, onUpdate, onImageUpl
                         onChange={e => setForm({...form, nidNumber: e.target.value.replace(/\D/g, '')})}
                       />
                     </div>
-                    {!isLocked && (
-                      <div className="relative border-2 border-dashed border-gray-100 rounded-2xl p-4 bg-gray-50/50 hover:bg-white hover:border-hotel-primary/30 transition-all cursor-pointer overflow-hidden text-center">
-                        <input type="file" accept="image/*" onChange={handleNidUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                        <div className="flex items-center justify-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                          {isUploading ? <Loader2 size={16} className="animate-spin text-hotel-primary" /> : <Camera size={16} className="text-hotel-primary" />}
-                          {isUploading ? 'Uploading Scan...' : 'Replace Identity Scan'}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div 
-                    onClick={() => nidPreview && setIsLightboxOpen(true)}
-                    className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-1 ring-black/5 aspect-video bg-gray-100 group cursor-zoom-in"
-                  >
-                    {nidPreview ? (
-                      <>
-                        <img src={nidPreview} className="w-full h-full object-contain" alt="NID Document" referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                          <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
-                         <IdCard size={32} />
-                         <p className="text-[9px] font-black uppercase tracking-widest">Missing Document</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

@@ -20,6 +20,7 @@ import Footer from './components/Footer';
 import PublicProfile from './components/PublicProfile';
 import SchemaOrg from './components/SchemaOrg';
 import GallerySection from './components/Gallery';
+import { storageService } from './services/storageService';
 import { 
   rtdb as db,
   auth, 
@@ -387,53 +388,7 @@ const AppContent = () => {
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
       if (!file) throw new Error("No file selected.");
-      
-      // Use absolute URL if VITE_API_URL is provided, otherwise relative
-      const apiBase = import.meta.env.VITE_API_URL || "";
-      const endpoint = `${apiBase}/api/upload/presigned`;
-      
-      // 1. Get pre-signed URL from our server
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: file.name,
-          contentType: file.type
-        })
-      });
-
-      if (!response.ok) {
-        if (response.status === 405) {
-          throw new Error("Upload API not found on this domain. Please use the AI Studio Shared URL for the full-stack version of the app.");
-        }
-        
-        let errorMessage = "Failed to get upload URL";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // If not JSON, use status text
-          errorMessage = `Server error: ${response.statusText}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      const { signedUrl, uploadUrl, publicUrl, useWorker } = data;
-
-      // 2. Upload directly to R2 (or via Worker Proxy)
-      const destinationUrl = useWorker ? uploadUrl : signedUrl;
-      const uploadResponse = await fetch(destinationUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type }
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload to storage");
-      }
-
-      return publicUrl;
+      return await storageService.uploadImage(file);
     } catch (error: any) {
       console.error("R2 Upload Error:", error);
       throw error;
@@ -442,22 +397,7 @@ const AppContent = () => {
 
   const handleImageDelete = async (imageUrl: string) => {
     try {
-      // Extract key from public URL
-      // Assuming publicUrl is something like https://pub-xxx.r2.dev/uploads/123-file.png
-      const url = new URL(imageUrl);
-      const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
-
-      const response = await fetch('/api/upload/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete from storage");
-      }
-
+      await storageService.deleteImage(imageUrl);
       return true;
     } catch (error: any) {
       console.error("R2 Delete Error:", error);

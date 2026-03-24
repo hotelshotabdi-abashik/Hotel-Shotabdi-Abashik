@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, User, Phone, IdCard, Camera, Loader2, AlertCircle, CheckCircle2, Maximize2, X } from 'lucide-react';
 import { rtdb as db, ref, set, checkUsernameUnique } from '../services/firebase';
+import { ImageUpload } from './ImageUpload';
 
 interface Props {
   user: any;
@@ -14,6 +15,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [nidPreview, setNidPreview] = useState('');
+  const [photoUrl, setPhotoUrl] = useState(user.photoURL || '');
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -82,7 +84,7 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
         username: normalizedUsername,
         uid: user.uid,
         email: user.email,
-        photoURL: user.photoURL,
+        photoURL: photoUrl,
         nidImageUrl: nidPreview,
         isComplete: true,
         lastUpdated: timestamp,
@@ -179,36 +181,21 @@ const ProfileOnboarding: React.FC<Props> = ({ user, onComplete, onImageUpload, o
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">NID Front Side Photo</label>
-              <div className={`relative border-2 border-dashed rounded-[2rem] p-8 transition-all ${nidPreview ? 'border-green-200 bg-green-50/30' : 'border-gray-100 bg-gray-50 hover:border-hotel-primary/30'}`}>
-                {!nidPreview && <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />}
-                {nidPreview ? (
-                  <div className="flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-6">
-                      <div className="relative group cursor-zoom-in" onClick={() => setIsLightboxOpen(true)}>
-                        <img src={nidPreview} className="w-24 h-16 rounded-xl object-contain border-2 border-white shadow-xl bg-gray-100" alt="NID Preview" referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-colors flex items-center justify-center">
-                          <Maximize2 className="text-white opacity-0 group-hover:opacity-100" size={12} />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-green-700">Digital Copy Linked</p>
-                        <p className="text-[10px] text-green-600/60 font-medium">Verified Aspect Ratio</p>
-                      </div>
-                    </div>
-                    <button onClick={handleImageRemove} className="p-3 bg-white rounded-xl text-red-500 shadow-sm border border-gray-100 hover:bg-red-50 transition-all"><X size={16} /></button>
-                  </div>
-                ) : (
-                  <div className="text-center py-2">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-3 shadow-sm border border-gray-50">
-                      {isUploading ? <Loader2 size={24} className="animate-spin text-hotel-primary" /> : <Camera size={24} />}
-                    </div>
-                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{isUploading ? 'Uploading Scan...' : 'Upload NID Front Side'}</p>
-                    <p className="text-[9px] text-gray-400/60 mt-1 font-medium italic">Full Document View Required</p>
-                  </div>
-                )}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <ImageUpload 
+                label="Profile Photo"
+                initialUrl={photoUrl}
+                onUpload={setPhotoUrl}
+                aspectRatio="square"
+                className="w-full"
+              />
+              <ImageUpload 
+                label="NID Front Side"
+                initialUrl={nidPreview}
+                onUpload={setNidPreview}
+                aspectRatio="video"
+                className="w-full"
+              />
             </div>
 
             <button type="submit" disabled={loading} className="w-full bg-hotel-primary text-white py-5 rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl shadow-red-100 hover:bg-hotel-secondary transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-4 mt-4">

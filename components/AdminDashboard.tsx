@@ -5,10 +5,11 @@ import {
   Users, User, Calendar, Search, CheckCircle2, 
   Loader2, Mail, Phone, IdCard, ShieldCheck, 
   Building2, Eye, Trash2, AlertTriangle, ShieldAlert,
-  MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star, ChevronRight
+  MapPin, UserCheck, Key, Shield, X, Maximize2, Database, ClipboardCheck, History, Activity, BarChart3, RefreshCw, Settings, Plus, Save, PhoneCall, Star, ChevronRight, Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ConfirmModal from './ConfirmModal';
+import { ImageUpload } from './ImageUpload';
 import { 
   rtdb, 
   createNotification, 
@@ -49,7 +50,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
   const currentUser = auth.currentUser;
   const isOwner = currentUser?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   
-  const [activeTab, setActiveTab] = useState<'users' | 'system'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'system' | 'site-config'>('users');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -237,7 +238,8 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
           title: "24h Residential Service",
           subtitle: "Experience Elite Hospitality in Sylhet",
           buttonText: "Book Now",
-          locationLabel: "Sylhet HQ District"
+          locationLabel: "Sylhet HQ District",
+          backgroundImage: "https://picsum.photos/seed/hotel/1920/1080"
         },
         rooms: ROOMS_DATA,
         offers: [],
@@ -303,22 +305,34 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
         />
       </div>
 
-      <div className="flex items-center gap-2 mb-8 bg-white p-2 rounded-[2rem] border border-gray-100 shadow-sm w-fit">
+      <div className="flex items-center gap-2 mb-8 bg-white p-2 rounded-[2rem] border border-gray-100 shadow-sm w-fit overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setActiveTab('users')}
-          className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'users' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+          className={`px-6 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shrink-0 ${activeTab === 'users' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
         >
           <Users size={16} /> Residents
         </button>
         <button 
+          onClick={() => setActiveTab('bookings')}
+          className={`px-6 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shrink-0 ${activeTab === 'bookings' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+        >
+          <Calendar size={16} /> All Bookings
+        </button>
+        <button 
+          onClick={() => setActiveTab('site-config')}
+          className={`px-6 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shrink-0 ${activeTab === 'site-config' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+        >
+          <Building2 size={16} /> Site Config
+        </button>
+        <button 
           onClick={() => setActiveTab('system')}
-          className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'system' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
+          className={`px-6 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shrink-0 ${activeTab === 'system' ? 'bg-hotel-primary text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}
         >
           <Settings size={16} /> System Tools
         </button>
       </div>
 
-      {activeTab === 'users' ? (
+      {activeTab === 'users' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-4">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-2">Registered Accounts</h4>
@@ -380,7 +394,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
                           {selectedUser.role || 'guest'}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      <div className="flex wrap gap-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
                         <span className="flex items-center gap-2"><Mail size={14} className="text-hotel-primary"/> {selectedUser.email}</span>
                         <span className="flex items-center gap-2"><Phone size={14} className="text-hotel-primary"/> {selectedUser.phone || 'No Phone'}</span>
                       </div>
@@ -446,7 +460,7 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
                   </div>
 
                   <div className="space-y-6">
-                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-100 pb-3">
+                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-3 border-b border-gray-50 pb-3">
                       <History size={16} className="text-hotel-primary" /> Stay History & Bookings
                     </h4>
                     <div className="space-y-4">
@@ -522,7 +536,216 @@ const AdminDashboard: React.FC<AdminProps> = ({ language, siteConfig, setSiteCon
             )}
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'bookings' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pending Requests</p>
+              <p className="text-3xl font-black text-amber-600">{formatNumber(bookings.filter(b => b.status === 'pending').length)}</p>
+            </div>
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Confirmed Stays</p>
+              <p className="text-3xl font-black text-green-600">{formatNumber(bookings.filter(b => b.status === 'accepted').length)}</p>
+            </div>
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Submissions</p>
+              <p className="text-3xl font-black text-gray-900">{formatNumber(bookings.length)}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl overflow-hidden">
+            <div className="p-8 border-b border-gray-50 flex justify-between items-center">
+              <h3 className="text-lg font-black text-gray-900 uppercase tracking-widest">Global Booking Registry</h3>
+              <div className="flex items-center gap-4">
+                <input 
+                  type="date" 
+                  className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-black uppercase outline-none"
+                  value={dateRange.start}
+                  onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                />
+                <span className="text-gray-300">to</span>
+                <input 
+                  type="date" 
+                  className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-black uppercase outline-none"
+                  value={dateRange.end}
+                  onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-8 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Guest</th>
+                    <th className="px-8 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Stay Details</th>
+                    <th className="px-8 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                    <th className="px-8 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-widest">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredBookings.map(booking => (
+                    <tr key={booking.id} className="hover:bg-gray-50/30 transition-colors">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-hotel-primary font-black text-xs">
+                            {booking.userName?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-gray-900">{booking.userName}</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{booking.userEmail}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="text-sm font-black text-gray-900">{booking.roomTitle}</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{booking.checkIn} — {booking.checkOut}</p>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
+                          booking.status === 'accepted' ? 'bg-green-50 text-green-600' :
+                          booking.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                          'bg-amber-50 text-amber-600'
+                        }`}>
+                          {booking.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <button 
+                          onClick={() => setSelectedBooking(booking)}
+                          className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-hotel-primary hover:border-hotel-primary transition-all shadow-sm"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredBookings.length === 0 && (
+                <div className="p-20 text-center">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">No matching bookings found.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'site-config' && (
+        <div className="space-y-10 animate-fade-in">
+          <div className="bg-white rounded-[3rem] border border-gray-100 p-10 shadow-xl space-y-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-hotel-primary/10 text-hotel-primary rounded-2xl flex items-center justify-center">
+                  <Settings size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Site Configuration</h3>
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Global Website Settings</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsSavingSettings(true)}
+                className="bg-hotel-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg hover:brightness-110 transition-all"
+              >
+                {isSavingSettings ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save Changes</>}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] border-b border-gray-50 pb-3">General Information</h4>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Hotel Name</label>
+                    <input 
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm font-black outline-none focus:border-hotel-primary" 
+                      value={siteConfig.name} 
+                      onChange={e => setSiteConfig(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Tagline</label>
+                    <input 
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm font-black outline-none focus:border-hotel-primary" 
+                      value={siteConfig.tagline} 
+                      onChange={e => setSiteConfig(prev => ({ ...prev, tagline: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Announcement Bar</label>
+                    <input 
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm font-black outline-none focus:border-hotel-primary" 
+                      value={siteConfig.announcement} 
+                      onChange={e => setSiteConfig(prev => ({ ...prev, announcement: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <ImageUpload 
+                      label="Website Logo"
+                      initialUrl={siteConfig.logoUrl}
+                      onUpload={(url) => setSiteConfig(prev => ({ ...prev, logoUrl: url }))}
+                      aspectRatio="square"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] border-b border-gray-50 pb-3">Contact & Support</h4>
+                <div className="space-y-6">
+                  {helpDeskNumbers.map((item, idx) => (
+                    <div key={idx} className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 space-y-4 relative group">
+                      <button 
+                        onClick={() => setHelpDeskNumbers(prev => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                          <input 
+                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs font-black outline-none focus:border-hotel-primary" 
+                            value={item.number} 
+                            onChange={e => {
+                              const newNums = [...helpDeskNumbers];
+                              newNums[idx].number = e.target.value;
+                              setHelpDeskNumbers(newNums);
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Label (EN)</label>
+                          <input 
+                            className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs font-black outline-none focus:border-hotel-primary" 
+                            value={item.labelEn} 
+                            onChange={e => {
+                              const newNums = [...helpDeskNumbers];
+                              newNums[idx].labelEn = e.target.value;
+                              setHelpDeskNumbers(newNums);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => setHelpDeskNumbers(prev => [...prev, { number: "", labelEn: "New Support", labelBn: "নতুন সহায়তা" }])}
+                    className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[2rem] text-[10px] font-black text-gray-400 uppercase tracking-widest hover:border-hotel-primary hover:text-hotel-primary transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} /> Add Support Number
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'system' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
           <div className="bg-white rounded-[3rem] border border-gray-100 p-10 shadow-xl space-y-8">
             <div className="flex items-center gap-4">
